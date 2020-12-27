@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "ogidni",
+	"version": "${version}",
+	"name": "Ogidni",
+	"description": "Bad FRAPI implementation for sodium",
+	"authors": [
+		"comp500"
+	],
+	"contact": {},
+	"license": "MIT",
+	"icon": "assets/ogidni/icon.png",
+	"environment": "client",
+	"custom": {
+		"fabric-renderer-api-v1:contains_renderer": true
+	},
+	"entrypoints": {
+		"client": [
+			"link.infra.ogidni.Ogidni"
+		]
+	},
+	"mixins": [
+		"ogidni.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.10.8",
+		"fabric": "*",
+		"minecraft": "1.16.4"
+	}
+}

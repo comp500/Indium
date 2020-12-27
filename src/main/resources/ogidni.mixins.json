@@ -1,0 +1,23 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "link.infra.ogidni.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"cursed.ChunkRenderContextMixin",
+		"cursed.WorldRendererMixin",
+		"renderer.MixinAmbientOcclusionCalculator",
+		"renderer.MixinBlockModelRenderer",
+		"renderer.MixinChunkRebuildTask",
+		"renderer.MixinChunkRenderData",
+		"renderer.MixinChunkRenderer",
+		"renderer.MixinChunkRendererRegion",
+		"renderer.MixinItemRenderer",
+		"sodium.ChunkRenderManagerMixin"
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
