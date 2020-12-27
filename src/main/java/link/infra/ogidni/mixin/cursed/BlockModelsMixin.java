@@ -1,6 +1,5 @@
 package link.infra.ogidni.mixin.cursed;
 
-import link.infra.ogidni.cursed.DummyBakedModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;

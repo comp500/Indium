@@ -21,8 +21,7 @@ public class WorldRendererMixin {
 	/**
 	 * Inject into rendering after all other BERs have been rendered (and as such all BERs have populated the BufferBuilders)
 	 * and draw the buffers to the screen.
-	 * TODO: If FREX/Fabric Rendering API implements a callback for batched BER rendering, conditionally enable this
-	 *     mixin and use the callback if it exists.
+	 * TODO: Use WorldRenderEvents when it is merged
 	 */
 	@Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;FJZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/util/math/Matrix4f;)V",
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;checkEmpty(Lnet/minecraft/client/util/math/MatrixStack;)V", ordinal = 0),

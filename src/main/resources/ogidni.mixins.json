@@ -4,7 +4,7 @@
 	"package": "link.infra.ogidni.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"cursed.ChunkRenderContextMixin",
+		"sodium.ChunkRenderContextMixin",
 		"cursed.WorldRendererMixin",
 		"renderer.MixinAmbientOcclusionCalculator",
 		"renderer.MixinBlockModelRenderer",

@@ -1,4 +1,4 @@
-package link.infra.ogidni.mixin.cursed;
+package link.infra.ogidni.mixin.sodium;
 
 import me.jellysquid.mods.sodium.client.model.quad.sink.ModelQuadSinkDelegate;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
