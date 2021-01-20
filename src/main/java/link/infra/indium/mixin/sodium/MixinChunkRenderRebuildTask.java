@@ -46,7 +46,10 @@ public abstract class MixinChunkRenderRebuildTask<T extends ChunkGraphicsState> 
 		indiumContext.release();
 	}
 
-	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/context/ChunkRenderContext;renderBlock(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuffers;Z)Z"), remap = false)
+	// Can't specify the arguments here, as the arguments wouldn't get remapped
+	// and remap = true fails as it tries to find a mapping for renderBlock
+	// so I just let MinecraftDev yell at me here
+	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/context/ChunkRenderContext;renderBlock"), remap = false)
 	public boolean onRenderBlock(ChunkRenderContext pipeline, BlockRenderView world, BlockState state, BlockPos pos, ChunkModelBuffers buffers, boolean cull) {
 		// We need to get the model with a bit more context than ChunkRenderContext has, so we do it here
 
