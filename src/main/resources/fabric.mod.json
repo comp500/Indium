@@ -1,26 +1,26 @@
 {
 	"schemaVersion": 1,
-	"id": "ogidni",
+	"id": "indium",
 	"version": "${version}",
-	"name": "Ogidni",
-	"description": "Bad FRAPI implementation for sodium",
+	"name": "Indium",
+	"description": "Adaptation of Indigo for use with Sodium",
 	"authors": [
 		"comp500"
 	],
 	"contact": {},
 	"license": "MIT",
-	"icon": "assets/ogidni/icon.png",
+	"icon": "assets/indium/icon.png",
 	"environment": "client",
 	"custom": {
 		"fabric-renderer-api-v1:contains_renderer": true
 	},
 	"entrypoints": {
 		"client": [
-			"link.infra.ogidni.Ogidni"
+			"link.infra.indium.Indigo"
 		]
 	},
 	"mixins": [
-		"ogidni.mixins.json"
+		"indium.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.10.8",

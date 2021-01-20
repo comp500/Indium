@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "link.infra.indium.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "plugin": "link.infra.indium.IndiumMixinConfigPlugin",
+  "client": [
+    "renderer.MixinAmbientOcclusionCalculator",
+    "renderer.MixinBlockModelRenderer",
+    "renderer.MixinItemRenderer",
+    "sodium.MixinWorldSlice",
+    "sodium.MixinChunkRenderRebuildTask",
+    "sodium.AccessorChunkRenderContext"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
