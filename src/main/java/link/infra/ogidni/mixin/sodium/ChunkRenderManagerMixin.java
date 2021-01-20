@@ -25,6 +25,7 @@ public class ChunkRenderManagerMixin {
 
 	@Inject(method = "scheduleRebuild", at = @At("TAIL"), remap = false)
 	private void onScheduleRebuild(int x, int y, int z, boolean important, CallbackInfo ci) {
+		// TODO: use y and important!!
 		VertexBufferStuff.VertexBufferManager.INSTANCE.invalidate(new ChunkPos(x, z));
 	}
 }

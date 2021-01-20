@@ -1,15 +1,17 @@
 package link.infra.ogidni.renderer.render;
 
-import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.objects.*;
+import com.google.common.collect.Sets;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.BlockModels;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.model.BakedModel;
@@ -21,7 +23,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkSection;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class VertexBufferStuff {
 	private static final RenderLayer[] RENDER_LAYERS = RenderLayer.getBlockLayers().toArray(new RenderLayer[0]);
@@ -39,7 +44,7 @@ public class VertexBufferStuff {
 		public static final VertexBufferManager INSTANCE = new VertexBufferManager();
 
 		private final Map<ChunkPos, RegionBuffer> builtRegions = new HashMap<>();
-		private final ObjectSet<ChunkPos> invalidRegions = new ObjectArraySet<>();
+		private final Set<ChunkPos> invalidRegions = Sets.newHashSet();
 
 		private ClientWorld currWorld = null;
 
@@ -119,27 +124,36 @@ public class VertexBufferStuff {
 
 		// TODO: move chunk baking off-thread? multiple threads?
 
-		public void render(MatrixStack matrices, Camera camera) {
-			Vec3d vec3d = camera.getPos();
+		public void render(WorldRenderContext context) {
+			//context.profiler().push("indium");
+			Vec3d vec3d = context.camera().getPos();
 			double camX = vec3d.getX();
 			double camY = vec3d.getY();
 			double camZ = vec3d.getZ();
 
 			CursedRenderContext renderContext = CursedRenderContext.POOL.get();
 
+//			context.profiler().push("invalidRegionIter");
+			long startTime = System.nanoTime();
 			// Iterate over all invalid regions, render and upload to RegionBuffers
 			BlockRenderManager renderManager = MinecraftClient.getInstance().getBlockRenderManager();
 			BlockModels models = renderManager.getModels();
-			for (ChunkPos rrp : invalidRegions) {
+			int frameQueueLimit = 10;
+			Iterator<ChunkPos> iter = invalidRegions.iterator();
+			while (iter.hasNext() && frameQueueLimit > 0) {
+				ChunkPos chunkPos = iter.next();
+				iter.remove();
+				frameQueueLimit--;
+
 				renderContext.prepare(currWorld, builder);
 				boolean wasRendered = false;
 
-				Chunk chunk = currWorld.getChunk(rrp.x, rrp.z);
+				Chunk chunk = currWorld.getChunk(chunkPos.x, chunkPos.z);
 				for (ChunkSection section : chunk.getSectionArray()) {
 					if (section == null || section.isEmpty()) {
 						continue;
 					}
-					BlockPos origin = new BlockPos(rrp.getStartPos().add(0, section.getYOffset(), 0));
+					BlockPos origin = new BlockPos(chunkPos.getStartPos().add(0, section.getYOffset(), 0));
 					BlockPos.Mutable pos = new BlockPos.Mutable();
 					for (int y = 0; y < 16; y++) {
 						for (int z = 0; z < 16; z++) {
@@ -168,24 +182,27 @@ public class VertexBufferStuff {
 					}
 				}
 
-				RegionBuffer buf = builtRegions.get(rrp);
+				RegionBuffer buf = builtRegions.get(chunkPos);
 				if (!wasRendered) {
 					if (buf != null) {
-						builtRegions.remove(rrp);
+						builtRegions.remove(chunkPos);
 						buf.deallocate();
 					}
 					continue;
 				}
 				if (buf == null) {
-					buf = new RegionBuffer(rrp);
-					builtRegions.put(rrp, buf);
+					buf = new RegionBuffer(chunkPos);
+					builtRegions.put(chunkPos, buf);
 				}
 				builder.build(buf);
 			}
-			invalidRegions.clear();
+			long endTime = System.nanoTime();
+			if (frameQueueLimit < 10) {
+				System.out.println("Built " + (10 - frameQueueLimit) + " regions in " + ((endTime - startTime)/1000000) + " ms");
+			}
 
 			// TODO: reuse VBOs?
-
+//			context.profiler().swap("regionBufferRender");
 			// Iterate over all RegionBuffers, render them
 			for (int i = 0; i < RENDER_LAYERS.length; i++) {
 				RenderLayer layer = RENDER_LAYERS[i];
@@ -193,27 +210,31 @@ public class VertexBufferStuff {
 				for (RegionBuffer cb : builtRegions.values()) {
 					if (cb.hasLayer(i)) {
 						BlockPos origin = cb.origin;
-						matrices.push();
-						matrices.translate(origin.getX() - camX, origin.getY() - camY, origin.getZ() - camZ);
-						cb.render(i, matrices);
-						matrices.pop();
+						context.matrixStack().push();
+						context.matrixStack().translate(origin.getX() - camX, origin.getY() - camY, origin.getZ() - camZ);
+						cb.render(i, context.matrixStack());
+						context.matrixStack().pop();
 					}
 				}
 				VertexBuffer.unbind();
 				layer.getVertexFormat().endDrawing();
 				layer.endDrawing();
 			}
+//			context.profiler().pop();
+//			context.profiler().pop();
 		}
 
 		public void invalidate(ChunkPos pos) {
 			// Mark a region as invalid. After the current set of rebuilding regions (invalid regions from the last frame) have been
 			// built, a RegionBuilder will be created for this region and passed to all BERs to render to
+			// TODO: run per chunk section, just mark each region then add to a queue rather than using a set
 			invalidRegions.add(pos);
 			//System.out.println("Invalidated for scheduled rebuild " + pos.x + " " + pos.z);
 		}
 
 		public void loadChunk(int x, int z) {
 			ChunkPos pos = new ChunkPos(x, z);
+			// TODO: just schedule builds, don't check if already built
 			if (!builtRegions.containsKey(pos)) {
 				invalidRegions.add(pos);
 				//System.out.println("Invalidated for load " + x + " " + z);
