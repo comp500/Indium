@@ -3,13 +3,16 @@
 	"id": "indium",
 	"version": "${version}",
 	"name": "Indium",
-	"description": "Adaptation of Indigo for use with Sodium",
+	"description": "Adaptation of Indigo for use with Sodium, implementing the Fabric Rendering API",
 	"authors": [
 		"comp500"
 	],
-	"contact": {},
-	"license": "MIT",
-	"icon": "assets/indium/icon.png",
+	"contact": {
+		"sources": "https://github.com/comp500/Indium",
+		"homepage": "https://github.com/comp500/Indium",
+		"issues": "https://github.com/comp500/Indium/issues"
+	},
+	"license": "Apache-2.0",
 	"environment": "client",
 	"custom": {
 		"fabric-renderer-api-v1:contains_renderer": true
