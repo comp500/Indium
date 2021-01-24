@@ -19,9 +19,7 @@ import net.minecraft.world.BlockRenderView;
 
 import java.util.function.Consumer;
 
-// TODO IndigoModification
 public class IndiumTerrainRenderContext extends AbstractRenderContext implements RenderContext {
-    //public static final ThreadLocal<SodiumTerrainRenderContext> POOL = ThreadLocal.withInitial(SodiumTerrainRenderContext::new);
     private final TerrainBlockRenderInfo blockInfo = new TerrainBlockRenderInfo();
     private final IndiumChunkRenderInfo chunkInfo = new IndiumChunkRenderInfo();
     private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
@@ -80,7 +78,7 @@ public class IndiumTerrainRenderContext extends AbstractRenderContext implements
             blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
             ((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
         } catch (Throwable var9) {
-            CrashReport crashReport_1 = CrashReport.create(var9, "Tesselating block in world - Indigo Renderer");
+            CrashReport crashReport_1 = CrashReport.create(var9, "Tesselating block in world - Indium Renderer");
             CrashReportSection crashReportElement_1 = crashReport_1.addElement("Block being tesselated");
             CrashReportSection.addBlockInfo(crashReportElement_1, blockPos, blockState);
             throw new CrashException(crashReport_1);

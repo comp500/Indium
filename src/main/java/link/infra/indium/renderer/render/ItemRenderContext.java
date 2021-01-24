@@ -16,22 +16,21 @@
 
 package link.infra.indium.renderer.render;
 
-import java.util.List;
-import java.util.Random;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
+import link.infra.indium.renderer.IndiumRenderer;
+import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -43,14 +42,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Matrix4f;
 
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.RenderMaterialImpl;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The render context used for item rendering.
@@ -127,7 +122,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 	/**
 	 * Use non-culling translucent material in GUI to match vanilla behavior. If the item
 	 * is enchanted then also select a dual-output vertex consumer. For models with layered
-	 * coplanar polygons this means we will render the glint more than once. Indigo doesn't
+	 * coplanar polygons this means we will render the glint more than once. Indium doesn't
 	 * support sprite layers, so this can't be helped in this implementation.
 	 */
 	private VertexConsumer selectVertexConsumer(RenderLayer layerIn) {

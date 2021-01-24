@@ -16,26 +16,25 @@
 
 package link.infra.indium;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Properties;
-
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.aocalc.AoConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Properties;
 
 public class Indigo implements ClientModInitializer {
 	public static final boolean ALWAYS_TESSELATE_INDIGO;
-	public static final boolean ENSURE_VERTEX_FORMAT_COMPATIBILITY;
 	public static final AoConfig AMBIENT_OCCLUSION_MODE;
 	/** Set true in dev env to confirm results match vanilla when they should. */
 	public static final boolean DEBUG_COMPARE_LIGHTING;
@@ -89,46 +88,33 @@ public class Indigo implements ClientModInitializer {
 	}
 
 	static {
-		File configDir = new File(FabricLoader.getInstance().getConfigDirectory(), "fabric");
-
-		if (!configDir.exists()) {
-			if (!configDir.mkdir()) {
-				LOGGER.warn("[Indigo] Could not create configuration directory: " + configDir.getAbsolutePath());
-			}
-		}
-
-		// TODO IndigoModification
-		File configFile = new File(configDir, "indium-renderer.properties");
+		Path configFile = FabricLoader.getInstance().getConfigDir().resolve("indium-renderer.properties");
 		Properties properties = new Properties();
 
-		if (configFile.exists()) {
-			try (FileInputStream stream = new FileInputStream(configFile)) {
+		if (Files.exists(configFile)) {
+			try (InputStream stream = Files.newInputStream(configFile)) {
 				properties.load(stream);
 			} catch (IOException e) {
-				LOGGER.warn("[Indigo] Could not read property file '" + configFile.getAbsolutePath() + "'", e);
+				LOGGER.warn("[Indium] Could not read property file '" + configFile.toAbsolutePath() + "'", e);
 			}
 		}
 
-		final boolean forceCompatibility = IndiumMixinConfigPlugin.shouldForceCompatibility();
-		ENSURE_VERTEX_FORMAT_COMPATIBILITY = forceCompatibility;
-		// necessary because OF alters the BakedModel vertex format and will confuse the fallback model consumer
-		ALWAYS_TESSELATE_INDIGO = !forceCompatibility && asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), true);
-		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "hybrid"), AoConfig.HYBRID);
+		ALWAYS_TESSELATE_INDIGO = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
+		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "auto"), AoConfig.ENHANCED);
 		DEBUG_COMPARE_LIGHTING = asBoolean((String) properties.computeIfAbsent("debug-compare-lighting", (a) -> "auto"), false);
 		FIX_SMOOTH_LIGHTING_OFFSET = asBoolean((String) properties.computeIfAbsent("fix-smooth-lighting-offset", (a) -> "auto"), true);
 		FIX_EXTERIOR_VERTEX_LIGHTING = asBoolean((String) properties.computeIfAbsent("fix-exterior-vertex-lighting", (a) -> "auto"), true);
 		FIX_LUMINOUS_AO_SHADE = asBoolean((String) properties.computeIfAbsent("fix-luminous-block-ambient-occlusion", (a) -> "auto"), false);
 
-		try (FileOutputStream stream = new FileOutputStream(configFile)) {
-			properties.store(stream, "Indigo properties file");
+		try (OutputStream stream = Files.newOutputStream(configFile)) {
+			properties.store(stream, "Indium properties file");
 		} catch (IOException e) {
-			LOGGER.warn("[Indigo] Could not store property file '" + configFile.getAbsolutePath() + "'", e);
+			LOGGER.warn("[Indium] Could not store property file '" + configFile.toAbsolutePath() + "'", e);
 		}
 	}
 
 	@Override
 	public void onInitializeClient() {
-	    // TODO IndigoModification
 		RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
 	}
 }

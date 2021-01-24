@@ -16,20 +16,19 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import java.lang.reflect.Constructor;
-import java.util.BitSet;
-import java.util.function.Supplier;
-
+import link.infra.indium.Indigo;
+import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
+import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import link.infra.indium.Indigo;
-import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
-import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
-import net.fabricmc.loader.api.FabricLoader;
+import java.lang.reflect.Constructor;
+import java.util.BitSet;
+import java.util.function.Supplier;
 
 public class VanillaAoHelper {
 	private static Supplier<AccessAmbientOcclusionCalculator> factory;
@@ -55,7 +54,7 @@ public class VanillaAoHelper {
 						try {
 							return (AccessAmbientOcclusionCalculator) constructor.newInstance(instance);
 						} catch (Exception e) {
-							Indigo.LOGGER.warn("[Indigo] Exception accessing vanilla smooth lighter", e);
+							Indigo.LOGGER.warn("[Indium] Exception accessing vanilla smooth lighter", e);
 							return null;
 						}
 					}
@@ -69,7 +68,7 @@ public class VanillaAoHelper {
 		}
 
 		if (factory == null) {
-			Indigo.LOGGER.warn("[Indigo] Vanilla smooth lighter unavailable. Indigo lighter will be used even if not configured.");
+			Indigo.LOGGER.warn("[Indium] Vanilla smooth lighter unavailable. Indigo lighter will be used even if not configured.");
 		}
 	}
 

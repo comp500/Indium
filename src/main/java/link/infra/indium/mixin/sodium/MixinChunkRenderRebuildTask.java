@@ -1,5 +1,6 @@
 package link.infra.indium.mixin.sodium;
 
+import link.infra.indium.Indigo;
 import link.infra.indium.renderer.render.IndiumTerrainRenderContext;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
@@ -56,7 +57,7 @@ public abstract class MixinChunkRenderRebuildTask<T extends ChunkGraphicsState> 
 		// This should probably be refactored to only get the model once: Either pass the Indium rendering
 		// context through to ChunkRenderContext, or move the getModel call from ChunkRenderContext and pass it
 		BakedModel model = ((AccessorChunkRenderContext)pipeline).getModels().getModel(state);
-		if (((FabricBakedModel) model).isVanillaAdapter()) {
+		if (!Indigo.ALWAYS_TESSELATE_INDIGO && ((FabricBakedModel) model).isVanillaAdapter()) {
 			return pipeline.renderBlock(world, state, pos, buffers, cull);
 		} else {
 			// TODO: should we actually read the value in this matrixstack, and apply it?
