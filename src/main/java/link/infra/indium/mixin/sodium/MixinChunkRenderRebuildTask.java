@@ -16,6 +16,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockRenderView;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -60,8 +61,11 @@ public abstract class MixinChunkRenderRebuildTask<T extends ChunkGraphicsState> 
 		if (!Indigo.ALWAYS_TESSELATE_INDIGO && ((FabricBakedModel) model).isVanillaAdapter()) {
 			return pipeline.renderBlock(world, state, pos, buffers, cull);
 		} else {
-			// TODO: should we actually read the value in this matrixstack, and apply it?
-			indiumContext.tesselateBlock(state, pos, model, new MatrixStack());
+			// TODO: replace MatrixStack with just a Vec3d
+			MatrixStack stack = new MatrixStack();
+			Vec3d offset = state.getModelOffset(world, pos);
+			stack.translate(offset.x, offset.y, offset.z);
+			indiumContext.tesselateBlock(state, pos, model, stack);
 			// TODO: determine if a block was actually rendered
 			return true;
 		}
