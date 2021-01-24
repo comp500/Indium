@@ -26,25 +26,25 @@ import java.util.Map;
  */
 @Mixin(WorldSlice.class)
 public abstract class MixinWorldSlice implements RenderAttachedBlockView {
-	@Shadow @Final private static int SECTION_TABLE_ARRAY_SIZE;
+	@Shadow(remap = false) @Final private static int SECTION_TABLE_ARRAY_SIZE;
 
-	@Shadow private int minX;
-	@Shadow private int minY;
-	@Shadow private int minZ;
-	@Shadow private int maxX;
-	@Shadow private int maxY;
-	@Shadow private int maxZ;
-	@Shadow private int baseX;
-	@Shadow private int baseY;
-	@Shadow private int baseZ;
-	@Shadow private WorldChunk[] chunks;
+	@Shadow(remap = false) private int minX;
+	@Shadow(remap = false) private int minY;
+	@Shadow(remap = false) private int minZ;
+	@Shadow(remap = false) private int maxX;
+	@Shadow(remap = false) private int maxY;
+	@Shadow(remap = false) private int maxZ;
+	@Shadow(remap = false) private int baseX;
+	@Shadow(remap = false) private int baseY;
+	@Shadow(remap = false) private int baseZ;
+	@Shadow(remap = false) private WorldChunk[] chunks;
 
-	@Shadow
+	@Shadow(remap = false)
 	public static int getLocalBlockIndex(int x, int y, int z) {
 		throw new RuntimeException("Shadow mixin failure");
 	}
 
-	@Shadow
+	@Shadow(remap = false)
 	public static int getLocalChunkIndex(int x, int z) {
 		throw new RuntimeException("Shadow mixin failure");
 	}
