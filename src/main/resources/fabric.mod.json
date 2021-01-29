@@ -30,6 +30,7 @@
 		"minecraft": "1.16.x",
 		"sodium": "*",
 		"fabric-renderer-api-v1": ">=0.3.0",
-		"fabric-rendering-data-attachment-v1": ">=0.1.1"
+		"fabric-rendering-data-attachment-v1": ">=0.1.1",
+		"fabric-rendering-fluids-v1": ">=0.1.3"
 	}
 }
