@@ -69,7 +69,7 @@ public abstract class MixinWorldSlice implements RenderAttachedBlockView {
 	// After the normal WorldSlice initialisation, fill indium_renderDataObjects with render
 	// attachments in this WorldSlice
 	@Inject(at = @At("TAIL"), method = "init", remap = false)
-	public void afterInit(ChunkBuilder<?> builder, World world, ChunkSectionPos origin, WorldChunk[] chunks, CallbackInfo ci) {
+	public void afterInit(ChunkBuilder builder, World world, ChunkSectionPos origin, WorldChunk[] chunks, CallbackInfo ci) {
 		final int minChunkX = this.minX >> 4;
 		final int minChunkZ = this.minZ >> 4;
 
