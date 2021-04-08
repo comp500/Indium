@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.5-SNAPSHOT'
+    id 'fabric-loom' version '0.6-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -21,9 +21,9 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     // Fabric API
-    modCompile(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
-    modCompile(fabricApi.module("fabric-rendering-data-attachment-v1", project.fabric_version))
-    modCompile(fabricApi.module("fabric-rendering-fluids-v1", project.fabric_version))
+    modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
+    modImplementation(fabricApi.module("fabric-rendering-data-attachment-v1", project.fabric_version))
+    modImplementation(fabricApi.module("fabric-rendering-fluids-v1", project.fabric_version))
 
     // For testing in dev environment
     modRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
