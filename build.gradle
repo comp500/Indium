@@ -31,7 +31,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-    modImplementation "com.github.jellysquid3:sodium-fabric:1.16.x~next-SNAPSHOT"
+    modImplementation "com.github.CaffeineMC:sodium-fabric:e0142381e9"
 }
 
 processResources {
