@@ -1,10 +1,15 @@
 pluginManagement {
     repositories {
-        jcenter()
         maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
         gradlePluginPortal()
     }
+}
+
+sourceControl {
+	gitRepository("https://github.com/CaffeineMC/sodium-fabric.git") {
+		producesModule("me.jellysquid.mods:sodium-fabric")
+	}
 }

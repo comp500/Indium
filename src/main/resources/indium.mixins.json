@@ -1,17 +1,17 @@
 {
-  "required": true,
-  "package": "link.infra.indium.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "client": [
-    "renderer.MixinAmbientOcclusionCalculator",
-    "renderer.MixinBlockModelRenderer",
-    "renderer.MixinItemRenderer",
-    "sodium.AccessorChunkRenderContext",
-    "sodium.MixinChunkRenderRebuildTask",
-    "sodium.MixinFluidRendererSodium",
-    "sodium.MixinWorldSlice"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"required": true,
+	"package": "link.infra.indium.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"client": [
+		"renderer.MixinAmbientOcclusionCalculator",
+		"renderer.MixinBlockModelRenderer",
+		"renderer.MixinItemRenderer",
+		"sodium.MixinChunkRenderRebuildTask",
+		"sodium.MixinClonedChunkSection",
+		"sodium.MixinFluidRendererSodium",
+		"sodium.MixinWorldSlice"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

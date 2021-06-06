@@ -1,4 +1,4 @@
 # Indium
-Adaptation of Indigo (Reference implementation of the Fabric Rendering API) for use with Sodium. Requires Sodium [1.16.x/next branch compiled from source](https://github.com/jellysquid3/sodium-fabric), or you can use [my fork](https://github.com/comp500/sodium-fabric) with a temporary fix for LambdaBetterGrass.
+Adaptation of Indigo (Reference implementation of the Fabric Rendering API) for use with Sodium. Currently requires bleeding-edge builds of the Sodium [1.16.x/next branch](https://github.com/CaffeineMC/sodium-fabric#bleeding-edge-builds-unstable). (my fork is no longer necessary)
 
 Based heavily upon [Indigo](https://github.com/FabricMC/fabric/tree/1.16/fabric-renderer-indigo) (licensed Apache 2.0)
