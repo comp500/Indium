@@ -64,4 +64,14 @@ public class VertexConsumerSinkShim implements VertexConsumer {
         sink.writeQuad(x, y, z, color, u, v, light);
         sink.flush();
     }
+
+	@Override
+	public void fixedColor(int red, int green, int blue, int alpha) {
+		// Appears to be unused
+	}
+
+	@Override
+	public void unfixColor() {
+		// Appears to be unused
+	}
 }

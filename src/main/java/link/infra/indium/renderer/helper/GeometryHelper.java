@@ -16,17 +16,15 @@
 
 package link.infra.indium.renderer.helper;
 
-import static net.minecraft.util.math.MathHelper.approximatelyEquals;
-
-import org.jetbrains.annotations.NotNull;
-
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
+import net.minecraft.util.math.Vec3f;
+import org.jetbrains.annotations.NotNull;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import static net.minecraft.util.math.MathHelper.approximatelyEquals;
 
 /**
  * Static routines of general utility for renderer implementations.
@@ -193,7 +191,7 @@ public abstract class GeometryHelper {
 	 * <p>Derived from the quad face normal and expects convex quads with all points co-planar.
 	 */
 	public static Direction lightFace(QuadView quad) {
-		final Vector3f normal = quad.faceNormal();
+		final Vec3f normal = quad.faceNormal();
 		switch (GeometryHelper.longestAxis(normal)) {
 		case X:
 			return normal.getX() > 0 ? Direction.EAST : Direction.WEST;
@@ -231,7 +229,7 @@ public abstract class GeometryHelper {
 	/**
 	 * @see #longestAxis(float, float, float)
 	 */
-	public static Axis longestAxis(Vector3f vec) {
+	public static Axis longestAxis(Vec3f vec) {
 		return longestAxis(vec.getX(), vec.getY(), vec.getZ());
 	}
 

@@ -16,32 +16,6 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import static java.lang.Math.max;
-import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
-import static link.infra.indium.renderer.helper.GeometryHelper.CUBIC_FLAG;
-import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
-import static net.minecraft.util.math.Direction.DOWN;
-import static net.minecraft.util.math.Direction.EAST;
-import static net.minecraft.util.math.Direction.NORTH;
-import static net.minecraft.util.math.Direction.SOUTH;
-import static net.minecraft.util.math.Direction.UP;
-import static net.minecraft.util.math.Direction.WEST;
-
-import java.util.BitSet;
-import java.util.function.ToIntFunction;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.util.math.Vector3f;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.BlockRenderView;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import link.infra.indium.Indigo;
 import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.aocalc.AoFace.WeightFunction;
@@ -49,6 +23,23 @@ import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.mesh.QuadViewImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.block.Block;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3f;
+import net.minecraft.world.BlockRenderView;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.BitSet;
+import java.util.function.ToIntFunction;
+
+import static java.lang.Math.max;
+import static link.infra.indium.renderer.helper.GeometryHelper.*;
+import static net.minecraft.util.math.Direction.*;
 
 /**
  * Adaptation of inner, non-static class in BlockModelRenderer that serves same purpose.
@@ -285,11 +276,11 @@ public class AoCalculator {
 	}
 
 	/** used exclusively in irregular face to avoid new heap allocations each call. */
-	private final Vector3f vertexNormal = new Vector3f();
+	private final Vec3f vertexNormal = new Vec3f();
 
 	private void irregularFace(MutableQuadViewImpl quad) {
-		final Vector3f faceNorm = quad.faceNormal();
-		Vector3f normal;
+		final Vec3f faceNorm = quad.faceNormal();
+		Vec3f normal;
 		final float[] w = this.w;
 		final float[] aoResult = this.ao;
 		final int[] lightResult = this.light;

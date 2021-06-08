@@ -16,31 +16,16 @@
 
 package link.infra.indium.renderer.mesh;
 
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
-import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_LIGHTMAP;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_NORMAL;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_U;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_V;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Y;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Z;
-
 import com.google.common.base.Preconditions;
-
-import net.minecraft.client.util.math.Vector3f;
-import net.minecraft.util.math.Direction;
-
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3f;
+
+import static link.infra.indium.renderer.mesh.EncodingFormat.*;
 
 /**
  * Base class for all quads / quad makers. Handles the ugly bits
@@ -50,7 +35,7 @@ public class QuadViewImpl implements QuadView {
 	protected Direction nominalFace;
 	/** True when geometry flags or light face may not match geometry. */
 	protected boolean isGeometryInvalid = true;
-	protected final Vector3f faceNormal = new Vector3f();
+	protected final Vec3f faceNormal = new Vec3f();
 	private boolean shade = true;
 
 	/** Size and where it comes from will vary in subtypes. But in all cases quad is fully encoded to array. */
@@ -152,7 +137,7 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public final Vector3f faceNormal() {
+	public final Vec3f faceNormal() {
 		computeGeometry();
 		return faceNormal;
 	}
@@ -170,9 +155,9 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public Vector3f copyPos(int vertexIndex, Vector3f target) {
+	public Vec3f copyPos(int vertexIndex, Vec3f target) {
 		if (target == null) {
-			target = new Vector3f();
+			target = new Vec3f();
 		}
 
 		final int index = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_X;
@@ -210,10 +195,10 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public Vector3f copyNormal(int vertexIndex, Vector3f target) {
+	public Vec3f copyNormal(int vertexIndex, Vec3f target) {
 		if (hasNormal(vertexIndex)) {
 			if (target == null) {
-				target = new Vector3f();
+				target = new Vec3f();
 			}
 
 			final int normal = data[normalIndex(vertexIndex)];

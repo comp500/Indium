@@ -37,10 +37,10 @@ import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Vec3f;
 
 import java.util.List;
 import java.util.Random;
@@ -65,7 +65,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 	private final ItemColors colorMap;
 	private final Random random = new Random();
 	private final Consumer<BakedModel> fallbackConsumer;
-	private final Vector3f normalVec = new Vector3f();
+	private final Vec3f normalVec = new Vec3f();
 
 	private MatrixStack matrixStack;
 	private Matrix4f matrix;
