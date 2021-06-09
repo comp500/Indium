@@ -9,7 +9,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 archivesBaseName = project.archives_base_name
-version = project.mod_version + (grgit != null ? "+rev.${grgit.head().abbreviatedId}" : "")
+version = project.mod_version + (grgit != null ? "+${project.minecraft_version}-${grgit.head().abbreviatedId}" : "")
 group = project.maven_group
 
 dependencies {
