@@ -2,7 +2,6 @@ package link.infra.indium.mixin.sodium;
 
 import link.infra.indium.Indigo;
 import link.infra.indium.renderer.render.IndiumTerrainRenderContext;
-import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
@@ -28,18 +27,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * The main injection point into Sodium - here we stop Sodium from rendering FRAPI block models, and do it ourselves
  */
 @Mixin(ChunkRenderRebuildTask.class)
-public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask<ChunkGraphicsState> {
+public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	// Store a rendering context per rebuild task
 	private final IndiumTerrainRenderContext indiumContext = new IndiumTerrainRenderContext();
 
 	@Inject(at = @At("HEAD"), method = "performBuild", remap = false)
-	public void beforePerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult<ChunkGraphicsState>> cir) {
+	public void beforePerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		// Set up our rendering context
 		indiumContext.prepare(cache.getWorldSlice(), buffers);
 	}
 
 	@Inject(at = @At("RETURN"), method = "performBuild", remap = false)
-	public void afterPerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult<ChunkGraphicsState>> cir) {
+	public void afterPerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		// Tear down our rendering context
 		indiumContext.release();
 	}
