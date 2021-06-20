@@ -10,6 +10,7 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.WorldChunk;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +36,12 @@ public abstract class MixinClonedChunkSection implements LocalRenderAttachedBloc
 	}
 
 	@Inject(at = @At("HEAD"), method = "init", remap = false)
-	private void indium_beforeInit(ChunkSectionPos pos, CallbackInfo ci) {
+	private void indium_beforeInit(World world, ChunkSectionPos pos, CallbackInfo ci) {
 		indium_renderDataObjects = null;
 	}
 
 	@Inject(at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;put(JLjava/lang/Object;)Ljava/lang/Object;"), method = "init", locals = LocalCapture.CAPTURE_FAILHARD, remap = false)
-	private void indium_onBlockEntity(ChunkSectionPos pos, CallbackInfo ci, WorldChunk chunk, ChunkSection section, PalettedContainerExtended<BlockState> container, BlockBox box, Iterator<?> var6, Map.Entry<BlockPos, BlockEntity> entry, BlockPos entityPos) {
+	private void indium_onBlockEntity(World world, ChunkSectionPos pos, CallbackInfo ci, WorldChunk chunk, ChunkSection section, PalettedContainerExtended<BlockState> container, BlockBox box, Iterator<?> var6, Map.Entry<BlockPos, BlockEntity> entry, BlockPos entityPos) {
 		indium_populateDataObject(entityPos, entry.getValue());
 	}
 

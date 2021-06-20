@@ -83,7 +83,7 @@ public class IndiumChunkRenderInfo {
 	/** Lazily retrieves output buffer for given layer, initializing as needed. */
 	public VertexConsumer getInitializedBuffer(RenderLayer renderLayer) {
 	    // TODO: use the right ModelQuadFacing
-        return new VertexConsumerSinkShim(buffers.get(renderLayer).getSink(ModelQuadFacing.UNASSIGNED));
+        return new VertexConsumerSinkShim(buffers.get(renderLayer).getBuilder(ModelQuadFacing.UNASSIGNED));
 	}
 
 	/**

@@ -33,7 +33,7 @@ dependencies {
 	// Jitpack doesn't work with Gradle 7, so this is the easiest solution
     implementation("me.jellysquid.mods:sodium-fabric") {
 		version {
-			branch = "1.17.x/next"
+			branch = "1.17.x/dev"
 		}
 		transitive = false
 	}

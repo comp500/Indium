@@ -9,7 +9,7 @@ pluginManagement {
 }
 
 sourceControl {
-	gitRepository("https://github.com/Kroppeb/sodium-fabric.git") {
+	gitRepository("https://github.com/CaffeineMC/sodium-fabric.git") {
 		producesModule("me.jellysquid.mods:sodium-fabric")
 	}
 }

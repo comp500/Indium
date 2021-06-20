@@ -1,13 +1,14 @@
 package link.infra.indium.other;
 
+import me.jellysquid.mods.sodium.client.model.PrimitiveSink;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import net.minecraft.client.render.VertexConsumer;
 
 public class VertexConsumerSinkShim implements VertexConsumer {
-    private final ModelVertexSink sink;
+    private final PrimitiveSink<ModelVertexSink> sink;
 
-    public VertexConsumerSinkShim(ModelVertexSink sink) {
+    public VertexConsumerSinkShim(PrimitiveSink<ModelVertexSink> sink) {
         this.sink = sink;
     }
 
@@ -15,6 +16,7 @@ public class VertexConsumerSinkShim implements VertexConsumer {
     private int color;
     private float u, v;
     private int light;
+    private int i = 0; // For writing indices
 
     @Override
     public VertexConsumer vertex(double x, double y, double z) {
@@ -40,38 +42,59 @@ public class VertexConsumerSinkShim implements VertexConsumer {
 
     @Override
     public VertexConsumer overlay(int u, int v) {
-        // TODO: overlay? indigo probably doesn't use this
+		// Not used in Sodium's ModelVertexSink
         return this;
     }
 
-    @Override
+	@Override
+	public VertexConsumer light(int uv) {
+		this.light = uv;
+		return this;
+	}
+
+	@Override
     public VertexConsumer light(int u, int v) {
-        // TODO: check these are correct
         this.light = ((v & 0xFF) << 16) | (u & 0xFF);
         return this;
     }
 
     @Override
     public VertexConsumer normal(float x, float y, float z) {
-        // TODO: normal? indigo probably doesn't use this
+        // Not used in Sodium's ModelVertexSink
         return this;
     }
 
     @Override
     public void next() {
         // TODO: move this up into the actual rendering code, batch writes when possible
-        sink.ensureCapacity(4);
-        sink.writeQuad(x, y, z, color, u, v, light);
-        sink.flush();
+		sink.vertices.ensureCapacity(1);
+        sink.vertices.writeVertex(x, y, z, color, u, v, light);
+		sink.vertices.flush();
+
+		i++;
+		if (i == 4) {
+			// Should be done before writing any vertices, easier to
+			// just subtract 4 for now
+			int count = sink.vertices.getVertexCount() - 4;
+			sink.indices.add(count + 0);
+			sink.indices.add(count + 1);
+			sink.indices.add(count + 2);
+			sink.indices.add(count + 2);
+			sink.indices.add(count + 3);
+			sink.indices.add(count + 0);
+			i = 0;
+		}
     }
 
 	@Override
 	public void fixedColor(int red, int green, int blue, int alpha) {
 		// Appears to be unused
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void unfixColor() {
 		// Appears to be unused
+		throw new UnsupportedOperationException();
 	}
 }
