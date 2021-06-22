@@ -4,7 +4,7 @@ import link.infra.indium.Indigo;
 import link.infra.indium.renderer.render.IndiumTerrainRenderContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderBuildTask;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
@@ -47,7 +47,7 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	// and remap = true fails as it tries to find a mapping for renderBlock
 	// so I just let MinecraftDev yell at me here
 	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel"), remap = false)
-	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BakedModel model, ChunkModelBuffers buffers, boolean cull, long seed) {
+	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 
 		if (!Indigo.ALWAYS_TESSELATE_INDIGO && ((FabricBakedModel) model).isVanillaAdapter()) {

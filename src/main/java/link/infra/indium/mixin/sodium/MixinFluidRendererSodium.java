@@ -4,7 +4,7 @@ import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.model.quad.blender.BiomeColorBlender;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.pipeline.FluidRenderer;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(FluidRenderer.class)
 public class MixinFluidRendererSodium {
 	@Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/FluidRenderer;waterSprites"), remap = false)
-	private Sprite[] onGetWaterSprites(FluidRenderer fluidRenderer, BlockRenderView world, FluidState fluidState, BlockPos pos, ChunkModelBuffers buffers) {
+	private Sprite[] onGetWaterSprites(FluidRenderer fluidRenderer, BlockRenderView world, FluidState fluidState, BlockPos pos, ChunkModelBuilder buffers) {
 		Fluid fluid = fluidState.getFluid();
 		FluidRenderHandler handler = FluidRenderHandlerRegistry.INSTANCE.get(fluid);
 		return handler.getFluidSprites(world, pos, fluidState);
@@ -36,7 +36,7 @@ public class MixinFluidRendererSodium {
 
 	// Not strictly necessary, but I feel like a mod should be able to add a fluid that has the lava tag with custom sprites!
 	@Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/FluidRenderer;lavaSprites"), remap = false)
-	private Sprite[] onGetLavaSprites(FluidRenderer fluidRenderer, BlockRenderView world, FluidState fluidState, BlockPos pos, ChunkModelBuffers buffers) {
+	private Sprite[] onGetLavaSprites(FluidRenderer fluidRenderer, BlockRenderView world, FluidState fluidState, BlockPos pos, ChunkModelBuilder buffers) {
 		Fluid fluid = fluidState.getFluid();
 		FluidRenderHandler handler = FluidRenderHandlerRegistry.INSTANCE.get(fluid);
 		return handler.getFluidSprites(world, pos, fluidState);
@@ -47,7 +47,7 @@ public class MixinFluidRendererSodium {
 	@Shadow(remap = false) @Final private BiomeColorBlender biomeColorBlender;
 
 	@Redirect(method = "render", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/FluidRenderer;calculateQuadColors"), remap = false)
-	private void onCalculateQuadColors(FluidRenderer fluidRenderer, ModelQuadView quad, BlockRenderView world, BlockPos pos, LightPipeline lighter, Direction dir, float brightness, boolean notLava, BlockRenderView _world, FluidState fluidState, BlockPos _pos, ChunkModelBuffers buffers) {
+	private void onCalculateQuadColors(FluidRenderer fluidRenderer, ModelQuadView quad, BlockRenderView world, BlockPos pos, LightPipeline lighter, Direction dir, float brightness, boolean notLava, BlockRenderView _world, FluidState fluidState, BlockPos _pos, ChunkModelBuilder buffers) {
 		// When implementing this you'd probably want to reuse the calculations done earlier, this is just an easier way of implementing the mixin
 		Fluid fluid = fluidState.getFluid();
 		boolean isWater = fluid.isIn(FluidTags.WATER);

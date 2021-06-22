@@ -22,6 +22,7 @@ import link.infra.indium.other.VertexConsumerSinkShim;
 import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -83,7 +84,8 @@ public class IndiumChunkRenderInfo {
 	/** Lazily retrieves output buffer for given layer, initializing as needed. */
 	public VertexConsumer getInitializedBuffer(RenderLayer renderLayer) {
 	    // TODO: use the right ModelQuadFacing
-        return new VertexConsumerSinkShim(buffers.get(renderLayer).getBuilder(ModelQuadFacing.UNASSIGNED));
+		ChunkModelBuilder chunkModelBuilder = buffers.get(renderLayer);
+        return new VertexConsumerSinkShim(chunkModelBuilder.getBuilder(ModelQuadFacing.UNASSIGNED), chunkModelBuilder.getOffset());
 	}
 
 	/**

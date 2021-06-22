@@ -7,9 +7,11 @@ import net.minecraft.client.render.VertexConsumer;
 
 public class VertexConsumerSinkShim implements VertexConsumer {
     private final PrimitiveSink<ModelVertexSink> sink;
+    private final int offset;
 
-    public VertexConsumerSinkShim(PrimitiveSink<ModelVertexSink> sink) {
+    public VertexConsumerSinkShim(PrimitiveSink<ModelVertexSink> sink, int offset) {
         this.sink = sink;
+        this.offset = offset;
     }
 
     private float x, y, z;
@@ -68,7 +70,7 @@ public class VertexConsumerSinkShim implements VertexConsumer {
     public void next() {
         // TODO: move this up into the actual rendering code, batch writes when possible
 		sink.vertices.ensureCapacity(1);
-        sink.vertices.writeVertex(x, y, z, color, u, v, light);
+        sink.vertices.writeVertex(x, y, z, color, u, v, light, offset);
 		sink.vertices.flush();
 
 		i++;
