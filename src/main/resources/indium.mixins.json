@@ -6,10 +6,7 @@
 		"renderer.MixinAmbientOcclusionCalculator",
 		"renderer.MixinBlockModelRenderer",
 		"renderer.MixinItemRenderer",
-		"sodium.MixinChunkRenderRebuildTask",
-		"sodium.MixinClonedChunkSection",
-		"sodium.MixinFluidRendererSodium",
-		"sodium.MixinWorldSlice"
+		"sodium.MixinChunkRenderRebuildTask"
 	],
 	"injectors": {
 		"defaultRequire": 1

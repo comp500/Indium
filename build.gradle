@@ -20,8 +20,6 @@ dependencies {
 
     // Fabric API
     modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
-    modImplementation(fabricApi.module("fabric-rendering-data-attachment-v1", project.fabric_version))
-    modImplementation(fabricApi.module("fabric-rendering-fluids-v1", project.fabric_version))
 
     // For testing in dev environment
     modRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
