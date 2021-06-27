@@ -1,17 +1,21 @@
 package link.infra.indium.other;
 
-import me.jellysquid.mods.sodium.client.model.PrimitiveSink;
+import link.infra.indium.renderer.render.TerrainBlockRenderInfo;
+import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import net.minecraft.client.render.VertexConsumer;
 
 public class VertexConsumerSinkShim implements VertexConsumer {
-    private final PrimitiveSink<ModelVertexSink> sink;
-    private final int offset;
+    private final ModelVertexSink sink;
+    private final IndexBufferBuilder indices;
+    private final TerrainBlockRenderInfo blockRenderInfo;
 
-    public VertexConsumerSinkShim(PrimitiveSink<ModelVertexSink> sink, int offset) {
+    public VertexConsumerSinkShim(ModelVertexSink sink, IndexBufferBuilder indices, TerrainBlockRenderInfo blockRenderInfo) {
         this.sink = sink;
-        this.offset = offset;
+        this.indices = indices;
+        this.blockRenderInfo = blockRenderInfo;
     }
 
     private float x, y, z;
@@ -69,21 +73,15 @@ public class VertexConsumerSinkShim implements VertexConsumer {
     @Override
     public void next() {
         // TODO: move this up into the actual rendering code, batch writes when possible
-		sink.vertices.ensureCapacity(1);
-        sink.vertices.writeVertex(x, y, z, color, u, v, light, offset);
-		sink.vertices.flush();
+		sink.ensureCapacity(1);
+        sink.writeVertex(blockRenderInfo.origin, x, y, z, color, u, v, light);
+		sink.flush();
 
 		i++;
 		if (i == 4) {
 			// Should be done before writing any vertices, easier to
 			// just subtract 4 for now
-			int count = sink.vertices.getVertexCount() - 4;
-			sink.indices.add(count + 0);
-			sink.indices.add(count + 1);
-			sink.indices.add(count + 2);
-			sink.indices.add(count + 2);
-			sink.indices.add(count + 3);
-			sink.indices.add(count + 0);
+			indices.add(sink.getVertexCount() - 4, ModelQuadWinding.CLOCKWISE);
 			i = 0;
 		}
     }

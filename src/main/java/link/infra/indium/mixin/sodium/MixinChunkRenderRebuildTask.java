@@ -47,17 +47,17 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	// and remap = true fails as it tries to find a mapping for renderBlock
 	// so I just let MinecraftDev yell at me here
 	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel"), remap = false)
-	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed) {
+	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 
 		if (!Indigo.ALWAYS_TESSELATE_INDIGO && ((FabricBakedModel) model).isVanillaAdapter()) {
-			return blockRenderer.renderModel(world, state, pos, model, buffers, cull, seed);
+			return blockRenderer.renderModel(world, state, pos, origin, model, buffers, cull, seed);
 		} else {
 			// TODO: replace MatrixStack with just a Vec3d
 			MatrixStack stack = new MatrixStack();
 			Vec3d offset = state.getModelOffset(world, pos);
 			stack.translate(offset.x, offset.y, offset.z);
-			indiumContext.tesselateBlock(state, pos, model, stack);
+			indiumContext.tesselateBlock(state, pos, origin, model, stack);
 			// TODO: determine if a block was actually rendered
 			return true;
 		}

@@ -66,6 +66,7 @@ public class IndiumChunkRenderInfo {
 
 	BlockRenderView blockView;
     ChunkBuildBuffers buffers;
+    TerrainBlockRenderInfo blockRenderInfo;
 
 	IndiumChunkRenderInfo() {
 		brightnessCache = new Long2IntOpenHashMap();
@@ -74,18 +75,22 @@ public class IndiumChunkRenderInfo {
 		aoLevelCache.defaultReturnValue(Float.MAX_VALUE);
 	}
 
-	void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
+	void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, TerrainBlockRenderInfo blockRenderInfo) {
 		this.blockView = blockView;
 		this.buffers = buffers;
 		brightnessCache.clear();
 		aoLevelCache.clear();
+		// TODO: decouple when VertexConsumerSinkShim is removed
+		this.blockRenderInfo = blockRenderInfo;
 	}
 
 	/** Lazily retrieves output buffer for given layer, initializing as needed. */
 	public VertexConsumer getInitializedBuffer(RenderLayer renderLayer) {
+		// TODO: cache per renderlayer?
 	    // TODO: use the right ModelQuadFacing
 		ChunkModelBuilder chunkModelBuilder = buffers.get(renderLayer);
-        return new VertexConsumerSinkShim(chunkModelBuilder.getBuilder(ModelQuadFacing.UNASSIGNED), chunkModelBuilder.getOffset());
+        return new VertexConsumerSinkShim(chunkModelBuilder.getVertexSink(),
+			chunkModelBuilder.getIndexBufferBuilder(ModelQuadFacing.UNASSIGNED), blockRenderInfo);
 	}
 
 	/**

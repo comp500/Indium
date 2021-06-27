@@ -60,7 +60,7 @@ public class IndiumTerrainRenderContext extends AbstractRenderContext implements
 
     public IndiumTerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
         blockInfo.setBlockView(blockView);
-        chunkInfo.prepare(blockView, buffers);
+        chunkInfo.prepare(blockView, buffers, blockInfo);
         return this;
     }
 
@@ -69,13 +69,14 @@ public class IndiumTerrainRenderContext extends AbstractRenderContext implements
     }
 
     /** Called from chunk renderer hook. */
-    public boolean tesselateBlock(BlockState blockState, BlockPos blockPos, final BakedModel model, MatrixStack matrixStack) {
+    public boolean tesselateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, MatrixStack matrixStack) {
         this.matrix = matrixStack.peek().getModel();
         this.normalMatrix = matrixStack.peek().getNormal();
 
         try {
             aoCalc.clear();
             blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
+            blockInfo.setOrigin(origin);
             ((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
         } catch (Throwable var9) {
             CrashReport crashReport_1 = CrashReport.create(var9, "Tesselating block in world - Indium Renderer");

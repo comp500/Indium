@@ -24,12 +24,17 @@ import net.minecraft.util.math.Direction;
 public class TerrainBlockRenderInfo extends BlockRenderInfo {
 	private int cullCompletionFlags;
 	private int cullResultFlags;
+	public BlockPos origin;
 
 	@Override
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
 		super.prepareForBlock(blockState, blockPos, modelAO);
 		cullCompletionFlags = 0;
 		cullResultFlags = 0;
+	}
+
+	public void setOrigin(BlockPos origin) {
+		this.origin = origin;
 	}
 
 	@Override
