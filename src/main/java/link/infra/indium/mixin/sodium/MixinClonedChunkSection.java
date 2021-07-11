@@ -1,12 +1,15 @@
 package link.infra.indium.mixin.sodium;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import link.infra.indium.other.CMETrackingHashMap;
 import link.infra.indium.other.LocalRenderAttachedBlockView;
 import me.jellysquid.mods.sodium.client.world.cloned.ClonedChunkSection;
 import me.jellysquid.mods.sodium.client.world.cloned.PalettedContainerExtended;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkSectionPos;
@@ -41,7 +44,15 @@ public abstract class MixinClonedChunkSection implements LocalRenderAttachedBloc
 
 	@Inject(at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;put(JLjava/lang/Object;)Ljava/lang/Object;"), method = "init", locals = LocalCapture.CAPTURE_FAILHARD, remap = false)
 	private void indium_onBlockEntity(ChunkSectionPos pos, CallbackInfo ci, WorldChunk chunk, ChunkSection section, PalettedContainerExtended<BlockState> container, BlockBox box, Iterator<?> var6, Map.Entry<BlockPos, BlockEntity> entry, BlockPos entityPos) {
-		indium_populateDataObject(entityPos, entry.getValue());
+		((CMETrackingHashMap<?, ?>)chunk.getBlockEntities()).isIterating = true;
+		try {
+			indium_populateDataObject(entityPos, entry.getValue());
+		} catch (Exception e) {
+			CrashReport report = new CrashReport("Failed to get block render attachments", e);
+			entry.getValue().populateCrashReport(report.addElement("Populating block"));
+			throw new CrashException(report);
+		}
+		((CMETrackingHashMap<?, ?>)chunk.getBlockEntities()).isIterating = false;
 	}
 
 	private void indium_populateDataObject(BlockPos entityPos, BlockEntity blockEntity) {

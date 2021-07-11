@@ -3,6 +3,7 @@
 	"package": "link.infra.indium.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"client": [
+		"WorldChunkCMEMixin",
 		"renderer.MixinAmbientOcclusionCalculator",
 		"renderer.MixinBlockModelRenderer",
 		"renderer.MixinItemRenderer",
