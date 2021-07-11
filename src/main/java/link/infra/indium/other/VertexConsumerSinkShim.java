@@ -11,11 +11,13 @@ public class VertexConsumerSinkShim implements VertexConsumer {
     private final ModelVertexSink sink;
     private final IndexBufferBuilder indices;
     private final TerrainBlockRenderInfo blockRenderInfo;
+    private final int chunkId;
 
-    public VertexConsumerSinkShim(ModelVertexSink sink, IndexBufferBuilder indices, TerrainBlockRenderInfo blockRenderInfo) {
+    public VertexConsumerSinkShim(ModelVertexSink sink, IndexBufferBuilder indices, TerrainBlockRenderInfo blockRenderInfo, int chunkId) {
         this.sink = sink;
         this.indices = indices;
         this.blockRenderInfo = blockRenderInfo;
+        this.chunkId = chunkId;
     }
 
     private float x, y, z;
@@ -74,7 +76,7 @@ public class VertexConsumerSinkShim implements VertexConsumer {
     public void next() {
         // TODO: move this up into the actual rendering code, batch writes when possible
 		sink.ensureCapacity(1);
-        sink.writeVertex(blockRenderInfo.origin, x, y, z, color, u, v, light);
+        sink.writeVertex(blockRenderInfo.origin, x, y, z, color, u, v, light, chunkId);
 		sink.flush();
 
 		i++;

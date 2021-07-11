@@ -37,6 +37,10 @@ public class TerrainBlockRenderInfo extends BlockRenderInfo {
 		this.origin = origin;
 	}
 
+	public void setChunkId() {
+
+	}
+
 	@Override
 	boolean shouldDrawFace(Direction face) {
 		if (face == null) {

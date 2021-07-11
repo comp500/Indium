@@ -90,7 +90,7 @@ public class IndiumChunkRenderInfo {
 	    // TODO: use the right ModelQuadFacing
 		ChunkModelBuilder chunkModelBuilder = buffers.get(renderLayer);
         return new VertexConsumerSinkShim(chunkModelBuilder.getVertexSink(),
-			chunkModelBuilder.getIndexBufferBuilder(ModelQuadFacing.UNASSIGNED), blockRenderInfo);
+			chunkModelBuilder.getIndexBufferBuilder(ModelQuadFacing.UNASSIGNED), blockRenderInfo, chunkModelBuilder.getChunkId());
 	}
 
 	/**
