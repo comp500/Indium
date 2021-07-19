@@ -21,6 +21,12 @@ if (grgit != null) {
 }
 group = project.maven_group
 
+repositories {
+	maven {
+		url = "https://api.modrinth.com/maven"
+	}
+}
+
 dependencies {
     //to change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -36,14 +42,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	// Note: yarn version must be the same as Indium's dev env
-	// Jitpack doesn't work with Gradle 7, so this is the easiest solution
-    implementation("me.jellysquid.mods:sodium-fabric") {
-		version {
-			branch = "1.17.x/dev"
-		}
-		transitive = false
-	}
+	modImplementation "maven.modrinth:sodium:mc1.17.1-0.3.0"
 }
 
 processResources {
