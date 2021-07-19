@@ -10,7 +10,7 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 archivesBaseName = project.archives_base_name
 if (grgit != null) {
-	if (grgit.describe() == "${project.mod_version}+mc${project.minecraft_version}") {
+	if (grgit.describe(tags: true) == "${project.mod_version}+mc${project.minecraft_version}") {
 		version = "${project.mod_version}+mc${project.minecraft_version}"
 	} else {
 		var dirty = grgit.status().clean ? "" : "-dirty";
