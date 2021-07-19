@@ -3,13 +3,13 @@
 	"id": "indium",
 	"version": "${version}",
 	"name": "Indium",
-	"description": "Adaptation of Indigo for use with Sodium, implementing the Fabric Rendering API",
+	"description": "Sodium addon providing support for the Fabric Rendering API, based on Indigo",
 	"authors": [
 		"comp500"
 	],
 	"contact": {
 		"sources": "https://github.com/comp500/Indium",
-		"homepage": "https://github.com/comp500/Indium",
+		"homepage": "https://modrinth.com/mod/indium",
 		"issues": "https://github.com/comp500/Indium/issues"
 	},
 	"license": "Apache-2.0",
