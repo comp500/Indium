@@ -16,13 +16,10 @@ No, Indium is an addon mod for Sodium - you must use both mods together to get F
 No, Indigo is provided as part of Fabric API as the reference implementation of the Fabric Rendering API. Indigo disables itself when Sodium is installed.
 
 ## Will it be merged into Sodium?
-Indium is currently unsuitable for merging into Sodium, as it duplicates significant portions of Sodium's rendering logic, which would be difficult to maintain as part of Sodium. However, work is being done to make the changes Indium does more suitable for integration into Sodium, so that it may be merged in the future. See [this page](https://github.com/comp500/Indium/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement) for some of the changes that are planned.
+Fabric Rendering API support is being explored in the [0.4-experiments branch](https://github.com/CaffeineMC/sodium-fabric/tree/1.17.x/0.4-experiments) of upstream Sodium, so Indium will no longer be necessary when this is released. These developments are not directly based on the work of Indium but do similarly use parts of the Indigo renderer. The 0.4-experiments branch is unstable and does not have any ETA for release.
 
 ## Which versions of Sodium are supported?
-Sodium 0.2.0 or newer is required for all versions of Indium. I support the latest stable versions of Sodium for 1.16 and 1.17, as well as the latest development builds for 1.17. For development builds, Indium must be obtained from Github Actions or compiled from source in the 1.17.x/main branch. Iris requires a custom fork of Sodium and may not always be compatible with the latest release or build of Indium - please ask the Iris support channels if you have issues.
+Sodium 0.2.0 or newer is required for all versions of Indium. I support the latest stable versions of Sodium for 1.16 and 1.17. Iris on Modrinth and CurseForge includes a custom fork of Sodium (do not install Sodium separately) and may not always be compatible with the latest release or build of Indium - please ask the Iris support channels if you have issues.
 
 ## Where do I download Indium?
-Releases of Indium are available from [Modrinth](https://modrinth.com/mod/indium), as well as [Github Releases](https://github.com/comp500/Indium/releases).
-
-### CurseForge?
-As Indium is not currently compatible with any released version of Sodium on CurseForge, it is not yet available for download from CurseForge. When Sodium 0.2.0 and newer release on CurseForge, Indium will also be released.
+Releases of Indium are available from [Modrinth](https://modrinth.com/mod/indium) and [CurseForge](https://www.curseforge.com/minecraft/mc-mods/indium), as well as [Github Releases](https://github.com/comp500/Indium/releases).
