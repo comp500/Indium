@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.8-SNAPSHOT'
+    id 'fabric-loom' version '0.10-SNAPSHOT'
     id 'maven-publish'
 
 	id 'org.ajoberstar.grgit' version '4.1.0'
@@ -43,6 +43,9 @@ dependencies {
     // You may need to force-disable transitiveness on them.
 
 	modImplementation "maven.modrinth:sodium:mc1.17.1-0.3.0"
+
+	// Transitive dependency of Sodium
+	implementation("org.joml:joml:1.10.2")
 }
 
 processResources {
