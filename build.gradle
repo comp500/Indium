@@ -42,7 +42,19 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	modImplementation "maven.modrinth:sodium:mc1.17.1-0.3.0"
+	// Use development builds of Sodium on the main branch
+	if (grgit != null && grgit.branch.current().name.contains("/main")) {
+		// Note: yarn version must be the same as Indium's dev env
+		// Jitpack doesn't work with Gradle 7, so this is the easiest solution
+		implementation("me.jellysquid.mods:sodium-fabric") {
+			version {
+				branch = "1.17.x/dev"
+			}
+			transitive = false
+		}
+	} else {
+		modImplementation "maven.modrinth:sodium:mc1.17.1-0.3.3"
+	}
 
 	// Transitive dependency of Sodium
 	implementation("org.joml:joml:1.10.2")
