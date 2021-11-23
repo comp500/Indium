@@ -2,6 +2,7 @@ package link.infra.indium.mixin.sodium;
 
 import link.infra.indium.Indigo;
 import link.infra.indium.renderer.render.IndiumTerrainRenderContext;
+import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
@@ -32,13 +33,13 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	private final IndiumTerrainRenderContext indiumContext = new IndiumTerrainRenderContext();
 
 	@Inject(at = @At("HEAD"), method = "performBuild", remap = false)
-	public void beforePerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
+	public void beforePerformBuild(ChunkBuildContext model, CancellationSource seed, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		// Set up our rendering context
-		indiumContext.prepare(cache.getWorldSlice(), buffers);
+		indiumContext.prepare(model.cache.getWorldSlice(), model.buffers);
 	}
 
 	@Inject(at = @At("RETURN"), method = "performBuild", remap = false)
-	public void afterPerformBuild(ChunkRenderCacheLocal cache, ChunkBuildBuffers buffers, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
+	public void afterPerformBuild(ChunkBuildContext model, CancellationSource seed, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		// Tear down our rendering context
 		indiumContext.release();
 	}
