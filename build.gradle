@@ -5,8 +5,8 @@ plugins {
 	id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
-sourceCompatibility = JavaVersion.VERSION_16
-targetCompatibility = JavaVersion.VERSION_16
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 if (grgit != null) {
@@ -48,12 +48,12 @@ dependencies {
 		// Jitpack doesn't work with Gradle 7, so this is the easiest solution
 		implementation("me.jellysquid.mods:sodium-fabric") {
 			version {
-				branch = "1.17.x/dev"
+				branch = "1.18.x/dev"
 			}
 			transitive = false
 		}
 	} else {
-		modImplementation "maven.modrinth:sodium:mc1.17.1-0.3.3"
+		modImplementation "maven.modrinth:sodium:mc1.18-pre8-0.4.0alpha4"
 	}
 
 	// Transitive dependency of Sodium
@@ -76,7 +76,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	it.options.release = 16
+	it.options.release = 17
 }
 
 java {

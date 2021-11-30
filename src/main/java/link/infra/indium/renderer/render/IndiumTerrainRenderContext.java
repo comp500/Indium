@@ -70,8 +70,8 @@ public class IndiumTerrainRenderContext extends AbstractRenderContext implements
 
     /** Called from chunk renderer hook. */
     public boolean tesselateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, MatrixStack matrixStack) {
-        this.matrix = matrixStack.peek().getModel();
-        this.normalMatrix = matrixStack.peek().getNormal();
+        this.matrix = matrixStack.peek().getPositionMatrix();
+        this.normalMatrix = matrixStack.peek().getNormalMatrix();
 
         try {
             aoCalc.clear();
