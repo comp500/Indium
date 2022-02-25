@@ -6,7 +6,8 @@
 		"renderer.MixinAmbientOcclusionCalculator",
 		"renderer.MixinBlockModelRenderer",
 		"renderer.MixinItemRenderer",
-		"sodium.MixinChunkRenderRebuildTask"
+		"sodium.MixinChunkRenderRebuildTask",
+		"sodium.MixinChunkRenderCacheLocal"
 	],
 	"injectors": {
 		"defaultRequire": 1

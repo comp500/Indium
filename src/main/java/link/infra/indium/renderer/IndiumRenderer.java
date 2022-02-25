@@ -26,7 +26,6 @@ import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 
-// TODO IndigoModification
 public class IndiumRenderer implements Renderer {
 	public static final IndiumRenderer INSTANCE = new IndiumRenderer();
 

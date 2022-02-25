@@ -18,14 +18,11 @@ package link.infra.indium.renderer.render;
 
 import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import link.infra.indium.other.VertexConsumerSinkShim;
 import link.infra.indium.renderer.aocalc.AoLuminanceFix;
-import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockRenderView;
@@ -37,8 +34,7 @@ import net.minecraft.world.BlockRenderView;
  * <p>Exception: per-block position offsets are tracked here so they can
  * be applied together with chunk offsets.
  */
-// TODO IndigoModification
-public class IndiumChunkRenderInfo {
+public class ChunkRenderInfo {
 	/**
 	 * Serves same function as brightness cache in Mojang's AO calculator,
 	 * with some differences as follows...
@@ -67,30 +63,30 @@ public class IndiumChunkRenderInfo {
 	BlockRenderView blockView;
 	ChunkBuildBuffers buffers;
 	TerrainBlockRenderInfo blockRenderInfo;
+	boolean didOutput = false;
 
-	IndiumChunkRenderInfo() {
+	ChunkRenderInfo() {
 		brightnessCache = new Long2IntOpenHashMap();
 		brightnessCache.defaultReturnValue(Integer.MAX_VALUE);
 		aoLevelCache = new Long2FloatOpenHashMap();
 		aoLevelCache.defaultReturnValue(Float.MAX_VALUE);
 	}
 
-	void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, TerrainBlockRenderInfo blockRenderInfo) {
+	void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
 		this.blockView = blockView;
 		this.buffers = buffers;
 		brightnessCache.clear();
 		aoLevelCache.clear();
-		// TODO: decouple when VertexConsumerSinkShim is removed
-		this.blockRenderInfo = blockRenderInfo;
 	}
 
-	/** Lazily retrieves output buffer for given layer, initializing as needed. */
-	public VertexConsumer getInitializedBuffer(RenderLayer renderLayer) {
-		// TODO: cache per renderlayer?
-		// TODO: use the right ModelQuadFacing
-		ChunkModelBuilder chunkModelBuilder = buffers.get(renderLayer);
-		return new VertexConsumerSinkShim(chunkModelBuilder.getVertexSink(),
-			chunkModelBuilder.getIndexBufferBuilder(ModelQuadFacing.UNASSIGNED), blockRenderInfo, chunkModelBuilder.getChunkId());
+	void release() {
+		blockView = null;
+		buffers = null;
+	}
+
+	public ChunkModelBuilder getChunkModelBuilder(RenderLayer renderLayer) {
+		didOutput = true;
+		return buffers.get(renderLayer);
 	}
 
 	/**

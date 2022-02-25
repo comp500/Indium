@@ -37,8 +37,8 @@ import link.infra.indium.renderer.RenderMaterialImpl;
  * Consumer for pre-baked meshes.  Works by copying the mesh data to a
  * "editor" quad held in the instance, where all transformations are applied before buffering.
  */
-public abstract class AbstractMeshConsumer extends AbstractQuadRenderer implements Consumer<Mesh> {
-	protected AbstractMeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
+public abstract class BufferMeshConsumer extends BufferQuadRenderer implements Consumer<Mesh> {
+	protected BufferMeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
 		super(blockInfo, bufferFunc, aoCalc, transform);
 	}
 

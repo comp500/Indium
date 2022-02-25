@@ -52,7 +52,7 @@ import java.util.function.Supplier;
  * Does not implement emissive lighting for sake
  * of simplicity in the default renderer.
  */
-public class ItemRenderContext extends AbstractRenderContext implements RenderContext {
+public class ItemRenderContext extends MatrixRenderContext implements RenderContext {
 	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
 	private static final long ITEM_RANDOM_SEED = 42L;
 
@@ -175,7 +175,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 
 		final RenderMaterialImpl.Value mat = quad.material();
 		final int quadColor = mat.disableColorIndex(0) ? -1 : indexColor();
-		final int lightmap = mat.emissive(0) ? AbstractQuadRenderer.FULL_BRIGHTNESS : this.lightmap;
+		final int lightmap = mat.emissive(0) ? BufferQuadRenderer.FULL_BRIGHTNESS : this.lightmap;
 
 		for (int i = 0; i < 4; i++) {
 			int c = quad.spriteColor(i, 0);
@@ -184,7 +184,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), lightmap));
 		}
 
-		AbstractQuadRenderer.bufferQuad(quadVertexConsumer(mat.blendMode(0)), quad, matrix, overlay, normalMatrix, normalVec);
+		BufferQuadRenderer.bufferQuad(quadVertexConsumer(mat.blendMode(0)), quad, matrix, overlay, normalMatrix, normalVec);
 	}
 
 	/**
@@ -228,9 +228,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 				renderFallbackWithTransform(model.getQuads((BlockState) null, cullFace, random), cullFace);
 			}
 		} else {
-			for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
-			}
+			vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
 		}
 	}
 

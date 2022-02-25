@@ -42,7 +42,7 @@ import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 /**
  * Context for non-terrain block rendering.
  */
-public class BlockRenderContext extends AbstractRenderContext implements RenderContext {
+public class BlockRenderContext extends MatrixRenderContext implements RenderContext {
 	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
 	private final MeshConsumer meshConsumer = new MeshConsumer(blockInfo, this::outputBuffer, aoCalc, this::transform);
@@ -61,7 +61,7 @@ public class BlockRenderContext extends AbstractRenderContext implements RenderC
 	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
 	 * apply the current transforms to vanilla models.
 	 */
-	private final TerrainFallbackConsumer fallbackConsumer = new TerrainFallbackConsumer(blockInfo, this::outputBuffer, aoCalc, this::transform) {
+	private final BufferFallbackConsumer fallbackConsumer = new BufferFallbackConsumer(blockInfo, this::outputBuffer, aoCalc, this::transform) {
 		@Override
 		protected int overlay() {
 			return overlay;
@@ -119,7 +119,7 @@ public class BlockRenderContext extends AbstractRenderContext implements RenderC
 		return didOutput;
 	}
 
-	private class MeshConsumer extends AbstractMeshConsumer {
+	private class MeshConsumer extends BufferMeshConsumer {
 		MeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
 			super(blockInfo, bufferFunc, aoCalc, transform);
 		}

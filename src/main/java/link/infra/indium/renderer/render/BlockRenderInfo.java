@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  * Holds, manages and provides access to the block/world related state
  * needed by fallback and mesh consumers.
  *
- * <p>Exception: per-block position offsets are tracked in {@link IndiumChunkRenderInfo}
+ * <p>Exception: per-block position offsets are tracked in {@link ChunkRenderInfo}
  * so they can be applied together with chunk offsets.
  */
 public class BlockRenderInfo {
