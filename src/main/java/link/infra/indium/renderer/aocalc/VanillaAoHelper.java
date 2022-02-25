@@ -16,7 +16,7 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import link.infra.indium.Indigo;
+import link.infra.indium.Indium;
 import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -54,7 +54,7 @@ public class VanillaAoHelper {
 						try {
 							return (AccessAmbientOcclusionCalculator) constructor.newInstance(instance);
 						} catch (Exception e) {
-							Indigo.LOGGER.warn("[Indium] Exception accessing vanilla smooth lighter", e);
+							Indium.LOGGER.warn("[Indium] Exception accessing vanilla smooth lighter", e);
 							return null;
 						}
 					}
@@ -68,7 +68,7 @@ public class VanillaAoHelper {
 		}
 
 		if (factory == null) {
-			Indigo.LOGGER.warn("[Indium] Vanilla smooth lighter unavailable. Indigo lighter will be used even if not configured.");
+			Indium.LOGGER.warn("[Indium] Vanilla smooth lighter unavailable. Indium lighter will be used even if not configured.");
 		}
 	}
 

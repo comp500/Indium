@@ -20,7 +20,7 @@
 	},
 	"entrypoints": {
 		"client": [
-			"link.infra.indium.Indigo"
+			"link.infra.indium.Indium"
 		]
 	},
 	"mixins": [

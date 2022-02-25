@@ -1,15 +1,13 @@
 package link.infra.indium.mixin.sodium;
 
-import link.infra.indium.Indigo;
+import link.infra.indium.Indium;
 import link.infra.indium.renderer.render.IndiumTerrainRenderContext;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderBuildTask;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
-import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheLocal;
 import me.jellysquid.mods.sodium.client.util.task.CancellationSource;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
@@ -51,7 +49,7 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 
-		if (!Indigo.ALWAYS_TESSELATE_INDIGO && ((FabricBakedModel) model).isVanillaAdapter()) {
+		if (!Indium.ALWAYS_TESSELATE_INDIUM && ((FabricBakedModel) model).isVanillaAdapter()) {
 			return blockRenderer.renderModel(world, state, pos, origin, model, buffers, cull, seed);
 		} else {
 			// TODO: replace MatrixStack with just a Vec3d

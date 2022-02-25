@@ -35,7 +35,7 @@ import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import link.infra.indium.renderer.render.ItemRenderContext;
 import link.infra.indium.renderer.render.ItemRenderContext.VanillaQuadHandler;
 import link.infra.indium.renderer.accessor.AccessItemRenderer;
-import link.infra.indium.renderer.render.IndigoQuadHandler;
+import link.infra.indium.renderer.render.IndiumQuadHandler;
 
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer implements AccessItemRenderer {
@@ -45,11 +45,11 @@ public abstract class MixinItemRenderer implements AccessItemRenderer {
 	@Shadow
 	protected ItemColors colors;
 
-	private final VanillaQuadHandler vanillaHandler = new IndigoQuadHandler(this);
+	private final VanillaQuadHandler vanillaHandler = new IndiumQuadHandler(this);
 
 	private final ThreadLocal<ItemRenderContext> CONTEXTS = ThreadLocal.withInitial(() -> new ItemRenderContext(colors));
 
-    @Inject(at = @At("HEAD"), method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformation$Mode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformation$Mode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V", cancellable = true)
 	public void hook_method_23179(ItemStack stack, ModelTransformation.Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int overlay, BakedModel model, CallbackInfo ci) {
 		final FabricBakedModel fabricModel = (FabricBakedModel) model;
 

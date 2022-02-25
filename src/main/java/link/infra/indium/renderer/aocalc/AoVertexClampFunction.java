@@ -18,12 +18,12 @@ package link.infra.indium.renderer.aocalc;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import link.infra.indium.Indigo;
+import link.infra.indium.Indium;
 
 @Environment(EnvType.CLIENT)
 @FunctionalInterface
 interface AoVertexClampFunction {
 	float clamp(float x);
 
-	AoVertexClampFunction CLAMP_FUNC = Indigo.FIX_EXTERIOR_VERTEX_LIGHTING ? x -> x < 0f ? 0f : (x > 1f ? 1f : x) : x -> x;
+	AoVertexClampFunction CLAMP_FUNC = Indium.FIX_EXTERIOR_VERTEX_LIGHTING ? x -> x < 0f ? 0f : (x > 1f ? 1f : x) : x -> x;
 }

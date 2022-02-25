@@ -16,7 +16,7 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import link.infra.indium.Indigo;
+import link.infra.indium.Indium;
 import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.aocalc.AoFace.WeightFunction;
 import link.infra.indium.renderer.mesh.EncodingFormat;
@@ -105,7 +105,7 @@ public class AoCalculator {
 	}
 
 	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
-		final AoConfig config = Indigo.AMBIENT_OCCLUSION_MODE;
+		final AoConfig config = Indium.AMBIENT_OCCLUSION_MODE;
 		final boolean shouldCompare;
 
 		switch (config) {
@@ -123,13 +123,13 @@ public class AoCalculator {
 
 		case EMULATE:
 			calcFastVanilla(quad);
-			shouldCompare = Indigo.DEBUG_COMPARE_LIGHTING && isVanilla;
+			shouldCompare = Indium.DEBUG_COMPARE_LIGHTING && isVanilla;
 			break;
 
 		case HYBRID:
 		default:
 			if (isVanilla) {
-				shouldCompare = Indigo.DEBUG_COMPARE_LIGHTING;
+				shouldCompare = Indium.DEBUG_COMPARE_LIGHTING;
 				calcFastVanilla(quad);
 			} else {
 				shouldCompare = false;
@@ -389,16 +389,16 @@ public class AoCalculator {
 			// vanilla was further offsetting these in the direction of the light face
 			// but it was actually mis-sampling and causing visible artifacts in certain situation
 			searchPos.set(lightPos).move(aoFace.neighbors[0]); //.setOffset(lightFace);
-			if (!Indigo.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
+			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
 			final boolean isClear0 = world.getBlockState(searchPos).getOpacity(world, searchPos) == 0;
 			searchPos.set(lightPos).move(aoFace.neighbors[1]); //.setOffset(lightFace);
-			if (!Indigo.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
+			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
 			final boolean isClear1 = world.getBlockState(searchPos).getOpacity(world, searchPos) == 0;
 			searchPos.set(lightPos).move(aoFace.neighbors[2]); //.setOffset(lightFace);
-			if (!Indigo.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
+			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
 			final boolean isClear2 = world.getBlockState(searchPos).getOpacity(world, searchPos) == 0;
 			searchPos.set(lightPos).move(aoFace.neighbors[3]); //.setOffset(lightFace);
-			if (!Indigo.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
+			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) searchPos.move(lightFace);
 			final boolean isClear3 = world.getBlockState(searchPos).getOpacity(world, searchPos) == 0;
 
 			// c = corner - values at corners of face
@@ -478,7 +478,7 @@ public class AoCalculator {
 	 * value from all four samples.
 	 */
 	private static int meanBrightness(int a, int b, int c, int d) {
-		if (Indigo.FIX_SMOOTH_LIGHTING_OFFSET) {
+		if (Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
 			return a == 0 || b == 0 || c == 0 || d == 0 ? meanEdgeBrightness(a, b, c, d) : meanInnerBrightness(a, b, c, d);
 		} else {
 			return vanillaMeanBrightness(a, b, c, d);

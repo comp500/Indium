@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.10-SNAPSHOT'
+    id 'fabric-loom' version '0.11-SNAPSHOT'
     id 'maven-publish'
 
 	id 'org.ajoberstar.grgit' version '4.1.0'
@@ -37,7 +37,7 @@ dependencies {
     modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
 
     // For testing in dev environment
-    modRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modRuntimeOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
