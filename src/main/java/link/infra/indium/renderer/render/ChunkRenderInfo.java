@@ -62,7 +62,6 @@ public class ChunkRenderInfo {
 
 	BlockRenderView blockView;
 	ChunkBuildBuffers buffers;
-	TerrainBlockRenderInfo blockRenderInfo;
 	boolean didOutput = false;
 
 	ChunkRenderInfo() {
