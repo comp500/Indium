@@ -16,12 +16,16 @@
 
 package link.infra.indium;
 
+import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.aocalc.AoConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resource.ResourceType;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -116,5 +120,7 @@ public class Indium implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
+
+		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(SpriteFinderCache.ReloadListener.INSTANCE);
 	}
 }

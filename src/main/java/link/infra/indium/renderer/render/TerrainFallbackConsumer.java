@@ -24,7 +24,6 @@ import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
@@ -44,8 +43,8 @@ public abstract class TerrainFallbackConsumer extends TerrainQuadRenderer implem
 
 	private final int[] editorBuffer = new int[EncodingFormat.TOTAL_STRIDE];
 
-	TerrainFallbackConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform, Supplier<SpriteFinder> spriteFinderSupplier) {
-		super(blockInfo, builderFunc, aoCalc, transform, spriteFinderSupplier);
+	TerrainFallbackConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform) {
+		super(blockInfo, builderFunc, aoCalc, transform);
 	}
 
 	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {
@@ -89,11 +88,14 @@ public abstract class TerrainFallbackConsumer extends TerrainQuadRenderer implem
 				renderQuad(q, null, defaultMaterial);
 			}
 		}
+
+		editorQuad.cachedSprite(null);
 	}
 
 	private void renderQuad(BakedQuad quad, Direction cullFace, Value defaultMaterial) {
 		final MutableQuadViewImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
+		editorQuad.cachedSprite(quad.getSprite());
 
 		if (!transform.transform(editorQuad)) {
 			return;

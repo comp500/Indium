@@ -16,11 +16,14 @@
 
 package link.infra.indium.renderer.render;
 
+import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.*;
 
 import java.util.function.Function;
@@ -72,5 +75,13 @@ public abstract class BufferQuadRenderer extends AbstractQuadRenderer {
 			buff.normal(normalVec.getX(), normalVec.getY(), normalVec.getZ());
 			buff.next();
 		}
+
+		Sprite sprite = quad.cachedSprite();
+
+		if (sprite == null) {
+			sprite = SpriteFinderCache.forBlockAtlas().find(quad, 0);
+		}
+
+		SpriteUtil.markSpriteActive(sprite);
 	}
 }

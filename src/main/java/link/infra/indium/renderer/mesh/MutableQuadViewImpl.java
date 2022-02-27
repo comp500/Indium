@@ -47,6 +47,8 @@ import link.infra.indium.renderer.helper.TextureHelper;
  * because that depends on where/how it is used. (Mesh encoding vs. render-time transformation).
  */
 public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEmitter {
+	private Sprite cachedSprite;
+
 	public final void begin(int[] data, int baseIndex) {
 		this.data = data;
 		this.baseIndex = baseIndex;
@@ -184,6 +186,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		final int i = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U;
 		data[i] = Float.floatToRawIntBits(u);
 		data[i + 1] = Float.floatToRawIntBits(v);
+		cachedSprite = null;
 		return this;
 	}
 
@@ -193,5 +196,13 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 
 		TextureHelper.bakeSprite(this, spriteIndex, sprite, bakeFlags);
 		return this;
+	}
+
+	public Sprite cachedSprite() {
+		return cachedSprite;
+	}
+
+	public void cachedSprite(Sprite cachedSprite) {
+		this.cachedSprite = cachedSprite;
 	}
 }

@@ -18,7 +18,6 @@ package link.infra.indium.renderer.render;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
@@ -30,14 +29,13 @@ import net.minecraft.client.render.RenderLayer;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 
 public abstract class TerrainMeshConsumer extends TerrainQuadRenderer implements Consumer<Mesh> {
-	protected TerrainMeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform, Supplier<SpriteFinder> spriteFinderSupplier) {
-		super(blockInfo, builderFunc, aoCalc, transform, spriteFinderSupplier);
+	protected TerrainMeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform) {
+		super(blockInfo, builderFunc, aoCalc, transform);
 	}
 
 	/**

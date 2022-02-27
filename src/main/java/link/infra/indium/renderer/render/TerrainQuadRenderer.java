@@ -16,6 +16,7 @@
 
 package link.infra.indium.renderer.render;
 
+import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
@@ -24,35 +25,31 @@ import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.*;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public abstract class TerrainQuadRenderer extends AbstractQuadRenderer {
 	protected final Function<RenderLayer, ChunkModelBuilder> builderFunc;
-	protected final Supplier<SpriteFinder> spriteFinderSupplier;
 
 	protected abstract Vec3i origin();
 
 	protected abstract Vec3d blockOffset();
 
-	TerrainQuadRenderer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform, Supplier<SpriteFinder> spriteFinderSupplier) {
+	TerrainQuadRenderer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform) {
 		super(blockInfo, aoCalc, transform);
 		this.builderFunc = builderFunc;
-		this.spriteFinderSupplier = spriteFinderSupplier;
 	}
 
 	@Override
 	protected void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
-		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset(), spriteFinderSupplier.get());
+		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset());
 	}
 
-	public static void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vec3i origin, Vec3d blockOffset, SpriteFinder spriteFinder) {
+	public static void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vec3i origin, Vec3d blockOffset) {
 		ModelVertexSink vertices = builder.getVertexSink();
 		vertices.ensureCapacity(4);
 
@@ -79,11 +76,13 @@ public abstract class TerrainQuadRenderer extends AbstractQuadRenderer {
 
 		indices.add(vertexStart, ModelQuadWinding.CLOCKWISE);
 
-		Sprite sprite = spriteFinder.find(quad, 0);
+		Sprite sprite = quad.cachedSprite();
 
-		if (sprite != null) {
-			builder.addSprite(sprite);
+		if (sprite == null) {
+			sprite = SpriteFinderCache.forBlockAtlas().find(quad, 0);
 		}
+
+		builder.addSprite(sprite);
 
 		vertices.flush();
 	}

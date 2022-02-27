@@ -5,12 +5,9 @@ import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
@@ -26,12 +23,10 @@ public class TerrainRenderContext extends AbstractRenderContext implements Rende
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
 
-	private SpriteFinder spriteFinder;
-
 	private Vec3i origin;
 	private Vec3d modelOffset;
 
-	private final TerrainMeshConsumer meshConsumer = new TerrainMeshConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform, () -> spriteFinder) {
+	private final TerrainMeshConsumer meshConsumer = new TerrainMeshConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform) {
 		@Override
 		protected Vec3i origin() {
 			return origin;
@@ -43,7 +38,7 @@ public class TerrainRenderContext extends AbstractRenderContext implements Rende
 		}
 	};
 
-	private final TerrainFallbackConsumer fallbackConsumer = new TerrainFallbackConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform, () -> spriteFinder) {
+	private final TerrainFallbackConsumer fallbackConsumer = new TerrainFallbackConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform) {
 		@Override
 		protected Vec3i origin() {
 			return origin;
@@ -58,14 +53,12 @@ public class TerrainRenderContext extends AbstractRenderContext implements Rende
 	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
 		blockInfo.setBlockView(blockView);
 		chunkInfo.prepare(blockView, buffers);
-		spriteFinder = SpriteFinder.get(MinecraftClient.getInstance().getBakedModelManager().getAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE));
 		return this;
 	}
 
 	public void release() {
 		blockInfo.release();
 		chunkInfo.release();
-		spriteFinder = null;
 	}
 
 	/** Called from chunk renderer hook. */
