@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
+import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -36,16 +37,14 @@ import net.minecraft.world.BlockRenderView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 
 /**
  * Context for non-terrain block rendering.
  */
-public class BlockRenderContext extends MatrixRenderContext implements RenderContext {
+public class BlockRenderContext extends MatrixRenderContext {
 	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
-	private final MeshConsumer meshConsumer = new MeshConsumer(blockInfo, this::outputBuffer, aoCalc, this::transform);
+	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 	private VertexConsumer bufferBuilder;
 	private boolean didOutput = false;
 	// These are kept as fields to avoid avoid the heap allocation for a supplier.
@@ -61,22 +60,7 @@ public class BlockRenderContext extends MatrixRenderContext implements RenderCon
 	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
 	 * apply the current transforms to vanilla models.
 	 */
-	private final BufferFallbackConsumer fallbackConsumer = new BufferFallbackConsumer(blockInfo, this::outputBuffer, aoCalc, this::transform) {
-		@Override
-		protected int overlay() {
-			return overlay;
-		}
-
-		@Override
-		protected Matrix4f matrix() {
-			return matrix;
-		}
-
-		@Override
-		protected Matrix3f normalMatrix() {
-			return normalMatrix;
-		}
-	};
+	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 
 	private int brightness(BlockPos pos) {
 		if (blockInfo.blockView == null) {
@@ -119,9 +103,9 @@ public class BlockRenderContext extends MatrixRenderContext implements RenderCon
 		return didOutput;
 	}
 
-	private class MeshConsumer extends BufferMeshConsumer {
-		MeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
-			super(blockInfo, bufferFunc, aoCalc, transform);
+	private class QuadBufferer extends VertexConsumerQuadBufferer {
+		QuadBufferer(Function<RenderLayer, VertexConsumer> bufferFunc) {
+			super(bufferFunc);
 		}
 
 		@Override

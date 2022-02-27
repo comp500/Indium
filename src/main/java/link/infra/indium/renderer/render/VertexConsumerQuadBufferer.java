@@ -1,34 +1,18 @@
-/*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package link.infra.indium.renderer.render;
-
-import link.infra.indium.other.SpriteFinderCache;
-import link.infra.indium.renderer.aocalc.AoCalculator;
-import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.*;
 
 import java.util.function.Function;
 
-public abstract class BufferQuadRenderer extends AbstractQuadRenderer {
+import link.infra.indium.other.SpriteFinderCache;
+import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Matrix3f;
+import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Vec3f;
+
+public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, VertexConsumer> bufferFunc;
 	protected final Vec3f normalVec = new Vec3f();
 
@@ -38,13 +22,12 @@ public abstract class BufferQuadRenderer extends AbstractQuadRenderer {
 
 	protected abstract int overlay();
 
-	BufferQuadRenderer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
-		super(blockInfo, aoCalc, transform);
+	VertexConsumerQuadBufferer(Function<RenderLayer, VertexConsumer> bufferFunc) {
 		this.bufferFunc = bufferFunc;
 	}
 
 	@Override
-	protected void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+	public void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
 		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix(), normalVec);
 	}
 

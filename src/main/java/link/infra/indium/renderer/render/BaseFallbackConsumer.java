@@ -21,12 +21,10 @@ import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
@@ -34,17 +32,35 @@ import net.minecraft.util.math.Direction;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class TerrainFallbackConsumer extends TerrainQuadRenderer implements Consumer<BakedModel> {
+/**
+ * Consumer for vanilla baked models. Generally intended to give visual results matching a vanilla render,
+ * however there could be subtle (and desirable) lighting variations so is good to be able to render
+ * everything consistently.
+ *
+ * <p>Also, the API allows multi-part models that hold multiple vanilla models to render them without
+ * combining quad lists, but the vanilla logic only handles one model per block. To route all of
+ * them through vanilla logic would require additional hooks.
+ *
+ *  <p>Works by copying the quad data to an "editor" quad held in the instance,
+ *  where all transformations are applied before buffering. Transformations should be
+ *  the same as they would be in a vanilla render - the editor is serving mainly
+ *  as a way to access vertex data without magical numbers. It also allows a consistent interface
+ *  for downstream tesselation routines.
+ *
+ *  <p>Another difference from vanilla render is that all transformation happens before the
+ *  vertex data is sent to the byte buffer.  Generally POJO array access will be faster than
+ *  manipulating the data via NIO.
+ */
+public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<BakedModel> {
 	private static Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
 	private static Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
 
 	private final int[] editorBuffer = new int[EncodingFormat.TOTAL_STRIDE];
 
-	TerrainFallbackConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, ChunkModelBuilder> builderFunc, AoCalculator aoCalc, QuadTransform transform) {
-		super(blockInfo, builderFunc, aoCalc, transform);
+	BaseFallbackConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+		super(bufferer, blockInfo, aoCalc, transform);
 	}
 
 	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {

@@ -31,14 +31,16 @@ import net.minecraft.util.math.*;
  * Base quad-rendering class for fallback and mesh consumers.
  * Has most of the actual buffer-time lighting and coloring logic.
  */
-public abstract class AbstractQuadRenderer {
+public class BaseQuadRenderer {
 	static final int FULL_BRIGHTNESS = 0xF000F0;
 
+	protected final QuadBufferer bufferer;
 	protected final BlockRenderInfo blockInfo;
 	protected final AoCalculator aoCalc;
 	protected final QuadTransform transform;
 
-	AbstractQuadRenderer(BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+	BaseQuadRenderer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+		this.bufferer = bufferer;
 		this.blockInfo = blockInfo;
 		this.aoCalc = aoCalc;
 		this.transform = transform;
@@ -60,7 +62,9 @@ public abstract class AbstractQuadRenderer {
 	}
 
 	/** final output step, common to all renders. */
-	protected abstract void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
+	private void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+		bufferer.bufferQuad(quad, renderLayer);
+	}
 
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 
@@ -198,5 +202,9 @@ public abstract class AbstractQuadRenderer {
 		}
 
 		return sum / div;
+	}
+
+	protected interface QuadBufferer {
+		void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
 	}
 }

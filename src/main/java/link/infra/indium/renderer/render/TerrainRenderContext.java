@@ -2,11 +2,12 @@ package link.infra.indium.renderer.render;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
@@ -17,8 +18,9 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.BlockRenderView;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class TerrainRenderContext extends AbstractRenderContext implements RenderContext {
+public class TerrainRenderContext extends AbstractRenderContext {
 	private final TerrainBlockRenderInfo blockInfo = new TerrainBlockRenderInfo();
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
@@ -26,29 +28,9 @@ public class TerrainRenderContext extends AbstractRenderContext implements Rende
 	private Vec3i origin;
 	private Vec3d modelOffset;
 
-	private final TerrainMeshConsumer meshConsumer = new TerrainMeshConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform) {
-		@Override
-		protected Vec3i origin() {
-			return origin;
-		}
+	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 
-		@Override
-		protected Vec3d blockOffset() {
-			return modelOffset;
-		}
-	};
-
-	private final TerrainFallbackConsumer fallbackConsumer = new TerrainFallbackConsumer(blockInfo, chunkInfo::getChunkModelBuilder, aoCalc, this::transform) {
-		@Override
-		protected Vec3i origin() {
-			return origin;
-		}
-
-		@Override
-		protected Vec3d blockOffset() {
-			return modelOffset;
-		}
-	};
+	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 
 	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
 		blockInfo.setBlockView(blockView);
@@ -79,6 +61,22 @@ public class TerrainRenderContext extends AbstractRenderContext implements Rende
 		}
 
 		return chunkInfo.didOutput;
+	}
+
+	private class QuadBufferer extends ChunkQuadBufferer {
+		QuadBufferer(Function<RenderLayer, ChunkModelBuilder> builderFunc) {
+			super(builderFunc);
+		}
+
+		@Override
+		protected Vec3i origin() {
+			return origin;
+		}
+
+		@Override
+		protected Vec3d blockOffset() {
+			return modelOffset;
+		}
 	}
 
 	@Override

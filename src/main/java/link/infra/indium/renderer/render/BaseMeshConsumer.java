@@ -17,7 +17,6 @@
 package link.infra.indium.renderer.render;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
@@ -25,7 +24,6 @@ import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -37,9 +35,9 @@ import link.infra.indium.renderer.RenderMaterialImpl;
  * Consumer for pre-baked meshes.  Works by copying the mesh data to a
  * "editor" quad held in the instance, where all transformations are applied before buffering.
  */
-public abstract class BufferMeshConsumer extends BufferQuadRenderer implements Consumer<Mesh> {
-	protected BufferMeshConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
-		super(blockInfo, bufferFunc, aoCalc, transform);
+public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh> {
+	protected BaseMeshConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+		super(bufferer, blockInfo, aoCalc, transform);
 	}
 
 	/**
