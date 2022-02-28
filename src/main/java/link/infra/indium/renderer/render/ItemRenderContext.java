@@ -27,7 +27,6 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.render.*;
@@ -39,7 +38,6 @@ import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3f;
 
 import java.util.List;
@@ -52,7 +50,7 @@ import java.util.function.Supplier;
  * Does not implement emissive lighting for sake
  * of simplicity in the default renderer.
  */
-public class ItemRenderContext extends AbstractRenderContext implements RenderContext {
+public class ItemRenderContext extends MatrixRenderContext {
 	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
 	private static final long ITEM_RANDOM_SEED = 42L;
 
@@ -68,14 +66,12 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 	private final Vec3f normalVec = new Vec3f();
 
 	private MatrixStack matrixStack;
-	private Matrix4f matrix;
 	private VertexConsumerProvider vertexConsumerProvider;
 	private VertexConsumer modelVertexConsumer;
 	private BlendMode quadBlendMode;
 	private VertexConsumer quadVertexConsumer;
 	private Mode transformMode;
 	private int lightmap;
-	private int overlay;
 	private ItemStack itemStack;
 	private VanillaQuadHandler vanillaHandler;
 
@@ -175,7 +171,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 
 		final RenderMaterialImpl.Value mat = quad.material();
 		final int quadColor = mat.disableColorIndex(0) ? -1 : indexColor();
-		final int lightmap = mat.emissive(0) ? AbstractQuadRenderer.FULL_BRIGHTNESS : this.lightmap;
+		final int lightmap = mat.emissive(0) ? BaseQuadRenderer.FULL_BRIGHTNESS : this.lightmap;
 
 		for (int i = 0; i < 4; i++) {
 			int c = quad.spriteColor(i, 0);
@@ -184,7 +180,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), lightmap));
 		}
 
-		AbstractQuadRenderer.bufferQuad(quadVertexConsumer(mat.blendMode(0)), quad, matrix, overlay, normalMatrix, normalVec);
+		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(mat.blendMode(0)), quad, matrix, overlay, normalMatrix, normalVec);
 	}
 
 	/**
@@ -228,9 +224,7 @@ public class ItemRenderContext extends AbstractRenderContext implements RenderCo
 				renderFallbackWithTransform(model.getQuads((BlockState) null, cullFace, random), cullFace);
 			}
 		} else {
-			for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
-			}
+			vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
 		}
 	}
 

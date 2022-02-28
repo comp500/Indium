@@ -20,7 +20,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
 
-import link.infra.indium.Indigo;
+import link.infra.indium.Indium;
 
 /**
  * Implements a fix to prevent luminous blocks from casting AO shade.
@@ -30,7 +30,7 @@ import link.infra.indium.Indigo;
 public interface AoLuminanceFix {
 	float apply(BlockView view, BlockPos pos);
 
-	AoLuminanceFix INSTANCE = Indigo.FIX_LUMINOUS_AO_SHADE ? AoLuminanceFix::fixed : AoLuminanceFix::vanilla;
+	AoLuminanceFix INSTANCE = Indium.FIX_LUMINOUS_AO_SHADE ? AoLuminanceFix::fixed : AoLuminanceFix::vanilla;
 
 	static float vanilla(BlockView view, BlockPos pos) {
 		return view.getBlockState(pos).getAmbientOcclusionLightLevel(view, pos);

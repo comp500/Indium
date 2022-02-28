@@ -25,8 +25,6 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
@@ -34,7 +32,6 @@ import net.minecraft.util.math.Direction;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -56,14 +53,14 @@ import java.util.function.Supplier;
  *  vertex data is sent to the byte buffer.  Generally POJO array access will be faster than
  *  manipulating the data via NIO.
  */
-public abstract class TerrainFallbackConsumer extends AbstractQuadRenderer implements Consumer<BakedModel> {
+public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<BakedModel> {
 	private static Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
 	private static Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
 
 	private final int[] editorBuffer = new int[EncodingFormat.TOTAL_STRIDE];
 
-	TerrainFallbackConsumer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
-		super(blockInfo, bufferFunc, aoCalc, transform);
+	BaseFallbackConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+		super(bufferer, blockInfo, aoCalc, transform);
 	}
 
 	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {

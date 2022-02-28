@@ -24,34 +24,24 @@ import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.util.math.*;
-
-import java.util.function.Function;
 
 /**
  * Base quad-rendering class for fallback and mesh consumers.
  * Has most of the actual buffer-time lighting and coloring logic.
  */
-public abstract class AbstractQuadRenderer {
+public class BaseQuadRenderer {
 	static final int FULL_BRIGHTNESS = 0xF000F0;
 
-	protected final Function<RenderLayer, VertexConsumer> bufferFunc;
+	protected final QuadBufferer bufferer;
 	protected final BlockRenderInfo blockInfo;
 	protected final AoCalculator aoCalc;
 	protected final QuadTransform transform;
-	protected final Vec3f normalVec = new Vec3f();
 
-	protected abstract Matrix4f matrix();
-
-	protected abstract Matrix3f normalMatrix();
-
-	protected abstract int overlay();
-
-	AbstractQuadRenderer(BlockRenderInfo blockInfo, Function<RenderLayer, VertexConsumer> bufferFunc, AoCalculator aoCalc, QuadTransform transform) {
+	BaseQuadRenderer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
+		this.bufferer = bufferer;
 		this.blockInfo = blockInfo;
-		this.bufferFunc = bufferFunc;
 		this.aoCalc = aoCalc;
 		this.transform = transform;
 	}
@@ -73,36 +63,7 @@ public abstract class AbstractQuadRenderer {
 
 	/** final output step, common to all renders. */
 	private void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
-		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix(), normalVec);
-	}
-
-	public static void bufferQuad(VertexConsumer buff, MutableQuadViewImpl quad, Matrix4f matrix, int overlay, Matrix3f normalMatrix, Vec3f normalVec) {
-		final boolean useNormals = quad.hasVertexNormals();
-
-		if (useNormals) {
-			quad.populateMissingNormals();
-		} else {
-			final Vec3f faceNormal = quad.faceNormal();
-			normalVec.set(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
-			normalVec.transform(normalMatrix);
-		}
-
-		for (int i = 0; i < 4; i++) {
-			buff.vertex(matrix, quad.x(i), quad.y(i), quad.z(i));
-			final int color = quad.spriteColor(i, 0);
-			buff.color(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
-			buff.texture(quad.spriteU(i, 0), quad.spriteV(i, 0));
-			buff.overlay(overlay);
-			buff.light(quad.lightmap(i));
-
-			if (useNormals) {
-				normalVec.set(quad.normalX(i), quad.normalY(i), quad.normalZ(i));
-				normalVec.transform(normalMatrix);
-			}
-
-			buff.normal(normalVec.getX(), normalVec.getY(), normalVec.getZ());
-			buff.next();
-		}
+		bufferer.bufferQuad(quad, renderLayer);
 	}
 
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
@@ -241,5 +202,9 @@ public abstract class AbstractQuadRenderer {
 		}
 
 		return sum / div;
+	}
+
+	protected interface QuadBufferer {
+		void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
 	}
 }

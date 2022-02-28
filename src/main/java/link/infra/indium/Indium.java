@@ -16,12 +16,16 @@
 
 package link.infra.indium;
 
+import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.aocalc.AoConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resource.ResourceType;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,8 +37,8 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Properties;
 
-public class Indigo implements ClientModInitializer {
-	public static final boolean ALWAYS_TESSELATE_INDIGO;
+public class Indium implements ClientModInitializer {
+	public static final boolean ALWAYS_TESSELATE_INDIUM;
 	public static final AoConfig AMBIENT_OCCLUSION_MODE;
 	/** Set true in dev env to confirm results match vanilla when they should. */
 	public static final boolean DEBUG_COMPARE_LIGHTING;
@@ -99,7 +103,7 @@ public class Indigo implements ClientModInitializer {
 			}
 		}
 
-		ALWAYS_TESSELATE_INDIGO = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
+		ALWAYS_TESSELATE_INDIUM = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
 		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "auto"), AoConfig.ENHANCED);
 		DEBUG_COMPARE_LIGHTING = asBoolean((String) properties.computeIfAbsent("debug-compare-lighting", (a) -> "auto"), false);
 		FIX_SMOOTH_LIGHTING_OFFSET = asBoolean((String) properties.computeIfAbsent("fix-smooth-lighting-offset", (a) -> "auto"), true);
@@ -116,5 +120,7 @@ public class Indigo implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
+
+		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(SpriteFinderCache.ReloadListener.INSTANCE);
 	}
 }

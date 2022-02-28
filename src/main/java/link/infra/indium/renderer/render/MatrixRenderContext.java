@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package link.infra.indium.renderer.aocalc;
+package link.infra.indium.renderer.render;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import link.infra.indium.Indium;
+import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Matrix3f;
 
-@Environment(EnvType.CLIENT)
-@FunctionalInterface
-interface AoVertexClampFunction {
-	float clamp(float x);
-
-	AoVertexClampFunction CLAMP_FUNC = Indium.FIX_EXTERIOR_VERTEX_LIGHTING ? x -> x < 0f ? 0f : (x > 1f ? 1f : x) : x -> x;
+abstract class MatrixRenderContext extends AbstractRenderContext {
+	protected Matrix4f matrix;
+	protected Matrix3f normalMatrix;
+	protected int overlay;
 }

@@ -22,10 +22,10 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 
-public class IndigoQuadHandler implements ItemRenderContext.VanillaQuadHandler {
+public class IndiumQuadHandler implements ItemRenderContext.VanillaQuadHandler {
 	private final AccessItemRenderer itemRenderer;
 
-	public IndigoQuadHandler(AccessItemRenderer itemRenderer) {
+	public IndiumQuadHandler(AccessItemRenderer itemRenderer) {
 		this.itemRenderer = itemRenderer;
 	}
 

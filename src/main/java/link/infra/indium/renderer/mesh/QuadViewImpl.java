@@ -58,7 +58,7 @@ public class QuadViewImpl implements QuadView {
 	 * Like {@link #load(int[], int)} but assumes array and index already set.
 	 * Only does the decoding part.
 	 */
-	public final void load() {
+	public void load() {
 		isGeometryInvalid = false;
 		nominalFace = lightFace();
 
