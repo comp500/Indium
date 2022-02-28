@@ -223,8 +223,6 @@ public class ItemRenderContext extends MatrixRenderContext {
 				final Direction cullFace = ModelHelper.faceFromIndex(i);
 				renderFallbackWithTransform(model.getQuads((BlockState) null, cullFace, random), cullFace);
 			}
-
-			editorQuad.cachedSprite(null);
 		} else {
 			vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
 		}
@@ -239,7 +237,6 @@ public class ItemRenderContext extends MatrixRenderContext {
 
 		for (final BakedQuad q : quads) {
 			editorQuad.fromVanilla(q, IndiumRenderer.MATERIAL_STANDARD, cullFace);
-			editorQuad.cachedSprite(q.getSprite());
 			renderQuad();
 		}
 	}

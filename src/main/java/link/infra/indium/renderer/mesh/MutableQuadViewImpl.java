@@ -16,31 +16,18 @@
 
 package link.infra.indium.renderer.mesh;
 
-import static link.infra.indium.renderer.mesh.EncodingFormat.EMPTY;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
-import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_LIGHTMAP;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_NORMAL;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_STRIDE;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_U;
-import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
-
 import com.google.common.base.Preconditions;
-
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.helper.TextureHelper;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
+
+import static link.infra.indium.renderer.mesh.EncodingFormat.*;
 
 /**
  * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emit()},
@@ -64,6 +51,13 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		colorIndex(-1);
 		cullFace(null);
 		material(IndiumRenderer.MATERIAL_STANDARD);
+		cachedSprite(null);
+	}
+
+	@Override
+	public final void load() {
+		super.load();
+		cachedSprite(null);
 	}
 
 	@Override
@@ -109,6 +103,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	public final MutableQuadViewImpl fromVanilla(int[] quadData, int startIndex, boolean isItem) {
 		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
 		isGeometryInvalid = true;
+		cachedSprite(null);
 		return this;
 	}
 
@@ -122,6 +117,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		tag(0);
 		shade(quad.hasShade());
 		isGeometryInvalid = true;
+		cachedSprite(quad.getSprite());
 		return this;
 	}
 
@@ -195,6 +191,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
 
 		TextureHelper.bakeSprite(this, spriteIndex, sprite, bakeFlags);
+		cachedSprite(sprite);
 		return this;
 	}
 

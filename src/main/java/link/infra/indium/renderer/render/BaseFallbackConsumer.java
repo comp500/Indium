@@ -104,14 +104,11 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 				renderQuad(q, null, defaultMaterial);
 			}
 		}
-
-		editorQuad.cachedSprite(null);
 	}
 
 	private void renderQuad(BakedQuad quad, Direction cullFace, Value defaultMaterial) {
 		final MutableQuadViewImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
-		editorQuad.cachedSprite(quad.getSprite());
 
 		if (!transform.transform(editorQuad)) {
 			return;
