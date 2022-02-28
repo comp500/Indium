@@ -24,8 +24,8 @@ import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.resource.ResourceType;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Properties;
 
 public class Indium implements ClientModInitializer {
@@ -119,7 +120,31 @@ public class Indium implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
+		try {
+			RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
+		} catch (UnsupportedOperationException e) {
+			if (FabricLoader.getInstance().isModLoaded("canvas")) {
+				throw new RuntimeException("Failed to load Indium: Indium and Sodium are not compatible with Canvas");
+			} else if (FabricLoader.getInstance().isModLoaded("frex")) {
+				String msg = "Failed to load Indium: Indium is not currently compatible with FREX 6.x, as it provides an incompatible implementation of the Fabric Rendering API; the FREX API may be directly supported in future.";
+				Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("frex");
+				if (container.isPresent()) {
+					StringBuilder sb = new StringBuilder(msg);
+					boolean first = true;
+					Optional<ModContainer> parent = container.get().getContainingMod();
+					while (parent.isPresent()) {
+						sb.append('\n').append(first ? "  FREX" : "  which");
+						first = false;
+						sb.append(" is bundled as part of ").append(parent.get().getMetadata().getName());
+
+						parent = parent.get().getContainingMod();
+					}
+					throw new RuntimeException(sb.toString());
+				}
+				throw new RuntimeException(msg);
+			}
+			throw e;
+		}
 
 		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(SpriteFinderCache.ReloadListener.INSTANCE);
 	}
