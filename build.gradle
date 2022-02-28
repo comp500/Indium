@@ -35,6 +35,7 @@ dependencies {
 
     // Fabric API
     modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
+	modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
 
     // For testing in dev environment
     modRuntimeOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
