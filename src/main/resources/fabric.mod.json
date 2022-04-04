@@ -16,7 +16,10 @@
 	"icon": "assets/indium/icon.png",
 	"environment": "client",
 	"custom": {
-		"fabric-renderer-api-v1:contains_renderer": true
+		"fabric-renderer-api-v1:contains_renderer": true,
+		"modmenu": {
+        		"parent": "sodium"
+    		}
 	},
 	"entrypoints": {
 		"client": [
