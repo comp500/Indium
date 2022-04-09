@@ -7,12 +7,10 @@
     "renderer.MixinBlockModelRenderer",
     "renderer.MixinItemRenderer",
     "sodium.MixinChunkRenderCacheLocal",
-    "sodium.MixinChunkRenderRebuildTask"
+    "sodium.MixinChunkRenderRebuildTask",
+    "sodium.MixinBlockRenderer"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "sodium.MixinBlockRenderer"
-  ]
+  }
 }
