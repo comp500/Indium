@@ -26,8 +26,7 @@ public class MixinChunkRenderCacheLocal implements AccessChunkRenderCacheLocal {
 	private TerrainRenderContext terrainRenderContext;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
-	private void onInit(MinecraftClient client, World world, CallbackInfo ci)
-	{
+	private void onInit(MinecraftClient client, World world, CallbackInfo ci) {
 		this.terrainRenderContext = new TerrainRenderContext(((AccessBlockRenderer) this.blockRenderer).indium$getBlockOcclusionCache());
 	}
 

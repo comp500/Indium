@@ -22,24 +22,25 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TerrainRenderContext extends AbstractRenderContext {
-	private TerrainBlockRenderInfo blockInfo;
+	private final TerrainBlockRenderInfo blockInfo;
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
-	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
+	private final AoCalculator aoCalc;
 
 	private Vec3i origin;
 	private Vec3d modelOffset;
 
-	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	private final BaseMeshConsumer meshConsumer;
 
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	private final BaseFallbackConsumer fallbackConsumer;
 
-	public TerrainRenderContext(BlockOcclusionCache blockOcclusionCache)
-	{
+	public TerrainRenderContext(BlockOcclusionCache blockOcclusionCache) {
 		this.blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
+		this.aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
+		this.meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+		this.fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 	}
 
-	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers)
-	{
+	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
 		blockInfo.setBlockView(blockView);
 		chunkInfo.prepare(blockView, buffers);
 		return this;
