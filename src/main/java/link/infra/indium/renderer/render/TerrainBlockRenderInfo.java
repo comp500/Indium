@@ -16,6 +16,7 @@
 
 package link.infra.indium.renderer.render;
 
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -23,6 +24,12 @@ import net.minecraft.util.math.Direction;
 public class TerrainBlockRenderInfo extends BlockRenderInfo {
 	private int cullCompletionFlags;
 	private int cullResultFlags;
+	protected final BlockOcclusionCache blockOcclusionCache;
+
+	public TerrainBlockRenderInfo(BlockOcclusionCache blockOcclusionCache)
+	{
+		this.blockOcclusionCache = blockOcclusionCache;
+	}
 
 	@Override
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
@@ -42,7 +49,7 @@ public class TerrainBlockRenderInfo extends BlockRenderInfo {
 		if ((cullCompletionFlags & mask) == 0) {
 			cullCompletionFlags |= mask;
 
-			if(blockOcclusionCache.shouldDrawSide(blockState, blockView, blockPos, face)) {
+			if (blockOcclusionCache.shouldDrawSide(blockState, blockView, blockPos, face)) {
 				cullResultFlags |= mask;
 				return true;
 			} else {

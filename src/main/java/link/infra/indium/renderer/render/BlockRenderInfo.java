@@ -39,7 +39,6 @@ import java.util.function.Supplier;
  */
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	protected final BlockOcclusionCache blockOcclusionCache = new BlockOcclusionCache();
 	public final Random random = new Random();
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
