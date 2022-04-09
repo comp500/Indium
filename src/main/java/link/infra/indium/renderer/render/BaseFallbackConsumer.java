@@ -21,6 +21,8 @@ import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
+import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
@@ -90,7 +92,7 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 			if (count != 0) {
 				for (int j = 0; j < count; j++) {
 					final BakedQuad q = quads.get(j);
-					renderQuad(q, face, defaultMaterial);
+					renderQuad(q, this.cachedQuadLightData, face, defaultMaterial);
 				}
 			}
 		}
@@ -101,12 +103,12 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 		if (count != 0) {
 			for (int j = 0; j < count; j++) {
 				final BakedQuad q = quads.get(j);
-				renderQuad(q, null, defaultMaterial);
+				renderQuad(q, this.cachedQuadLightData, null, defaultMaterial);
 			}
 		}
 	}
 
-	private void renderQuad(BakedQuad quad, Direction cullFace, Value defaultMaterial) {
+	private void renderQuad(BakedQuad quad, QuadLightData cachedQuadLightData, Direction cullFace, Value defaultMaterial) {
 		final MutableQuadViewImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
 
@@ -122,8 +124,8 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 
 		if (!editorQuad.material().disableAo(0)) {
 			// needs to happen before offsets are applied
-			aoCalc.compute(editorQuad, true);
-			tesselateSmooth(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
+			aoCalc.compute(editorQuad, cachedQuadLightData, true);
+			tesselateSmooth(editorQuad, cachedQuadLightData, blockInfo.defaultLayer, editorQuad.colorIndex());
 		} else {
 			// Recomputing whether the quad has a light face is only needed if it doesn't also have a cull face,
 			// as in those cases, the cull face will always be used to offset the light sampling position

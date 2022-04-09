@@ -23,6 +23,8 @@ import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.mesh.QuadViewImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
+import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
+import me.jellysquid.mods.sodium.common.util.DirectionUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -84,10 +86,6 @@ public class AoCalculator {
 	/** holds per-corner weights - used locally to avoid new allocation. */
 	private final float[] w = new float[4];
 
-	// outputs
-	public final float[] ao = new float[4];
-	public final int[] light = new int[4];
-
 	public AoCalculator(BlockRenderInfo blockInfo, ToIntFunction<BlockPos> brightnessFunc, AoFunc aoFunc) {
 		this.blockInfo = blockInfo;
 		this.brightnessFunc = brightnessFunc;
@@ -104,7 +102,7 @@ public class AoCalculator {
 		completionFlags = 0;
 	}
 
-	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
+	public void compute(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, boolean isVanilla) {
 		final AoConfig config = Indium.AMBIENT_OCCLUSION_MODE;
 		final boolean shouldCompare;
 
@@ -112,9 +110,9 @@ public class AoCalculator {
 		case VANILLA:
 			// prevent NPE in error case of failed reflection for vanilla calculator access
 			if (vanillaCalc == null) {
-				calcFastVanilla(quad);
+				calcFastVanilla(quad, cachedQuadLightData);
 			} else {
-				calcVanilla(quad);
+				calcVanilla(quad, cachedQuadLightData);
 			}
 
 			// no point in comparing vanilla with itself
@@ -122,7 +120,7 @@ public class AoCalculator {
 			break;
 
 		case EMULATE:
-			calcFastVanilla(quad);
+			calcFastVanilla(quad, cachedQuadLightData);
 			shouldCompare = Indium.DEBUG_COMPARE_LIGHTING && isVanilla;
 			break;
 
@@ -130,17 +128,17 @@ public class AoCalculator {
 		default:
 			if (isVanilla) {
 				shouldCompare = Indium.DEBUG_COMPARE_LIGHTING;
-				calcFastVanilla(quad);
+				calcFastVanilla(quad, cachedQuadLightData);
 			} else {
 				shouldCompare = false;
-				calcEnhanced(quad);
+				calcEnhanced(quad, cachedQuadLightData);
 			}
 
 			break;
 
 		case ENHANCED:
 			shouldCompare = false;
-			calcEnhanced(quad);
+			calcEnhanced(quad, cachedQuadLightData);
 		}
 
 		if (shouldCompare && vanillaCalc != null) {
@@ -149,31 +147,35 @@ public class AoCalculator {
 			calcVanilla(quad, vanillaAo, vanillaLight);
 
 			for (int i = 0; i < 4; i++) {
-				if (light[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(ao[i], vanillaAo[i])) {
-					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState.toString(), blockInfo.blockPos.toString()));
-					LOGGER.info(String.format("Flags = %d, LightFace = %s", quad.geometryFlags(), quad.lightFace().toString()));
-					LOGGER.info(String.format("    Old Multiplier: %.2f, %.2f, %.2f, %.2f", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]));
-					LOGGER.info(String.format("    New Multiplier: %.2f, %.2f, %.2f, %.2f", ao[0], ao[1], ao[2], ao[3]));
-					LOGGER.info(String.format("    Old Brightness: %s, %s, %s, %s", Integer.toHexString(vanillaLight[0]), Integer.toHexString(vanillaLight[1]), Integer.toHexString(vanillaLight[2]), Integer.toHexString(vanillaLight[3])));
-					LOGGER.info(String.format("    New Brightness: %s, %s, %s, %s", Integer.toHexString(light[0]), Integer.toHexString(light[1]), Integer.toHexString(light[2]), Integer.toHexString(light[3])));
+				if (cachedQuadLightData.br[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(cachedQuadLightData.lm[i], vanillaAo[i])) {
+					LOGGER.info("Mismatch for {} @ {}", blockInfo.blockState.toString(), blockInfo.blockPos.toString());
+					LOGGER.info("Flags = {}, LightFace = {}", quad.geometryFlags(), quad.lightFace());
+
+					LOGGER.info("    Old Brightness: {}, {}, {}, {}", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]);
+					LOGGER.info("    New Brightness: {}, {}, {}, {}", cachedQuadLightData.br[0], cachedQuadLightData.br[1], cachedQuadLightData.br[2], cachedQuadLightData.br[3]);
+					LOGGER.info("    Old Lightmap: {}, {}, {}, {}", Integer.toHexString(vanillaLight[0]), Integer.toHexString(vanillaLight[1]), Integer.toHexString(vanillaLight[2]), Integer.toHexString(vanillaLight[3]));
+					LOGGER.info("    New Lightmap: {}, {}, {}, {}", Integer.toHexString(cachedQuadLightData.lm[0]), Integer.toHexString(cachedQuadLightData.lm[1]), Integer.toHexString(cachedQuadLightData.lm[2]), Integer.toHexString(cachedQuadLightData.lm[3]));
 					break;
 				}
 			}
 		}
 	}
 
-	private void calcVanilla(MutableQuadViewImpl quad) {
-		calcVanilla(quad, ao, light);
-	}
 
 	// These are what vanilla AO calc wants, per its usage in vanilla code
 	// Because this instance is effectively thread-local, we preserve instances
 	// to avoid making a new allocation each call.
-	private final float[] vanillaAoData = new float[Direction.values().length * 2];
+	private final float[] vanillaAoData = new float[DirectionUtil.ALL_DIRECTIONS.length * 2];
 	private final BitSet vanillaAoControlBits = new BitSet(3);
 	private final int[] vertexData = new int[EncodingFormat.QUAD_STRIDE];
 
-	private void calcVanilla(MutableQuadViewImpl quad, float[] aoDest, int[] lightDest) {
+	private void calcVanilla(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData)
+	{
+		calcVanilla(quad, cachedQuadLightData.br, cachedQuadLightData.lm);
+	}
+
+	private void calcVanilla(MutableQuadViewImpl quad, float[] br, int[] lm)
+	{
 		vanillaAoControlBits.clear();
 		final Direction face = quad.lightFace();
 		quad.toVanilla(0, vertexData, 0, false);
@@ -181,11 +183,11 @@ public class AoCalculator {
 		VanillaAoHelper.updateShape(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, face, vanillaAoData, vanillaAoControlBits);
 		vanillaCalc.fabric_apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
 
-		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, br, 0, 4);
+		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lm, 0, 4);
 	}
 
-	private void calcFastVanilla(MutableQuadViewImpl quad) {
+	private void calcFastVanilla(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData) {
 		int flags = quad.geometryFlags();
 
 		// force to block face if shape is full cube - matches vanilla logic
@@ -194,36 +196,36 @@ public class AoCalculator {
 		}
 
 		if ((flags & CUBIC_FLAG) == 0) {
-			vanillaPartialFace(quad, (flags & LIGHT_FACE_FLAG) != 0);
+			vanillaPartialFace(quad, cachedQuadLightData, (flags & LIGHT_FACE_FLAG) != 0);
 		} else {
-			vanillaFullFace(quad, (flags & LIGHT_FACE_FLAG) != 0);
+			vanillaFullFace(quad, cachedQuadLightData, (flags & LIGHT_FACE_FLAG) != 0);
 		}
 	}
 
-	private void calcEnhanced(MutableQuadViewImpl quad) {
+	private void calcEnhanced(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData) {
 		switch (quad.geometryFlags()) {
 		case AXIS_ALIGNED_FLAG | CUBIC_FLAG | LIGHT_FACE_FLAG:
 		case AXIS_ALIGNED_FLAG | LIGHT_FACE_FLAG:
-			vanillaPartialFace(quad, true);
+			vanillaPartialFace(quad, cachedQuadLightData, true);
 			break;
 
 		case AXIS_ALIGNED_FLAG | CUBIC_FLAG:
 		case AXIS_ALIGNED_FLAG:
-			blendedPartialFace(quad);
+			blendedPartialFace(quad, cachedQuadLightData);
 			break;
 
 		default:
-			irregularFace(quad);
+			irregularFace(quad, cachedQuadLightData);
 			break;
 		}
 	}
 
-	private void vanillaFullFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaFullFace(QuadViewImpl quad, QuadLightData cachedQuadLightData, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
-		computeFace(lightFace, isOnLightFace, quad.hasShade()).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
+		computeFace(lightFace, isOnLightFace, quad.hasShade()).toArray(cachedQuadLightData.br, cachedQuadLightData.lm, VERTEX_MAP[lightFace.getId()]);
 	}
 
-	private void vanillaPartialFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaPartialFace(QuadViewImpl quad, QuadLightData cachedQuadLightData, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
 		AoFaceData faceData = computeFace(lightFace, isOnLightFace, quad.hasShade());
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;
@@ -231,8 +233,8 @@ public class AoCalculator {
 
 		for (int i = 0; i < 4; i++) {
 			wFunc.apply(quad, i, w);
-			light[i] = faceData.weightedCombinedLight(w);
-			ao[i] = faceData.weigtedAo(w);
+			cachedQuadLightData.lm[i] = faceData.weightedCombinedLight(w);
+			cachedQuadLightData.br[i] = faceData.weigtedAo(w);
 		}
 	}
 
@@ -263,27 +265,25 @@ public class AoCalculator {
 		}
 	}
 
-	private void blendedPartialFace(QuadViewImpl quad) {
+	private void blendedPartialFace(QuadViewImpl quad, QuadLightData cachedQuadLightData) {
 		final Direction lightFace = quad.lightFace();
 		AoFaceData faceData = blendedInsetFace(quad, 0, lightFace);
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;
 
 		for (int i = 0; i < 4; i++) {
 			wFunc.apply(quad, i, w);
-			light[i] = faceData.weightedCombinedLight(w);
-			ao[i] = faceData.weigtedAo(w);
+			cachedQuadLightData.lm[i] = faceData.weightedCombinedLight(w);
+			cachedQuadLightData.br[i] = faceData.weigtedAo(w);
 		}
 	}
 
 	/** used exclusively in irregular face to avoid new heap allocations each call. */
 	private final Vec3f vertexNormal = new Vec3f();
 
-	private void irregularFace(MutableQuadViewImpl quad) {
+	private void irregularFace(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData) {
 		final Vec3f faceNorm = quad.faceNormal();
 		Vec3f normal;
 		final float[] w = this.w;
-		final float[] aoResult = this.ao;
-		final int[] lightResult = this.light;
 
 		for (int i = 0; i < 4; i++) {
 			normal = quad.hasNormal(i) ? quad.copyNormal(i, vertexNormal) : faceNorm;
@@ -344,8 +344,8 @@ public class AoCalculator {
 				maxBlock = Math.max(maxBlock, b);
 			}
 
-			aoResult[i] = (ao + maxAo) * 0.5f;
-			lightResult[i] = (((int) ((sky + maxSky) * 0.5f) & 0xF0) << 16) | ((int) ((block + maxBlock) * 0.5f) & 0xF0);
+			cachedQuadLightData.br[i] = (ao + maxAo) * 0.5f;
+			cachedQuadLightData.lm[i] = (((int) ((sky + maxSky) * 0.5f) & 0xF0) << 16) | ((int) ((block + maxBlock) * 0.5f) & 0xF0);
 		}
 	}
 

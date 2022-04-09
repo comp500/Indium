@@ -22,6 +22,7 @@ import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 
@@ -36,6 +37,7 @@ import link.infra.indium.renderer.RenderMaterialImpl;
  * "editor" quad held in the instance, where all transformations are applied before buffering.
  */
 public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh> {
+
 	protected BaseMeshConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
 		super(bufferer, blockInfo, aoCalc, transform);
 	}
@@ -54,7 +56,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 		@Override
 		public Maker emit() {
 			computeGeometry();
-			renderQuad(this);
+			renderQuad(this, BaseMeshConsumer.this.cachedQuadLightData);
 			clear();
 			return this;
 		}
@@ -73,7 +75,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 			System.arraycopy(data, index, editorQuad.data(), 0, EncodingFormat.TOTAL_STRIDE);
 			editorQuad.load();
 			index += EncodingFormat.TOTAL_STRIDE;
-			renderQuad(editorQuad);
+			renderQuad(editorQuad, this.cachedQuadLightData);
 		}
 	}
 
@@ -82,7 +84,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 		return editorQuad;
 	}
 
-	private void renderQuad(MutableQuadViewImpl q) {
+	private void renderQuad(MutableQuadViewImpl q, QuadLightData cachedQuadLightData) {
 		if (!transform.transform(editorQuad)) {
 			return;
 		}
@@ -95,25 +97,25 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 
 		if (!mat.disableAo(0) && MinecraftClient.isAmbientOcclusionEnabled()) {
 			// needs to happen before offsets are applied
-			aoCalc.compute(q, false);
+			aoCalc.compute(q, cachedQuadLightData, false);
 		}
 
-		tesselateQuad(q, mat, 0);
+		tesselateQuad(q, cachedQuadLightData, mat, 0);
 	}
 
 	/**
 	 * Determines color index and render layer, then routes to appropriate
 	 * tesselate routine based on material properties.
 	 */
-	private void tesselateQuad(MutableQuadViewImpl quad, RenderMaterialImpl.Value mat, int textureIndex) {
+	private void tesselateQuad(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, RenderMaterialImpl.Value mat, int textureIndex) {
 		final int colorIndex = mat.disableColorIndex(textureIndex) ? -1 : quad.colorIndex();
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode(textureIndex));
 
 		if (blockInfo.defaultAo && !mat.disableAo(textureIndex)) {
 			if (mat.emissive(textureIndex)) {
-				tesselateSmoothEmissive(quad, renderLayer, colorIndex);
+				tesselateSmoothEmissive(quad, cachedQuadLightData, renderLayer, colorIndex);
 			} else {
-				tesselateSmooth(quad, renderLayer, colorIndex);
+				tesselateSmooth(quad, cachedQuadLightData, renderLayer, colorIndex);
 			}
 		} else {
 			if (mat.emissive(textureIndex)) {

@@ -33,7 +33,7 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 public abstract class RenderMaterialImpl {
 	private static final BlendMode[] BLEND_MODES = BlendMode.values();
 
-	private static final int BLEND_MODE_MASK = MathHelper.smallestEncompassingPowerOfTwo(BlendMode.values().length) - 1;
+	private static final int BLEND_MODE_MASK = MathHelper.smallestEncompassingPowerOfTwo(BLEND_MODES.length) - 1;
 	private static final int COLOR_DISABLE_FLAG = BLEND_MODE_MASK + 1;
 	private static final int EMISSIVE_FLAG = COLOR_DISABLE_FLAG << 1;
 	private static final int DIFFUSE_FLAG = EMISSIVE_FLAG << 1;

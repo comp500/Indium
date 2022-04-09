@@ -20,6 +20,8 @@ import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -38,12 +40,14 @@ public class BaseQuadRenderer {
 	protected final BlockRenderInfo blockInfo;
 	protected final AoCalculator aoCalc;
 	protected final QuadTransform transform;
+	protected final QuadLightData cachedQuadLightData;
 
 	BaseQuadRenderer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
 		this.bufferer = bufferer;
 		this.blockInfo = blockInfo;
 		this.aoCalc = aoCalc;
 		this.transform = transform;
+		this.cachedQuadLightData = new QuadLightData();
 	}
 
 	/** handles block color and red-blue swizzle, common to all renders. */
@@ -69,24 +73,30 @@ public class BaseQuadRenderer {
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 
 	/** for non-emissive mesh quads and all fallback quads with smooth lighting. */
-	protected void tesselateSmooth(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tesselateSmooth(MutableQuadViewImpl q, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
+		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
-			q.lightmap(i, ColorHelper.maxBrightness(q.lightmap(i), aoCalc.light[i]));
+			int idx = orientation.getVertexIndex(i);
+
+			q.spriteColor(idx, 0, ColorHelper.multiplyRGB(q.spriteColor(idx, 0), cachedQuadLightData.br[idx]));
+			q.lightmap(idx, ColorHelper.maxBrightness(q.lightmap(idx), cachedQuadLightData.lm[idx]));
 		}
 
 		bufferQuad(q, renderLayer);
 	}
 
 	/** for emissive mesh quads with smooth lighting. */
-	protected void tesselateSmoothEmissive(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tesselateSmoothEmissive(MutableQuadViewImpl q, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
+		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
-			q.lightmap(i, FULL_BRIGHTNESS);
+			int idx = orientation.getVertexIndex(i);
+
+			q.spriteColor(idx, 0, ColorHelper.multiplyRGB(q.spriteColor(idx, 0), cachedQuadLightData.br[idx]));
+			q.lightmap(idx, FULL_BRIGHTNESS);
 		}
 
 		bufferQuad(q, renderLayer);
