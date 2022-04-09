@@ -22,6 +22,7 @@ import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.util.rand.XoRoShiRoRandom;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -61,7 +62,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	}
 
 	private final ItemColors colorMap;
-	private final Random random = new Random();
+	private final Random random = new XoRoShiRoRandom();
 	private final Consumer<BakedModel> fallbackConsumer;
 	private final Vec3f normalVec = new Vec3f();
 

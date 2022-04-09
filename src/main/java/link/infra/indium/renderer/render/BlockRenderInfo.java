@@ -16,6 +16,8 @@
 
 package link.infra.indium.renderer.render;
 
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+import me.jellysquid.mods.sodium.client.util.rand.XoRoShiRoRandom;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -38,7 +40,8 @@ import java.util.function.Supplier;
  */
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	public final Random random = new Random();
+	protected final BlockOcclusionCache occlusionCache = new BlockOcclusionCache();
+	public final Random random = new XoRoShiRoRandom();
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
 	public BlockState blockState;
