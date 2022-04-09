@@ -32,7 +32,7 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	public void beforePerformBuild(ChunkBuildContext buildContext, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).indium$getTerrainRenderContext();
 		// Set up our rendering context
-		context.prepare(buildContext);
+		context.prepare(buildContext.cache.getWorldSlice(), buildContext.buffers);
 	}
 
 	@Inject(method = "performBuild", at = @At("RETURN"), remap = false)

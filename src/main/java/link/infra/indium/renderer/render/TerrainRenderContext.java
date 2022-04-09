@@ -1,11 +1,9 @@
 package link.infra.indium.renderer.render;
 
-import link.infra.indium.other.AccessBlockRenderer;
 import link.infra.indium.renderer.aocalc.AoCalculator;
-import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
-import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheLocal;
-import me.jellysquid.mods.sodium.client.world.WorldSlice;
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
@@ -18,6 +16,7 @@ import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.BlockRenderView;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,12 +33,15 @@ public class TerrainRenderContext extends AbstractRenderContext {
 
 	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 
-	public TerrainRenderContext prepare(ChunkBuildContext ctx) {
-		ChunkRenderCacheLocal cache = ctx.cache;
-		WorldSlice slice = cache.getWorldSlice();
-		blockInfo = new TerrainBlockRenderInfo(((AccessBlockRenderer) ctx.cache.getBlockRenderer()).indium$getBlockOcclusionCache());
-		blockInfo.setBlockView(slice);
-		chunkInfo.prepare(slice, ctx.buffers);
+	public TerrainRenderContext(BlockOcclusionCache blockOcclusionCache)
+	{
+		this.blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
+	}
+
+	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers)
+	{
+		blockInfo.setBlockView(blockView);
+		chunkInfo.prepare(blockView, buffers);
 		return this;
 	}
 
