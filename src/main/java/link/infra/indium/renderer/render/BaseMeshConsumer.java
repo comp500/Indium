@@ -119,9 +119,9 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 			}
 		} else {
 			if (mat.emissive(textureIndex)) {
-				tesselateFlatEmissive(quad, renderLayer, colorIndex);
+				tesselateFlatEmissive(quad, cachedQuadLightData, renderLayer, colorIndex);
 			} else {
-				tesselateFlat(quad, renderLayer, colorIndex);
+				tesselateFlat(quad, cachedQuadLightData, renderLayer, colorIndex);
 			}
 		}
 	}

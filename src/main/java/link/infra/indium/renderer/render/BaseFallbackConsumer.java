@@ -134,7 +134,7 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 				editorQuad.geometryFlags();
 			}
 
-			tesselateFlat(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
+			tesselateFlat(editorQuad, cachedQuadLightData, blockInfo.defaultLayer, editorQuad.colorIndex());
 		}
 	}
 }

@@ -51,31 +51,33 @@ public class BaseQuadRenderer {
 	}
 
 	/** handles block color and red-blue swizzle, common to all renders. */
-	private void colorizeQuad(MutableQuadViewImpl q, int blockColorIndex) {
+	private void colorizeQuad(MutableQuadViewImpl q, ModelQuadOrientation orientation, int blockColorIndex) {
 		if (blockColorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				int idx = orientation.getVertexIndex(i);
+				q.spriteColor(idx, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(idx, 0)));
 			}
 		} else {
 			final int blockColor = blockInfo.blockColor(blockColorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.spriteColor(i, 0))));
+				int idx = orientation.getVertexIndex(i);
+				q.spriteColor(idx, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.spriteColor(idx, 0))));
 			}
 		}
 	}
 
 	/** final output step, common to all renders. */
-	private void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
-		bufferer.bufferQuad(quad, renderLayer);
+	private void bufferQuad(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, RenderLayer renderLayer) {
+		bufferer.bufferQuad(quad, cachedQuadLightData, renderLayer);
 	}
 
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 
 	/** for non-emissive mesh quads and all fallback quads with smooth lighting. */
 	protected void tesselateSmooth(MutableQuadViewImpl q, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
-		colorizeQuad(q, blockColorIndex);
 		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
+		colorizeQuad(q, orientation, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			int idx = orientation.getVertexIndex(i);
@@ -84,13 +86,13 @@ public class BaseQuadRenderer {
 			q.lightmap(idx, ColorHelper.maxBrightness(q.lightmap(idx), cachedQuadLightData.lm[idx]));
 		}
 
-		bufferQuad(q, renderLayer);
+		bufferQuad(q, cachedQuadLightData, renderLayer);
 	}
 
 	/** for emissive mesh quads with smooth lighting. */
 	protected void tesselateSmoothEmissive(MutableQuadViewImpl q, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
-		colorizeQuad(q, blockColorIndex);
 		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
+		colorizeQuad(q, orientation, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			int idx = orientation.getVertexIndex(i);
@@ -99,13 +101,14 @@ public class BaseQuadRenderer {
 			q.lightmap(idx, FULL_BRIGHTNESS);
 		}
 
-		bufferQuad(q, renderLayer);
+		bufferQuad(q, cachedQuadLightData, renderLayer);
 	}
 
 	/** for non-emissive mesh quads and all fallback quads with flat lighting. */
-	protected void tesselateFlat(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
-		colorizeQuad(quad, blockColorIndex);
-		shadeFlatQuad(quad);
+	protected void tesselateFlat(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
+		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
+		colorizeQuad(quad, orientation, blockColorIndex);
+		shadeFlatQuad(quad, orientation);
 
 		final int brightness = flatBrightness(quad, blockInfo.blockState, blockInfo.blockPos);
 
@@ -113,19 +116,20 @@ public class BaseQuadRenderer {
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), brightness));
 		}
 
-		bufferQuad(quad, renderLayer);
+		bufferQuad(quad, cachedQuadLightData, renderLayer);
 	}
 
 	/** for emissive mesh quads with flat lighting. */
-	protected void tesselateFlatEmissive(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
-		colorizeQuad(quad, blockColorIndex);
-		shadeFlatQuad(quad);
+	protected void tesselateFlatEmissive(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, RenderLayer renderLayer, int blockColorIndex) {
+		ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(cachedQuadLightData.br);
+		colorizeQuad(quad, orientation, blockColorIndex);
+		shadeFlatQuad(quad, orientation);
 
 		for (int i = 0; i < 4; i++) {
 			quad.lightmap(i, FULL_BRIGHTNESS);
 		}
 
-		bufferQuad(quad, renderLayer);
+		bufferQuad(quad, cachedQuadLightData, renderLayer);
 	}
 
 	private final BlockPos.Mutable mpos = new BlockPos.Mutable();
@@ -154,21 +158,23 @@ public class BaseQuadRenderer {
 	 * Starting in 1.16 flat shading uses dimension-specific diffuse factors that can be < 1.0
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
-	private void shadeFlatQuad(MutableQuadViewImpl quad) {
+	private void shadeFlatQuad(MutableQuadViewImpl quad, ModelQuadOrientation orientation) {
 		if ((quad.geometryFlags() & GeometryHelper.AXIS_ALIGNED_FLAG) == 0 || quad.hasVertexNormals()) {
 			// Quads that aren't direction-aligned or that have vertex normals need to be shaded
 			// using interpolation - vanilla can't handle them. Generally only applies to modded models.
 			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			for (int i = 0; i < 4; i++) {
-				quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), vertexShade(quad, i, faceShade)));
+				int idx = orientation.getVertexIndex(i);
+				quad.spriteColor(idx, 0, ColorHelper.multiplyRGB(quad.spriteColor(idx, 0), vertexShade(quad, idx, faceShade)));
 			}
 		} else {
 			final float diffuseShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			if (diffuseShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
-					quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), diffuseShade));
+					int idx = orientation.getVertexIndex(i);
+					quad.spriteColor(idx, 0, ColorHelper.multiplyRGB(quad.spriteColor(idx, 0), diffuseShade));
 				}
 			}
 		}
@@ -215,6 +221,6 @@ public class BaseQuadRenderer {
 	}
 
 	protected interface QuadBufferer {
-		void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
+		void bufferQuad(MutableQuadViewImpl quad, QuadLightData cachedQuadLightData, RenderLayer renderLayer);
 	}
 }
