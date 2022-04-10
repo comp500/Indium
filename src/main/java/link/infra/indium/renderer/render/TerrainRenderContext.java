@@ -3,6 +3,7 @@ package link.infra.indium.renderer.render;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
@@ -32,7 +33,8 @@ public class TerrainRenderContext extends AbstractRenderContext {
 
 	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 
-	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers) {
+	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
+		blockInfo.setBlockOcclusionCache(cache);
 		blockInfo.setBlockView(blockView);
 		chunkInfo.prepare(blockView, buffers);
 		return this;
