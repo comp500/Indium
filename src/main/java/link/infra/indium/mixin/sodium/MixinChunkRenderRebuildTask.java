@@ -1,5 +1,6 @@
 package link.infra.indium.mixin.sodium;
 
+import link.infra.indium.other.AccessBlockRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,7 +33,7 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	public void beforePerformBuild(ChunkBuildContext buildContext, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).indium$getTerrainRenderContext();
 		// Set up our rendering context
-		context.prepare(buildContext.cache.getWorldSlice(), buildContext.buffers);
+		context.prepare(buildContext.cache.getWorldSlice(), buildContext.buffers, ((AccessBlockRenderer) buildContext.cache.getBlockRenderer()).indium$getBlockOcclusionCache());
 	}
 
 	@Inject(method = "performBuild", at = @At("RETURN"), remap = false)

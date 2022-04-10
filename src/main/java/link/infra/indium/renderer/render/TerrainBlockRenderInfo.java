@@ -16,7 +16,6 @@
 
 package link.infra.indium.renderer.render;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -43,7 +42,7 @@ public class TerrainBlockRenderInfo extends BlockRenderInfo {
 		if ((cullCompletionFlags & mask) == 0) {
 			cullCompletionFlags |= mask;
 
-			if (Block.shouldDrawSide(blockState, blockView, blockPos, face, blockPos.offset(face))) {
+			if (blockOcclusionCache.shouldDrawSide(blockState, blockView, blockPos, face)) {
 				cullResultFlags |= mask;
 				return true;
 			} else {
