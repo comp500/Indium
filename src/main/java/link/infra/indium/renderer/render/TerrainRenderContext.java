@@ -33,11 +33,10 @@ public class TerrainRenderContext extends AbstractRenderContext {
 
 	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
 
-	public TerrainRenderContext prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
+	public void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
 		blockInfo.setBlockOcclusionCache(cache);
 		blockInfo.setBlockView(blockView);
 		chunkInfo.prepare(blockView, buffers);
-		return this;
 	}
 
 	public void release() {
@@ -46,7 +45,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public boolean tesselateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, Vec3d modelOffset) {
+	public boolean tessellateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, Vec3d modelOffset) {
 		this.origin = origin;
 		this.modelOffset = modelOffset;
 
@@ -56,8 +55,8 @@ public class TerrainRenderContext extends AbstractRenderContext {
 			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
 			((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
 		} catch (Throwable throwable) {
-			CrashReport crashReport = CrashReport.create(throwable, "Tesselating block in world - Indium Renderer");
-			CrashReportSection crashReportSection = crashReport.addElement("Block being tesselated");
+			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Indium Renderer");
+			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
 			CrashReportSection.addBlockInfo(crashReportSection, chunkInfo.blockView, blockPos, blockState);
 			throw new CrashException(crashReport);
 		}

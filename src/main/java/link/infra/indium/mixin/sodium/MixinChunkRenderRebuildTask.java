@@ -50,12 +50,12 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 
-		if (!Indium.ALWAYS_TESSELATE_INDIUM && ((FabricBakedModel) model).isVanillaAdapter()) {
+		if (!Indium.ALWAYS_TESSELLATE_INDIUM && ((FabricBakedModel) model).isVanillaAdapter()) {
 			return blockRenderer.renderModel(world, state, pos, origin, model, buffers, cull, seed);
 		} else {
 			TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).indium$getTerrainRenderContext();
 			Vec3d modelOffset = state.getModelOffset(world, pos);
-			return context.tesselateBlock(state, pos, origin, model, modelOffset);
+			return context.tessellateBlock(state, pos, origin, model, modelOffset);
 		}
 	}
 }

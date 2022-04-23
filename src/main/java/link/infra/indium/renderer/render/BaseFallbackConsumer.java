@@ -54,10 +54,8 @@ import java.util.function.Supplier;
  *  manipulating the data via NIO.
  */
 public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<BakedModel> {
-	private static Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
-	private static Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
-
-	private final int[] editorBuffer = new int[EncodingFormat.TOTAL_STRIDE];
+	private static final Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
+	private static final Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
 
 	BaseFallbackConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
 		super(bufferer, blockInfo, aoCalc, transform);
@@ -65,7 +63,7 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 
 	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {
 		{
-			data = editorBuffer;
+			data = new int[EncodingFormat.TOTAL_STRIDE];
 			material(MATERIAL_SHADED);
 		}
 
@@ -82,26 +80,15 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 		final Value defaultMaterial = blockInfo.defaultAo && model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
 		final BlockState blockState = blockInfo.blockState;
 
-		for (int i = 0; i < 6; i++) {
-			final Direction face = ModelHelper.faceFromIndex(i);
-			final List<BakedQuad> quads = model.getQuads(blockState, face, random.get());
+		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
+			final Direction cullFace = ModelHelper.faceFromIndex(i);
+			final List<BakedQuad> quads = model.getQuads(blockState, cullFace, random.get());
 			final int count = quads.size();
 
 			if (count != 0) {
-				for (int j = 0; j < count; j++) {
-					final BakedQuad q = quads.get(j);
-					renderQuad(q, face, defaultMaterial);
+				for (final BakedQuad q : quads) {
+					renderQuad(q, cullFace, defaultMaterial);
 				}
-			}
-		}
-
-		final List<BakedQuad> quads = model.getQuads(blockState, null, random.get());
-		final int count = quads.size();
-
-		if (count != 0) {
-			for (int j = 0; j < count; j++) {
-				final BakedQuad q = quads.get(j);
-				renderQuad(q, null, defaultMaterial);
 			}
 		}
 	}
@@ -123,16 +110,16 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 		if (!editorQuad.material().disableAo(0)) {
 			// needs to happen before offsets are applied
 			aoCalc.compute(editorQuad, true);
-			tesselateSmooth(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
+			tessellateSmooth(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
 		} else {
 			// Recomputing whether the quad has a light face is only needed if it doesn't also have a cull face,
 			// as in those cases, the cull face will always be used to offset the light sampling position
 			if (cullFace == null) {
-				// Can't rely on lazy computation in tesselateFlat() because needs to happen before offsets are applied
+				// Can't rely on lazy computation in tessellateFlat() because needs to happen before offsets are applied
 				editorQuad.geometryFlags();
 			}
 
-			tesselateFlat(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
+			tessellateFlat(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
 		}
 	}
 }

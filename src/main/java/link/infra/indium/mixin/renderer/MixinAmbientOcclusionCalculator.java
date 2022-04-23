@@ -30,8 +30,10 @@ import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 
 @Mixin(targets = "net.minecraft.client.render.block.BlockModelRenderer$AmbientOcclusionCalculator")
 public abstract class MixinAmbientOcclusionCalculator implements AccessAmbientOcclusionCalculator {
-	@Shadow private float[] brightness;
-	@Shadow private int[] light;
+	@Shadow
+	private float[] brightness;
+	@Shadow
+	private int[] light;
 
 	@Shadow
 	public abstract void apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
