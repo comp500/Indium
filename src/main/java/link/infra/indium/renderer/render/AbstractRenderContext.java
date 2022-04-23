@@ -26,7 +26,6 @@ abstract class AbstractRenderContext implements RenderContext {
 
 	private QuadTransform activeTransform = NO_TRANSFORM;
 	private final ObjectArrayList<QuadTransform> transformStack = new ObjectArrayList<>();
-
 	private final QuadTransform stackTransform = (q) -> {
 		int i = transformStack.size() - 1;
 

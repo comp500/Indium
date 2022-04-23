@@ -32,7 +32,7 @@ import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 
 /**
- * Consumer for pre-baked meshes.  Works by copying the mesh data to a
+ * Consumer for pre-baked meshes.  Works by copying the mesh data to an
  * "editor" quad held in the instance, where all transformations are applied before buffering.
  */
 public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh> {
