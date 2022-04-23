@@ -83,7 +83,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 	}
 
 	private void renderQuad(MutableQuadViewImpl quad) {
-		if (!transform.transform(editorQuad)) {
+		if (!transform.transform(quad)) {
 			return;
 		}
 

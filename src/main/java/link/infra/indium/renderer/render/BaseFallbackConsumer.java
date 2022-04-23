@@ -86,7 +86,8 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 			final int count = quads.size();
 
 			if (count != 0) {
-				for (final BakedQuad q : quads) {
+				for (int j = 0; j < count; j++) {
+					final BakedQuad q = quads.get(j);
 					renderQuad(q, cullFace, defaultMaterial);
 				}
 			}
