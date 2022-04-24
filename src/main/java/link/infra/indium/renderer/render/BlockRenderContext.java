@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
@@ -47,7 +48,7 @@ public class BlockRenderContext extends MatrixRenderContext {
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 	private VertexConsumer bufferBuilder;
 	private boolean didOutput = false;
-	// These are kept as fields to avoid avoid the heap allocation for a supplier.
+	// These are kept as fields to avoid the heap allocation for a supplier.
 	// BlockModelRenderer allows the caller to supply both the random object and seed.
 	private Random random;
 	private long seed;
@@ -64,7 +65,7 @@ public class BlockRenderContext extends MatrixRenderContext {
 
 	private int brightness(BlockPos pos) {
 		if (blockInfo.blockView == null) {
-			return 15 << 20 | 15 << 4;
+			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
 		}
 
 		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, blockInfo.blockView.getBlockState(pos), pos);

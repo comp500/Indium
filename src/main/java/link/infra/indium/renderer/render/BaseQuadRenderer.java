@@ -23,6 +23,7 @@ import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.util.math.*;
@@ -32,8 +33,6 @@ import net.minecraft.util.math.*;
  * Has most of the actual buffer-time lighting and coloring logic.
  */
 public class BaseQuadRenderer {
-	static final int FULL_BRIGHTNESS = 0xF000F0;
-
 	protected final QuadBufferer bufferer;
 	protected final BlockRenderInfo blockInfo;
 	protected final AoCalculator aoCalc;
@@ -69,7 +68,7 @@ public class BaseQuadRenderer {
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 
 	/** for non-emissive mesh quads and all fallback quads with smooth lighting. */
-	protected void tesselateSmooth(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateSmooth(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -81,19 +80,19 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with smooth lighting. */
-	protected void tesselateSmoothEmissive(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateSmoothEmissive(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
-			q.lightmap(i, FULL_BRIGHTNESS);
+			q.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
 		bufferQuad(q, renderLayer);
 	}
 
 	/** for non-emissive mesh quads and all fallback quads with flat lighting. */
-	protected void tesselateFlat(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateFlat(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(quad, blockColorIndex);
 		shadeFlatQuad(quad);
 
@@ -107,12 +106,12 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with flat lighting. */
-	protected void tesselateFlatEmissive(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateFlatEmissive(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(quad, blockColorIndex);
 		shadeFlatQuad(quad);
 
 		for (int i = 0; i < 4; i++) {
-			quad.lightmap(i, FULL_BRIGHTNESS);
+			quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
 		bufferQuad(quad, renderLayer);

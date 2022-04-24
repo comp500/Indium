@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.util.math.Direction;
@@ -148,7 +149,9 @@ public class QuadViewImpl implements QuadView {
 
 		final MutableQuadViewImpl quad = (MutableQuadViewImpl) target;
 		// copy everything except the material
-		System.arraycopy(data, baseIndex + 1, quad.data, quad.baseIndex + 1, EncodingFormat.TOTAL_STRIDE - 1);
+		RenderMaterial material = quad.material();
+		System.arraycopy(data, baseIndex, quad.data, quad.baseIndex, EncodingFormat.TOTAL_STRIDE);
+		quad.material(material);
 		quad.faceNormal.set(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
 		quad.nominalFace = this.nominalFace;
 		quad.isGeometryInvalid = false;

@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 public class Indium implements ClientModInitializer {
-	public static final boolean ALWAYS_TESSELATE_INDIUM;
+	public static final boolean ALWAYS_TESSELLATE_INDIUM;
 	public static final AoConfig AMBIENT_OCCLUSION_MODE;
 	/** Set true in dev env to confirm results match vanilla when they should. */
 	public static final boolean DEBUG_COMPARE_LIGHTING;
@@ -104,7 +104,7 @@ public class Indium implements ClientModInitializer {
 			}
 		}
 
-		ALWAYS_TESSELATE_INDIUM = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
+		ALWAYS_TESSELLATE_INDIUM = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
 		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "auto"), AoConfig.ENHANCED);
 		DEBUG_COMPARE_LIGHTING = asBoolean((String) properties.computeIfAbsent("debug-compare-lighting", (a) -> "auto"), false);
 		FIX_SMOOTH_LIGHTING_OFFSET = asBoolean((String) properties.computeIfAbsent("fix-smooth-lighting-offset", (a) -> "auto"), true);
