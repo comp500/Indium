@@ -50,8 +50,6 @@ import java.util.function.Supplier;
 
 /**
  * The render context used for item rendering.
- * Does not implement emissive lighting for sake
- * of simplicity in the default renderer.
  */
 public class ItemRenderContext extends MatrixRenderContext {
 	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
