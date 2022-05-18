@@ -37,7 +37,6 @@ public class QuadViewImpl implements QuadView {
 	protected boolean isGeometryInvalid = true;
 //	protected final Vec3f faceNormal = new Vec3f();
 	protected int packedFaceNormalFrex;
-	private boolean shade = true;
 
 	/** Size and where it comes from will vary in subtypes. But in all cases quad is fully encoded to array. */
 	protected int[] data;
@@ -278,10 +277,6 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	public boolean hasShade() {
-		return shade && !material().disableDiffuse();
-	}
-
-	public void shade(boolean shade) {
-		this.shade = shade;
+		return !material().disableDiffuse();
 	}
 }

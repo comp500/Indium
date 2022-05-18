@@ -120,7 +120,6 @@ public abstract class QuadEmitterImpl extends QuadViewImpl implements QuadEmitte
 		colorIndex(quad.getColorIndex());
 		material(material);
 		tag(0);
-		shade(quad.hasShade());
 		isGeometryInvalid = true;
 		cachedSprite(quad.getSprite());
 		return this;
