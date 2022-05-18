@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "io.github.spiralhalo.plumbum.mixin",
+  "plugin": "io.github.spiralhalo.plumbum.PlumbumMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "renderer.MixinAmbientOcclusionCalculator",
+    "renderer.MixinBlockModelRenderer",
+    "renderer.MixinItemRenderer",
+    "sodium.MixinChunkRenderCacheLocal",
+    "sodium.MixinChunkRenderRebuildTask",
+    "sodium.MixinBlockRenderer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
