@@ -6,6 +6,7 @@ import io.vram.frex.api.math.FastMatrix3f;
 import io.vram.frex.api.math.PackedVector3f;
 import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+import io.vram.frex.api.renderer.Renderer;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;

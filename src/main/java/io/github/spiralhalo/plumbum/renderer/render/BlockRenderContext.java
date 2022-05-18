@@ -52,12 +52,6 @@ public class BlockRenderContext {
 	protected Matrix4f matrix;
 	protected FastMatrix3f normalMatrix;
 
-	/**
-	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
-	 * apply the current transforms to vanilla models.
-	 */
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc);
-
 	private int brightness(BlockPos pos) {
 		if (blockInfo.blockView() == null) {
 			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
@@ -87,8 +81,7 @@ public class BlockRenderContext {
 		blockInfo.prepareForWorld(blockView, false, (io.vram.frex.api.math.MatrixStack) matrixStack);
 		blockInfo.prepareForBlock(model, state, pos);
 
-//		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, randomSupplier, this);
-		((BlockModel) model).renderAsBlock(blockInfo, getEmitter());
+		((BlockModel) model).renderAsBlock(blockInfo, meshConsumer.getEmitter());
 
 		blockInfo.release();
 		this.bufferBuilder = null;
@@ -115,9 +108,5 @@ public class BlockRenderContext {
 		protected int overlay() {
 			return blockInfo.overlay();
 		}
-	}
-
-	public QuadEmitter getEmitter() {
-		return meshConsumer.getEmitter();
 	}
 }

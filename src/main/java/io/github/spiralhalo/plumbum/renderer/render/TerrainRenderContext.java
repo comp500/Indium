@@ -2,12 +2,15 @@ package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.buffer.QuadSink;
 import io.vram.frex.api.model.BlockModel;
+import io.vram.frex.base.renderer.mesh.RootQuadEmitter;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
@@ -29,8 +32,6 @@ public class TerrainRenderContext {
 
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc);
 
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc);
-
 	public void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
 		blockInfo.setBlockOcclusionCache(cache);
 		blockInfo.setBlockView(blockView);
@@ -51,8 +52,7 @@ public class TerrainRenderContext {
 			chunkInfo.didOutput = false;
 			aoCalc.clear();
 			blockInfo.prepareForBlock(model, blockState, blockPos);
-//			((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
-			((BlockModel) model).renderDynamic(blockInfo, getEmitter());
+			((BlockModel) model).renderDynamic(blockInfo, meshConsumer.getEmitter());
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Plumbum Renderer");
 			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
@@ -77,9 +77,5 @@ public class TerrainRenderContext {
 		protected Vec3d blockOffset() {
 			return modelOffset;
 		}
-	}
-
-	public QuadEmitter getEmitter() {
-		return meshConsumer.getEmitter();
 	}
 }

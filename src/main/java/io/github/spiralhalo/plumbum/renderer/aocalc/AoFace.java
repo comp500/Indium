@@ -16,20 +16,14 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
-import static io.github.spiralhalo.plumbum.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
-import static net.minecraft.util.math.Direction.DOWN;
-import static net.minecraft.util.math.Direction.EAST;
-import static net.minecraft.util.math.Direction.NORTH;
-import static net.minecraft.util.math.Direction.SOUTH;
-import static net.minecraft.util.math.Direction.UP;
-import static net.minecraft.util.math.Direction.WEST;
-
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadViewImpl;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.Direction;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import static io.github.spiralhalo.plumbum.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
+import static net.minecraft.util.math.Direction.*;
 
 /**
  * Adapted from vanilla BlockModelRenderer.AoCalculator.
@@ -118,11 +112,11 @@ enum AoFace {
 	 */
 	@FunctionalInterface
 	interface WeightFunction {
-		void apply(QuadViewImpl q, int vertexIndex, float[] out);
+		void apply(BaseQuadView q, int vertexIndex, float[] out);
 	}
 
 	@FunctionalInterface
 	interface Vertex2Float {
-		float apply(QuadViewImpl q, int vertexIndex);
+		float apply(BaseQuadView q, int vertexIndex);
 	}
 }

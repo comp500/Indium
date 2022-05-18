@@ -16,17 +16,15 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
+import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.MaterialConstants;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.mesh.Mesh;
 import io.vram.frex.api.model.BlockItemModel;
-import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
-import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
-import io.github.spiralhalo.plumbum.renderer.mesh.MeshImpl;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
@@ -63,8 +61,6 @@ public class ItemRenderContext extends BaseItemInputContext {
 	private int packedNormalFrex;
 
 	private final Maker editorQuad = new Maker();
-	private final MeshConsumer meshConsumer = new MeshConsumer();
-	private final FallbackConsumer fallbackConsumer = new FallbackConsumer();
 
 	private VertexConsumerProvider vertexConsumerProvider;
 	private VanillaQuadHandler vanillaHandler;
@@ -223,7 +219,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 
 	private class Maker extends QuadEmitterImpl implements QuadEmitter {
 		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
+			data = new int[MeshEncodingHelper.TOTAL_MESH_QUAD_STRIDE];
 			clear();
 		}
 
@@ -233,23 +229,6 @@ public class ItemRenderContext extends BaseItemInputContext {
 			renderMeshQuad(this);
 			clear();
 			return this;
-		}
-	}
-
-	private class MeshConsumer implements Consumer<Mesh> {
-		@Override
-		public void accept(Mesh mesh) {
-			final MeshImpl m = (MeshImpl) mesh;
-			final int[] data = m.data();
-			final int limit = data.length;
-			int index = 0;
-
-			while (index < limit) {
-				System.arraycopy(data, index, editorQuad.data(), 0, EncodingFormat.TOTAL_STRIDE);
-				editorQuad.load();
-				index += EncodingFormat.TOTAL_STRIDE;
-				renderMeshQuad(editorQuad);
-			}
 		}
 	}
 

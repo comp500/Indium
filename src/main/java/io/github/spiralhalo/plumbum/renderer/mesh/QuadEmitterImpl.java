@@ -16,337 +16,16 @@
 
 package io.github.spiralhalo.plumbum.renderer.mesh;
 
-import io.github.spiralhalo.plumbum.renderer.helper.TextureHelper;
-import io.vram.frex.api.buffer.*;
-import io.vram.frex.api.material.RenderMaterial;
-import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.math.FastMatrix4f;
-import io.vram.frex.api.model.InputContext;
-import io.vram.frex.api.model.util.FaceUtil;
-import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
-import io.github.spiralhalo.plumbum.renderer.helper.NormalHelper;
+import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.base.renderer.mesh.BaseQuadEmitter;
+import io.vram.frex.base.renderer.mesh.RootQuadEmitter;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Matrix3f;
-import net.minecraft.util.math.Matrix4f;
 import org.jetbrains.annotations.Nullable;
 
-import static io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat.*;
-
-/**
- * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emit()},
- * because that depends on where/how it is used. (Mesh encoding vs. render-time transformation).
- */
-public abstract class QuadEmitterImpl extends QuadViewImpl implements QuadEmitter, VertexEmitter {
-	private final PlumbumTransformStack transformStack = createTransformStack();
+public abstract class QuadEmitterImpl extends RootQuadEmitter {
 	private Sprite cachedSprite;
-	protected RenderMaterial defaultMaterial = RenderMaterial.defaultMaterial();
-	private int vertexIndex = 0;
-
-	public final void begin(int[] data, int baseIndex) {
-		this.data = data;
-		this.baseIndex = baseIndex;
-		clear();
-	}
-
-	public void clear() {
-		System.arraycopy(EMPTY, 0, data, baseIndex, EncodingFormat.TOTAL_STRIDE);
-		isGeometryInvalid = true;
-		nominalFace = null;
-		normalFlags(0);
-		tag(0);
-		colorIndex(-1);
-		cullFace(null);
-		material(defaultMaterial);
-		cachedSprite(null);
-	}
-
-	@Override
-	public final void load() {
-		super.load();
-		cachedSprite(null);
-	}
-
-	@Override
-	public final QuadEmitterImpl material(RenderMaterial material) {
-		if (material == null) {
-			material = defaultMaterial;
-		}
-
-		data[baseIndex + HEADER_BITS] = EncodingFormat.material(data[baseIndex + HEADER_BITS], (RenderMaterial) material);
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl cullFace(Direction face) {
-		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(data[baseIndex + HEADER_BITS], face);
-		nominalFace(face);
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl nominalFace(Direction face) {
-		nominalFace = face;
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl colorIndex(int colorIndex) {
-		data[baseIndex + HEADER_COLOR_INDEX] = colorIndex;
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl tag(int tag) {
-		data[baseIndex + HEADER_TAG] = tag;
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl fromVanilla(int[] quadData, int startIndex) {
-		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
-		isGeometryInvalid = true;
-		cachedSprite(null);
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl fromVanilla(BakedQuad quad, RenderMaterial material, Direction cullFace) {
-		System.arraycopy(quad.getVertexData(), 0, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
-		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
-		nominalFace(quad.getFace());
-		colorIndex(quad.getColorIndex());
-		material(material);
-		tag(0);
-		isGeometryInvalid = true;
-		cachedSprite(quad.getSprite());
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl defaultMaterial(RenderMaterial material) {
-		defaultMaterial = material;
-		return this;
-	}
-
-	@Override
-	public final QuadEmitterImpl fromVanilla(BakedQuad quad, RenderMaterial material, int cullFaceId) {
-		return fromVanilla(quad, material, FaceUtil.faceFromIndex(cullFaceId));
-	}
-
-	@Override
-	public final QuadEmitterImpl tangent(int vertexIndex, float x, float y, float z) {
-		// unsupported
-		return this;
-	}
-
-	@Override
-	public QuadEmitterImpl pos(int vertexIndex, float x, float y, float z) {
-		final int index = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_X;
-		data[index] = Float.floatToRawIntBits(x);
-		data[index + 1] = Float.floatToRawIntBits(y);
-		data[index + 2] = Float.floatToRawIntBits(z);
-		isGeometryInvalid = true;
-		return this;
-	}
-
-	protected void normalFlags(int flags) {
-		data[baseIndex + HEADER_BITS] = EncodingFormat.normalFlags(data[baseIndex + HEADER_BITS], flags);
-	}
-
-	@Override
-	public QuadEmitterImpl normal(int vertexIndex, float x, float y, float z) {
-		normalFlags(normalFlags() | (1 << vertexIndex));
-		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = NormalHelper.packNormal(x, y, z, 0);
-		return this;
-	}
-
-	/**
-	 * Internal helper method. Copies face normals to vertex normals lacking one.
-	 */
-	public final void populateMissingNormals() {
-		final int normalFlags = this.normalFlags();
-
-		if (normalFlags == 0b1111) return;
-
-		final int packedFaceNormal = NormalHelper.packNormal(packedFaceNormalFrex, 0);
-
-		for (int v = 0; v < 4; v++) {
-			if ((normalFlags & (1 << v)) == 0) {
-				data[baseIndex + v * VERTEX_STRIDE + VERTEX_NORMAL] = packedFaceNormal;
-			}
-		}
-
-		normalFlags(0b1111);
-	}
-
-	@Override
-	public QuadEmitterImpl lightmap(int vertexIndex, int lightmap) {
-		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_LIGHTMAP] = lightmap;
-		return this;
-	}
-
-	@Override
-	public QuadEmitterImpl vertexColor(int vertexIndex, int color) {
-		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_COLOR] = color;
-		return this;
-	}
-
-	@Override
-	public QuadEmitter uv(int vertexIndex, float u, float v) {
-		// TODO: Is this even correct??
-		spriteFloat(vertexIndex, u, v);
-		return this;
-	}
-
-	@Override
-	public QuadEmitter uvSprite(@Nullable Sprite sprite, float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
-		this.spriteFloat(0, u0, v0);
-		this.spriteFloat(1, u1, v1);
-		this.spriteFloat(2, u2, v2);
-		this.spriteFloat(3, u3, v3);
-		if (sprite != null) {
-			cachedSprite(sprite);
-		}
-
-		return this;
-	}
-
-	public QuadEmitter spriteFloat(int vertexIndex, float u, float v) {
-		final int i = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U;
-		data[i] = Float.floatToRawIntBits(u);
-		data[i + 1] = Float.floatToRawIntBits(v);
-		cachedSprite = null;
-		return this;
-	}
-
-	@Override
-	public QuadEmitter spriteBake(Sprite sprite, int bakeFlags) {
-		TextureHelper.bakeSprite(this, sprite, bakeFlags);
-		cachedSprite(sprite);
-		return this;
-	}
-
-	public Sprite cachedSprite() {
-		return cachedSprite;
-	}
-
-	public void cachedSprite(Sprite cachedSprite) {
-		this.cachedSprite = cachedSprite;
-	}
-
-	/** Override to use custom stack. */
-	protected PlumbumTransformStack createTransformStack() {
-		return new PlumbumTransformStack();
-	}
-
-	@Override
-	public PooledQuadEmitter withTransformQuad(InputContext context, QuadTransform transform) {
-		return transformStack.createTransform(context, transform, this);
-	}
-
-	@Override
-	public PooledVertexEmitter withTransformVertex(InputContext context, QuadTransform transform) {
-		return transformStack.createTransform(context, transform, this);
-	}
-
-	@Override
-	public VertexEmitter asVertexEmitter() {
-		return this;
-	}
-
-	/** VERTEX EMITTER **/
-
-	@Override
-	public VertexEmitter vertex(float x, float y, float z) {
-		pos(vertexIndex, x, y, z);
-		return this;
-	}
-
-	@Override
-	public VertexEmitter color(int color) {
-		vertexColor(vertexIndex, color);
-		return this;
-	}
-
-	@Override
-	public VertexEmitter vertex(Matrix4f matrix, float x, float y, float z) {
-		final FastMatrix4f mat = (FastMatrix4f) (Object) matrix;
-
-		final float tx = mat.f_m00() * x + mat.f_m10() * y + mat.f_m20() * z + mat.f_m30();
-		final float ty = mat.f_m01() * x + mat.f_m11() * y + mat.f_m21() * z + mat.f_m31();
-		final float tz = mat.f_m02() * x + mat.f_m12() * y + mat.f_m22() * z + mat.f_m32();
-
-		return this.vertex(tx, ty, tz);
-	}
-
-	@Override
-	public VertexEmitter normal(Matrix3f matrix, float x, float y, float z) {
-		final FastMatrix3f mat = (FastMatrix3f) (Object) matrix;
-
-		final float tx = mat.f_m00() * x + mat.f_m10() * y + mat.f_m20() * z;
-		final float ty = mat.f_m01() * x + mat.f_m11() * y + mat.f_m21() * z;
-		final float tz = mat.f_m02() * x + mat.f_m12() * y + mat.f_m22() * z;
-
-		return this.normal(tx, ty, tz);
-	}
-
-	@Override
-	public VertexEmitter color(int red, int green, int blue, int alpha) {
-		return color(MeshEncodingHelper.packColor(red, green, blue, alpha));
-	}
-
-	@Override
-	public VertexEmitter uv(float u, float v) {
-		uv(vertexIndex, u, v);
-		return this;
-	}
-
-	@Override
-	public VertexEmitter overlayCoords(int u, int v) {
-		final var mat = material();
-		final var oMat = mat.withOverlay(u, v);
-
-		if (oMat != mat) {
-			material(oMat);
-		}
-
-		return this;
-	}
-
-	@Override
-	public VertexEmitter uv2(int block, int sky) {
-		lightmap(vertexIndex, (block & 0xFF) | ((sky & 0xFF) << 8));
-		return this;
-	}
-
-	@Override
-	public VertexEmitter normal(float x, float y, float z) {
-		return normal(vertexIndex, x, y, z);
-	}
-
-	@Override
-	public void next() {
-		if (this.vertexIndex == 3) {
-			this.emit();
-		} else {
-			++this.vertexIndex;
-		}
-	}
-
-	/** VERTEX CONSUMER **/
-
-	@Override
-	public void fixedColor(int red, int green, int blue, int alpha) {
-		assert false : "fixedColor call encountered in quad rendering";
-	}
-
-	@Override
-	public void unfixColor() {
-		assert false : "unfixColor call encountered in quad rendering";
-	}
 
 	@Override
 	public VertexConsumer texture(float u, float v) {
@@ -361,5 +40,49 @@ public abstract class QuadEmitterImpl extends QuadViewImpl implements QuadEmitte
 	@Override
 	public VertexConsumer light(int u, int v) {
 		return uv2(u, v);
+	}
+
+	public void populateMissingNormals() {
+		int normalFlag = normalFlags();
+		if (normalFlag == 0b1111) return;
+
+		int packedNormal = packedFaceNormal();
+		for (int i = 0; i < 4; i++) {
+			if (((normalFlag >> i) & 1) == 0) {
+				normal(i, PackedVector3f.unpackX(packedNormal), PackedVector3f.unpackY(packedNormal), PackedVector3f.unpackZ(packedNormal));
+			}
+		}
+	}
+
+	@Override
+	public void clear() {
+		cachedSprite = null;
+		super.clear();
+	}
+
+	@Override
+	public QuadEmitter fromVanilla(int[] quadData, int startIndex) {
+		cachedSprite = null;
+		return super.fromVanilla(quadData, startIndex);
+	}
+
+	@Override
+	public BaseQuadEmitter uvSprite(@Nullable Sprite sprite, float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
+		if (sprite != null) cachedSprite = sprite;
+		return super.uvSprite(sprite, u0, v0, u1, v1, u2, v2, u3, v3);
+	}
+
+	@Override
+	public BaseQuadEmitter spriteBake(Sprite sprite, int bakeFlags) {
+		cachedSprite = sprite;
+		return super.spriteBake(sprite, bakeFlags);
+	}
+
+	public Sprite cachedSprite() {
+		return cachedSprite;
+	}
+
+	public boolean hasShade() {
+		return !material().disableDiffuse();
 	}
 }

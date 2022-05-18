@@ -16,14 +16,14 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
-import io.vram.frex.api.math.PackedVector3f;
 import io.github.spiralhalo.plumbum.Plumbum;
 import io.github.spiralhalo.plumbum.renderer.accessor.AccessAmbientOcclusionCalculator;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoFace.WeightFunction;
-import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadViewImpl;
 import io.github.spiralhalo.plumbum.renderer.render.BlockRenderInfo;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -38,8 +38,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.BitSet;
 import java.util.function.ToIntFunction;
 
-import static java.lang.Math.max;
 import static io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper.*;
+import static java.lang.Math.max;
 import static net.minecraft.util.math.Direction.*;
 
 /**
@@ -172,7 +172,7 @@ public class AoCalculator {
 	// to avoid making a new allocation each call.
 	private final float[] vanillaAoData = new float[Direction.values().length * 2];
 	private final BitSet vanillaAoControlBits = new BitSet(3);
-	private final int[] vertexData = new int[EncodingFormat.QUAD_STRIDE];
+	private final int[] vertexData = new int[MeshEncodingHelper.TOTAL_MESH_QUAD_STRIDE];
 
 	private void calcVanilla(QuadEmitterImpl quad, float[] aoDest, int[] lightDest) {
 		vanillaAoControlBits.clear();
@@ -180,7 +180,7 @@ public class AoCalculator {
 		quad.toVanilla(vertexData, 0);
 
 		VanillaAoHelper.updateShape(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), vertexData, face, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.fabric_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
+		vanillaCalc.fabric_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, !quad.material().disableDiffuse());
 
 		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
 		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
@@ -219,14 +219,14 @@ public class AoCalculator {
 		}
 	}
 
-	private void vanillaFullFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaFullFace(BaseQuadView quad, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
-		computeFace(lightFace, isOnLightFace, quad.hasShade()).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
+		computeFace(lightFace, isOnLightFace, !quad.material().disableDiffuse()).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
 	}
 
-	private void vanillaPartialFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaPartialFace(BaseQuadView quad, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
-		AoFaceData faceData = computeFace(lightFace, isOnLightFace, quad.hasShade());
+		AoFaceData faceData = computeFace(lightFace, isOnLightFace, !quad.material().disableDiffuse());
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;
 		final float[] w = this.w;
 
@@ -237,34 +237,34 @@ public class AoCalculator {
 		}
 	}
 
-	/** used in {@link #blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace)} as return variable to avoid new allocation. */
+	/** used in {@link #blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace)} as return variable to avoid new allocation. */
 	AoFaceData tmpFace = new AoFaceData();
 
 	/** Returns linearly interpolated blend of outer and inner face based on depth of vertex in face. */
-	private AoFaceData blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace) {
+	private AoFaceData blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace) {
 		final float w1 = AoFace.get(lightFace).depthFunc.apply(quad, vertexIndex);
 		final float w0 = 1 - w1;
-		return AoFaceData.weightedMean(computeFace(lightFace, true, quad.hasShade()), w0, computeFace(lightFace, false, quad.hasShade()), w1, tmpFace);
+		return AoFaceData.weightedMean(computeFace(lightFace, true, !quad.material().disableDiffuse()), w0, computeFace(lightFace, false, !quad.material().disableDiffuse()), w1, tmpFace);
 	}
 
 	/**
-	 * Like {@link #blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace)} but optimizes if depth is 0 or 1.
+	 * Like {@link #blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace)} but optimizes if depth is 0 or 1.
 	 * Used for irregular faces when depth varies by vertex to avoid unneeded interpolation.
 	 */
-	private AoFaceData gatherInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace) {
+	private AoFaceData gatherInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace) {
 		final float w1 = AoFace.get(lightFace).depthFunc.apply(quad, vertexIndex);
 
 		if (MathHelper.approximatelyEquals(w1, 0)) {
-			return computeFace(lightFace, true, quad.hasShade());
+			return computeFace(lightFace, true, !quad.material().disableDiffuse());
 		} else if (MathHelper.approximatelyEquals(w1, 1)) {
-			return computeFace(lightFace, false, quad.hasShade());
+			return computeFace(lightFace, false, !quad.material().disableDiffuse());
 		} else {
 			final float w0 = 1 - w1;
-			return AoFaceData.weightedMean(computeFace(lightFace, true, quad.hasShade()), w0, computeFace(lightFace, false, quad.hasShade()), w1, tmpFace);
+			return AoFaceData.weightedMean(computeFace(lightFace, true, !quad.material().disableDiffuse()), w0, computeFace(lightFace, false, !quad.material().disableDiffuse()), w1, tmpFace);
 		}
 	}
 
-	private void blendedPartialFace(QuadViewImpl quad) {
+	private void blendedPartialFace(BaseQuadView quad) {
 		final Direction lightFace = quad.lightFace();
 		AoFaceData faceData = blendedInsetFace(quad, 0, lightFace);
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;

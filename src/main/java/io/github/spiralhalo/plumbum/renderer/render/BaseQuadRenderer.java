@@ -20,6 +20,7 @@ import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
 import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+import io.vram.frex.api.math.PackedVector3f;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -162,7 +163,7 @@ public class BaseQuadRenderer {
 	}
 
 	private float vertexShade(QuadEmitterImpl quad, int vertexIndex, float faceShade) {
-		return quad.hasNormal(vertexIndex) ? normalShade(quad.normalX(vertexIndex), quad.normalY(vertexIndex), quad.normalZ(vertexIndex), quad.hasShade()) : faceShade;
+		return quad.hasNormal(vertexIndex) ? normalShade(quad.packedNormal(vertexIndex), quad.hasShade()) : faceShade;
 	}
 
 	/**
@@ -170,7 +171,10 @@ public class BaseQuadRenderer {
 	 * Not how light actually works but the vanilla diffuse shading model is a hack to start with
 	 * and this gives reasonable results for non-cubic surfaces in a vanilla-style renderer.
 	 */
-	private float normalShade(float normalX, float normalY, float normalZ, boolean hasShade) {
+	private float normalShade(int packedNormal, boolean hasShade) {
+		float normalX = PackedVector3f.unpackX(packedNormal);
+		float normalY = PackedVector3f.unpackY(packedNormal);
+		float normalZ = PackedVector3f.unpackZ(packedNormal);
 		float sum = 0;
 		float div = 0;
 

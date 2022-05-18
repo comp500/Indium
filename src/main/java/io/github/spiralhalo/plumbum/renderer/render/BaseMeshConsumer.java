@@ -16,24 +16,20 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.RenderMaterial;
-import io.vram.frex.api.mesh.Mesh;
-import io.github.spiralhalo.plumbum.renderer.PlumbumRenderer;
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
-import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
-import io.github.spiralhalo.plumbum.renderer.mesh.MeshImpl;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+import io.vram.frex.api.renderer.Renderer;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
-
-import java.util.function.Consumer;
 
 /**
  * Consumer for pre-baked meshes.  Works by copying the mesh data to an
  * "editor" quad held in the instance, where all transformations are applied before buffering.
  */
-public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh> {
+public class BaseMeshConsumer extends BaseQuadRenderer {
 	protected BaseMeshConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc) {
 		super(bufferer, blockInfo, aoCalc);
 	}
@@ -44,8 +40,8 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 	 */
 	private class Maker extends QuadEmitterImpl {
 		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
-			material(PlumbumRenderer.MATERIAL_STANDARD);
+			data = new int[MeshEncodingHelper.TOTAL_MESH_QUAD_STRIDE];
+			material(Renderer.get().materials().defaultMaterial());
 		}
 
 		// only used via RenderContext.getEmitter()
@@ -59,21 +55,6 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 	}
 
 	private final Maker editorQuad = new Maker();
-
-	@Override
-	public void accept(Mesh mesh) {
-		final MeshImpl m = (MeshImpl) mesh;
-		final int[] data = m.data();
-		final int limit = data.length;
-		int index = 0;
-
-		while (index < limit) {
-			System.arraycopy(data, index, editorQuad.data(), 0, EncodingFormat.TOTAL_STRIDE);
-			editorQuad.load();
-			index += EncodingFormat.TOTAL_STRIDE;
-			renderQuad(editorQuad);
-		}
-	}
 
 	public QuadEmitter getEmitter() {
 		editorQuad.clear();
