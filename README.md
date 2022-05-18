@@ -1,13 +1,17 @@
 # Plumbum
 
+![Plumbum Icon](./src/main/resources/assets/plumbum/icon.png)
+
 A fork of [Indium](https://github.com/comp500/Indium) in an attempt to add FREX support to Sodium.
 
 The name means the chemical element *Pb*, and also "plumbing", in reference to the rendering *pipe*line. Pretty genius, I know.
 
 ## Current State
 
-So far, custom FRAPI models render without texture (but hey, they aren't invisible!)
+**This mod is currently experimental and temporary.**
 
-FREX's features aren't implemented yet.
+Custom FRAPI models render properly! Tested with Campanion, LambdaBetterGrass, and Continuity.
 
-Dependency on FRAPI is still required to differentiate vanilla baked models.
+FREX extended features are technically implemented, but they are likely ignored. It hasn't been tested against real FREX implementation.
+
+Still depends on FRAPI to differentiate vanilla baked models.
