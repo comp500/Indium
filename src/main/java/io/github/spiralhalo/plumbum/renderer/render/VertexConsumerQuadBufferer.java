@@ -5,7 +5,7 @@ import java.util.function.Function;
 import io.vram.frex.api.math.FastMatrix3f;
 import io.vram.frex.api.math.PackedVector3f;
 import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -27,11 +27,11 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 	}
 
 	@Override
-	public void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+	public void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer) {
 		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix(), packedNormalFrex);
 	}
 
-	public static void bufferQuad(VertexConsumer buff, MutableQuadViewImpl quad, Matrix4f matrix, int overlay, FastMatrix3f normalMatrix, int packedNormal) {
+	public static void bufferQuad(VertexConsumer buff, QuadEmitterImpl quad, Matrix4f matrix, int overlay, FastMatrix3f normalMatrix, int packedNormal) {
 		final boolean useNormals = quad.hasVertexNormals();
 
 		if (useNormals) {

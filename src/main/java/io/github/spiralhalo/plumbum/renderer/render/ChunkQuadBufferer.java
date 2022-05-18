@@ -3,7 +3,7 @@ package io.github.spiralhalo.plumbum.renderer.render;
 import java.util.function.Function;
 
 import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
@@ -28,11 +28,11 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 	}
 
 	@Override
-	public void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+	public void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer) {
 		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset());
 	}
 
-	public static void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vec3i origin, Vec3d blockOffset) {
+	public static void bufferQuad(ChunkModelBuilder builder, QuadEmitterImpl quad, Vec3i origin, Vec3d blockOffset) {
 		ModelVertexSink vertices = builder.getVertexSink();
 		vertices.ensureCapacity(4);
 

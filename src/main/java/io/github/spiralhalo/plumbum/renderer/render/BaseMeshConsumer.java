@@ -17,13 +17,13 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.mesh.Mesh;
 import io.github.spiralhalo.plumbum.renderer.PlumbumRenderer;
-import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
 import io.github.spiralhalo.plumbum.renderer.mesh.MeshImpl;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 
@@ -42,7 +42,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 	 * Where we handle all pre-buffer coloring, lighting, transformation, etc.
 	 * Reused for all mesh quads. Fixed baking array sized to hold largest possible mesh quad.
 	 */
-	private class Maker extends MutableQuadViewImpl {
+	private class Maker extends QuadEmitterImpl {
 		{
 			data = new int[EncodingFormat.TOTAL_STRIDE];
 			material(PlumbumRenderer.MATERIAL_STANDARD);
@@ -80,13 +80,13 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 		return editorQuad;
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad) {
+	private void renderQuad(QuadEmitterImpl quad) {
 
 		if (!blockInfo.shouldDrawFace(quad.cullFace())) {
 			return;
 		}
 
-		final RenderMaterialImpl.Value mat = quad.material();
+		final RenderMaterial mat = quad.material();
 
 		if (!mat.disableAo() && MinecraftClient.isAmbientOcclusionEnabled()) {
 			// needs to happen before offsets are applied
@@ -100,7 +100,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 	 * Determines color index and render layer, then routes to appropriate
 	 * tessellate routine based on material properties.
 	 */
-	private void tessellateQuad(MutableQuadViewImpl quad, RenderMaterialImpl.Value mat) {
+	private void tessellateQuad(QuadEmitterImpl quad, RenderMaterial mat) {
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.preset());
 

@@ -1,12 +1,8 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.vram.frex.api.buffer.QuadEmitter;
-import io.vram.frex.api.material.MaterialConstants;
-import io.vram.frex.api.math.MatrixStack;
-import io.vram.frex.api.mesh.Mesh;
-import io.vram.frex.api.model.BlockModel;
-import io.vram.frex.api.model.fluid.FluidModel;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
+import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.model.BlockModel;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
@@ -20,13 +16,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.BlockRenderView;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Random;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class TerrainRenderContext implements BlockModel.BlockInputContext {
+public class TerrainRenderContext {
 	private final TerrainBlockRenderInfo blockInfo = new TerrainBlockRenderInfo();
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
@@ -49,8 +42,6 @@ public class TerrainRenderContext implements BlockModel.BlockInputContext {
 		chunkInfo.release();
 	}
 
-	private BakedModel model;
-
 	/** Called from chunk renderer hook. */
 	public boolean tessellateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, Vec3d modelOffset) {
 		this.origin = origin;
@@ -59,11 +50,9 @@ public class TerrainRenderContext implements BlockModel.BlockInputContext {
 		try {
 			chunkInfo.didOutput = false;
 			aoCalc.clear();
-			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
-			this.model = model;
+			blockInfo.prepareForBlock(model, blockState, blockPos);
 //			((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
-			((BlockModel) model).renderDynamic(this, getEmitter());
-			this.model = null;
+			((BlockModel) model).renderDynamic(blockInfo, getEmitter());
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Plumbum Renderer");
 			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
@@ -72,71 +61,6 @@ public class TerrainRenderContext implements BlockModel.BlockInputContext {
 		}
 
 		return chunkInfo.didOutput;
-	}
-
-	@Override
-	public BlockRenderView blockView() {
-		return blockInfo.blockView;
-	}
-
-	@Override
-	public boolean isFluidModel() {
-		return model instanceof FluidModel; // TODO ??
-	}
-
-	@Override
-	public @Nullable BakedModel bakedModel() {
-		return model;
-	}
-
-	@Override
-	public BlockState blockState() {
-		return blockInfo.blockState;
-	}
-
-	@Override
-	public BlockPos pos() {
-		return blockInfo.blockPos;
-	}
-
-	@Override
-	public Random random() {
-		return blockInfo.randomSupplier.get();
-	}
-
-	@Override
-	public int overlay() {
-		return 0; // TODO ??
-	}
-
-	@Override
-	public MatrixStack matrixStack() {
-		return null; // TODO ??
-	}
-
-	@Override
-	public boolean cullTest(int faceId) {
-		return true; // TODO ??
-	}
-
-	@Override
-	public int indexedColor(int colorIndex) {
-		return 0;
-	}
-
-	@Override
-	public RenderLayer defaultRenderType() {
-		return blockInfo.defaultLayer;
-	}
-
-	@Override
-	public int defaultPreset() {
-		return blockInfo.defaultLayer.equals(RenderLayer.getTranslucent()) ? MaterialConstants.PRESET_TRANSLUCENT : MaterialConstants.PRESET_DEFAULT;
-	}
-
-	@Override
-	public @Nullable Object blockEntityRenderData(BlockPos blockPos) {
-		return null; // TODO ??
 	}
 
 	private class QuadBufferer extends ChunkQuadBufferer {
@@ -155,17 +79,6 @@ public class TerrainRenderContext implements BlockModel.BlockInputContext {
 		}
 	}
 
-//	@Override
-	public Consumer<Mesh> meshConsumer() {
-		return meshConsumer;
-	}
-
-//	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
-		return fallbackConsumer;
-	}
-
-//	@Override
 	public QuadEmitter getEmitter() {
 		return meshConsumer.getEmitter();
 	}

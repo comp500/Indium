@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 public class PlumbumTransformStack {
 	protected final ObjectArrayList<TransformingQuadEmitter> POOL = new ObjectArrayList<>();
 
-	public TransformingQuadEmitter createTransform(InputContext context, QuadTransform transform, MutableQuadViewImpl output) {
+	public TransformingQuadEmitter createTransform(InputContext context, QuadTransform transform, QuadEmitterImpl output) {
 		return (POOL.isEmpty() ? new TransformingQuadEmitter(this) : POOL.pop()).prepare(context, transform, output);
 	}
 
@@ -19,7 +19,7 @@ public class PlumbumTransformStack {
 		POOL.add(transformingQuadEmitter);
 	}
 
-	public static class TransformingQuadEmitter extends MutableQuadViewImpl implements PooledQuadEmitter, PooledVertexEmitter {
+	public static class TransformingQuadEmitter extends QuadEmitterImpl implements PooledQuadEmitter, PooledVertexEmitter {
 		protected final PlumbumTransformStack transformStack;
 
 		protected InputContext context;

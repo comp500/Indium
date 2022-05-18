@@ -19,7 +19,6 @@ package io.github.spiralhalo.plumbum.renderer.mesh;
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.mesh.QuadView;
-import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl;
 import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
 import io.github.spiralhalo.plumbum.renderer.helper.NormalHelper;
 import net.minecraft.util.math.Direction;
@@ -108,7 +107,7 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public final RenderMaterialImpl.Value material() {
+	public final RenderMaterial material() {
 		return EncodingFormat.material(data[baseIndex + HEADER_BITS]);
 	}
 
@@ -147,7 +146,7 @@ public class QuadViewImpl implements QuadView {
 	public void copyTo(QuadEmitter target) {
 		computeGeometry();
 
-		final MutableQuadViewImpl quad = (MutableQuadViewImpl) target;
+		final QuadEmitterImpl quad = (QuadEmitterImpl) target;
 		// copy everything except the material
 		RenderMaterial material = quad.material();
 		System.arraycopy(data, baseIndex, quad.data, quad.baseIndex, EncodingFormat.TOTAL_STRIDE);

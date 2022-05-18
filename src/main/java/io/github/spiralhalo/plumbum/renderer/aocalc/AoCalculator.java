@@ -21,7 +21,7 @@ import io.github.spiralhalo.plumbum.Plumbum;
 import io.github.spiralhalo.plumbum.renderer.accessor.AccessAmbientOcclusionCalculator;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoFace.WeightFunction;
 import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadViewImpl;
 import io.github.spiralhalo.plumbum.renderer.render.BlockRenderInfo;
 import net.fabricmc.api.EnvType;
@@ -76,7 +76,7 @@ public class AoCalculator {
 	private final ToIntFunction<BlockPos> brightnessFunc;
 	private final AoFunc aoFunc;
 
-	/** caches results of {@link #computeFace(Direction, boolean)} for the current block. */
+	/** caches results of {@link #computeFace} for the current block. */
 	private final AoFaceData[] faceData = new AoFaceData[12];
 
 	/** indicates which elements of {@link #faceData} have been computed for the current block. */
@@ -105,7 +105,7 @@ public class AoCalculator {
 		completionFlags = 0;
 	}
 
-	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
+	public void compute(QuadEmitterImpl quad, boolean isVanilla) {
 		final AoConfig config = Plumbum.AMBIENT_OCCLUSION_MODE;
 		final boolean shouldCompare;
 
@@ -151,7 +151,7 @@ public class AoCalculator {
 
 			for (int i = 0; i < 4; i++) {
 				if (light[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(ao[i], vanillaAo[i])) {
-					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState.toString(), blockInfo.blockPos.toString()));
+					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState().toString(), blockInfo.pos().toString()));
 					LOGGER.info(String.format("Flags = %d, LightFace = %s", quad.geometryFlags(), quad.lightFace().toString()));
 					LOGGER.info(String.format("    Old Multiplier: %.2f, %.2f, %.2f, %.2f", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]));
 					LOGGER.info(String.format("    New Multiplier: %.2f, %.2f, %.2f, %.2f", ao[0], ao[1], ao[2], ao[3]));
@@ -163,7 +163,7 @@ public class AoCalculator {
 		}
 	}
 
-	private void calcVanilla(MutableQuadViewImpl quad) {
+	private void calcVanilla(QuadEmitterImpl quad) {
 		calcVanilla(quad, ao, light);
 	}
 
@@ -174,23 +174,23 @@ public class AoCalculator {
 	private final BitSet vanillaAoControlBits = new BitSet(3);
 	private final int[] vertexData = new int[EncodingFormat.QUAD_STRIDE];
 
-	private void calcVanilla(MutableQuadViewImpl quad, float[] aoDest, int[] lightDest) {
+	private void calcVanilla(QuadEmitterImpl quad, float[] aoDest, int[] lightDest) {
 		vanillaAoControlBits.clear();
 		final Direction face = quad.lightFace();
 		quad.toVanilla(vertexData, 0);
 
-		VanillaAoHelper.updateShape(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, face, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.fabric_apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
+		VanillaAoHelper.updateShape(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), vertexData, face, vanillaAoData, vanillaAoControlBits);
+		vanillaCalc.fabric_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
 
 		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
 		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
 	}
 
-	private void calcFastVanilla(MutableQuadViewImpl quad) {
+	private void calcFastVanilla(QuadEmitterImpl quad) {
 		int flags = quad.geometryFlags();
 
 		// force to block face if shape is full cube - matches vanilla logic
-		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) == AXIS_ALIGNED_FLAG && Block.isShapeFullCube(blockInfo.blockState.getCollisionShape(blockInfo.blockView, blockInfo.blockPos))) {
+		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) == AXIS_ALIGNED_FLAG && Block.isShapeFullCube(blockInfo.blockState().getCollisionShape(blockInfo.blockView(), blockInfo.pos()))) {
 			flags |= LIGHT_FACE_FLAG;
 		}
 
@@ -201,7 +201,7 @@ public class AoCalculator {
 		}
 	}
 
-	private void calcEnhanced(MutableQuadViewImpl quad) {
+	private void calcEnhanced(QuadEmitterImpl quad) {
 		switch (quad.geometryFlags()) {
 		case AXIS_ALIGNED_FLAG | CUBIC_FLAG | LIGHT_FACE_FLAG:
 		case AXIS_ALIGNED_FLAG | LIGHT_FACE_FLAG:
@@ -279,7 +279,7 @@ public class AoCalculator {
 	/** used exclusively in irregular face to avoid new heap allocations each call. */
 	private final Vec3f vertexNormal = new Vec3f();
 
-	private void irregularFace(MutableQuadViewImpl quad) {
+	private void irregularFace(QuadEmitterImpl quad) {
 		final Vec3f faceNorm = new Vec3f();
 		PackedVector3f.unpackTo(quad.packedFaceNormal(), faceNorm);
 		Vec3f normal;
@@ -367,8 +367,8 @@ public class AoCalculator {
 		if ((completionFlags & mask) == 0) {
 			completionFlags |= mask;
 
-			final BlockRenderView world = blockInfo.blockView;
-			final BlockPos pos = blockInfo.blockPos;
+			final BlockRenderView world = blockInfo.blockView();
+			final BlockPos pos = blockInfo.pos();
 			final BlockPos.Mutable lightPos = this.lightPos;
 			final BlockPos.Mutable searchPos = this.searchPos;
 

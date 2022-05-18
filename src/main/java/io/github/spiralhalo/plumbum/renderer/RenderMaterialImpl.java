@@ -30,12 +30,12 @@ import net.minecraft.util.math.MathHelper;
  */
 public abstract class RenderMaterialImpl implements MaterialView {
 	private static final int[] PRESETS = new int[]{
-		MaterialConstants.PRESET_NONE,
-		MaterialConstants.PRESET_DEFAULT,
-		MaterialConstants.PRESET_SOLID,
-		MaterialConstants.PRESET_CUTOUT_MIPPED,
-		MaterialConstants.PRESET_CUTOUT,
-		MaterialConstants.PRESET_TRANSLUCENT,
+			MaterialConstants.PRESET_NONE,
+			MaterialConstants.PRESET_DEFAULT,
+			MaterialConstants.PRESET_SOLID,
+			MaterialConstants.PRESET_CUTOUT_MIPPED,
+			MaterialConstants.PRESET_CUTOUT,
+			MaterialConstants.PRESET_TRANSLUCENT,
 	};
 
 	private static final int PRESET_MASK = MathHelper.smallestEncompassingPowerOfTwo(PRESETS.length) - 1;

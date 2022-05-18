@@ -19,7 +19,7 @@ package io.github.spiralhalo.plumbum.renderer.render;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
 import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -44,7 +44,7 @@ public class BaseQuadRenderer {
 	}
 
 	/** handles block color and red-blue swizzle, common to all renders. */
-	private void colorizeQuad(MutableQuadViewImpl q, int blockColorIndex) {
+	private void colorizeQuad(QuadEmitterImpl q, int blockColorIndex) {
 		if (blockColorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
 				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(q.vertexColor(i)));
@@ -59,14 +59,14 @@ public class BaseQuadRenderer {
 	}
 
 	/** final output step, common to all renders. */
-	private void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+	private void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer) {
 		bufferer.bufferQuad(quad, renderLayer);
 	}
 
 	// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 
 	/** for non-emissive mesh quads and all fallback quads with smooth lighting. */
-	protected void tessellateSmooth(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateSmooth(QuadEmitterImpl q, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -78,7 +78,7 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with smooth lighting. */
-	protected void tessellateSmoothEmissive(MutableQuadViewImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateSmoothEmissive(QuadEmitterImpl q, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -90,11 +90,11 @@ public class BaseQuadRenderer {
 	}
 
 	/** for non-emissive mesh quads and all fallback quads with flat lighting. */
-	protected void tessellateFlat(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateFlat(QuadEmitterImpl quad, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(quad, blockColorIndex);
 		shadeFlatQuad(quad);
 
-		final int brightness = flatBrightness(quad, blockInfo.blockState, blockInfo.blockPos);
+		final int brightness = flatBrightness(quad, blockInfo.blockState(), blockInfo.pos());
 
 		for (int i = 0; i < 4; i++) {
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), brightness));
@@ -104,7 +104,7 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with flat lighting. */
-	protected void tessellateFlatEmissive(MutableQuadViewImpl quad, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateFlatEmissive(QuadEmitterImpl quad, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(quad, blockColorIndex);
 		shadeFlatQuad(quad);
 
@@ -121,7 +121,7 @@ public class BaseQuadRenderer {
 	 * Handles geometry-based check for using self brightness or neighbor brightness.
 	 * That logic only applies in flat lighting.
 	 */
-	int flatBrightness(MutableQuadViewImpl quad, BlockState blockState, BlockPos pos) {
+	int flatBrightness(QuadEmitterImpl quad, BlockState blockState, BlockPos pos) {
 		mpos.set(pos);
 
 		// To mirror Vanilla's behavior, if the face has a cull-face, always sample the light value
@@ -129,29 +129,29 @@ public class BaseQuadRenderer {
 		// for reference.
 		if (quad.cullFace() != null) {
 			mpos.move(quad.cullFace());
-		} else if ((quad.geometryFlags() & GeometryHelper.LIGHT_FACE_FLAG) != 0 || Block.isShapeFullCube(blockState.getCollisionShape(blockInfo.blockView, pos))) {
+		} else if ((quad.geometryFlags() & GeometryHelper.LIGHT_FACE_FLAG) != 0 || Block.isShapeFullCube(blockState.getCollisionShape(blockInfo.blockView(), pos))) {
 			mpos.move(quad.lightFace());
 		}
 
 		// Unfortunately cannot use brightness cache here unless we implement one specifically for flat lighting. See #329
-		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, blockState, mpos);
+		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView(), blockState, mpos);
 	}
 
 	/**
 	 * Starting in 1.16 flat shading uses dimension-specific diffuse factors that can be < 1.0
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
-	private void shadeFlatQuad(MutableQuadViewImpl quad) {
+	private void shadeFlatQuad(QuadEmitterImpl quad) {
 		if ((quad.geometryFlags() & GeometryHelper.AXIS_ALIGNED_FLAG) == 0 || quad.hasVertexNormals()) {
 			// Quads that aren't direction-aligned or that have vertex normals need to be shaded
 			// using interpolation - vanilla can't handle them. Generally only applies to modded models.
-			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
+			final float faceShade = blockInfo.blockView().getBrightness(quad.lightFace(), quad.hasShade());
 
 			for (int i = 0; i < 4; i++) {
 				quad.vertexColor(i, ColorHelper.multiplyRGB(quad.vertexColor(i), vertexShade(quad, i, faceShade)));
 			}
 		} else {
-			final float diffuseShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
+			final float diffuseShade = blockInfo.blockView().getBrightness(quad.lightFace(), quad.hasShade());
 
 			if (diffuseShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
@@ -161,7 +161,7 @@ public class BaseQuadRenderer {
 		}
 	}
 
-	private float vertexShade(MutableQuadViewImpl quad, int vertexIndex, float faceShade) {
+	private float vertexShade(QuadEmitterImpl quad, int vertexIndex, float faceShade) {
 		return quad.hasNormal(vertexIndex) ? normalShade(quad.normalX(vertexIndex), quad.normalY(vertexIndex), quad.normalZ(vertexIndex), quad.hasShade()) : faceShade;
 	}
 
@@ -175,26 +175,26 @@ public class BaseQuadRenderer {
 		float div = 0;
 
 		if (normalX > 0) {
-			sum += normalX * blockInfo.blockView.getBrightness(Direction.EAST, hasShade);
+			sum += normalX * blockInfo.blockView().getBrightness(Direction.EAST, hasShade);
 			div += normalX;
 		} else if (normalX < 0) {
-			sum += -normalX * blockInfo.blockView.getBrightness(Direction.WEST, hasShade);
+			sum += -normalX * blockInfo.blockView().getBrightness(Direction.WEST, hasShade);
 			div -= normalX;
 		}
 
 		if (normalY > 0) {
-			sum += normalY * blockInfo.blockView.getBrightness(Direction.UP, hasShade);
+			sum += normalY * blockInfo.blockView().getBrightness(Direction.UP, hasShade);
 			div += normalY;
 		} else if (normalY < 0) {
-			sum += -normalY * blockInfo.blockView.getBrightness(Direction.DOWN, hasShade);
+			sum += -normalY * blockInfo.blockView().getBrightness(Direction.DOWN, hasShade);
 			div -= normalY;
 		}
 
 		if (normalZ > 0) {
-			sum += normalZ * blockInfo.blockView.getBrightness(Direction.SOUTH, hasShade);
+			sum += normalZ * blockInfo.blockView().getBrightness(Direction.SOUTH, hasShade);
 			div += normalZ;
 		} else if (normalZ < 0) {
-			sum += -normalZ * blockInfo.blockView.getBrightness(Direction.NORTH, hasShade);
+			sum += -normalZ * blockInfo.blockView().getBrightness(Direction.NORTH, hasShade);
 			div -= normalZ;
 		}
 
@@ -202,6 +202,6 @@ public class BaseQuadRenderer {
 	}
 
 	protected interface QuadBufferer {
-		void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
+		void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer);
 	}
 }

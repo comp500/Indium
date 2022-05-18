@@ -17,6 +17,7 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
@@ -25,8 +26,8 @@ public class TerrainBlockRenderInfo extends BlockRenderInfo {
 	private int cullResultFlags;
 
 	@Override
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
-		super.prepareForBlock(blockState, blockPos, modelAO);
+	public void prepareForBlock(BakedModel model, BlockState blockState, BlockPos blockPos) {
+		super.prepareForBlock(model, blockState, blockPos);
 		cullCompletionFlags = 0;
 		cullResultFlags = 0;
 	}

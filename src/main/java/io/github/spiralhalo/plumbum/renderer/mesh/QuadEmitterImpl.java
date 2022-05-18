@@ -16,6 +16,7 @@
 
 package io.github.spiralhalo.plumbum.renderer.mesh;
 
+import io.github.spiralhalo.plumbum.renderer.helper.TextureHelper;
 import io.vram.frex.api.buffer.*;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.FastMatrix3f;
@@ -23,7 +24,6 @@ import io.vram.frex.api.math.FastMatrix4f;
 import io.vram.frex.api.model.InputContext;
 import io.vram.frex.api.model.util.FaceUtil;
 import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
-import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl.Value;
 import io.github.spiralhalo.plumbum.renderer.helper.NormalHelper;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.model.BakedQuad;
@@ -39,7 +39,7 @@ import static io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat.*;
  * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emit()},
  * because that depends on where/how it is used. (Mesh encoding vs. render-time transformation).
  */
-public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEmitter, VertexEmitter {
+public abstract class QuadEmitterImpl extends QuadViewImpl implements QuadEmitter, VertexEmitter {
 	private final PlumbumTransformStack transformStack = createTransformStack();
 	private Sprite cachedSprite;
 	protected RenderMaterial defaultMaterial = RenderMaterial.defaultMaterial();
@@ -70,42 +70,42 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public final MutableQuadViewImpl material(RenderMaterial material) {
+	public final QuadEmitterImpl material(RenderMaterial material) {
 		if (material == null) {
 			material = defaultMaterial;
 		}
 
-		data[baseIndex + HEADER_BITS] = EncodingFormat.material(data[baseIndex + HEADER_BITS], (Value) material);
+		data[baseIndex + HEADER_BITS] = EncodingFormat.material(data[baseIndex + HEADER_BITS], (RenderMaterial) material);
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl cullFace(Direction face) {
+	public final QuadEmitterImpl cullFace(Direction face) {
 		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(data[baseIndex + HEADER_BITS], face);
 		nominalFace(face);
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl nominalFace(Direction face) {
+	public final QuadEmitterImpl nominalFace(Direction face) {
 		nominalFace = face;
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl colorIndex(int colorIndex) {
+	public final QuadEmitterImpl colorIndex(int colorIndex) {
 		data[baseIndex + HEADER_COLOR_INDEX] = colorIndex;
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl tag(int tag) {
+	public final QuadEmitterImpl tag(int tag) {
 		data[baseIndex + HEADER_TAG] = tag;
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl fromVanilla(int[] quadData, int startIndex) {
+	public final QuadEmitterImpl fromVanilla(int[] quadData, int startIndex) {
 		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
 		isGeometryInvalid = true;
 		cachedSprite(null);
@@ -113,7 +113,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public final MutableQuadViewImpl fromVanilla(BakedQuad quad, RenderMaterial material, Direction cullFace) {
+	public final QuadEmitterImpl fromVanilla(BakedQuad quad, RenderMaterial material, Direction cullFace) {
 		System.arraycopy(quad.getVertexData(), 0, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
 		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
 		nominalFace(quad.getFace());
@@ -127,24 +127,24 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public final MutableQuadViewImpl defaultMaterial(RenderMaterial material) {
+	public final QuadEmitterImpl defaultMaterial(RenderMaterial material) {
 		defaultMaterial = material;
 		return this;
 	}
 
 	@Override
-	public final MutableQuadViewImpl fromVanilla(BakedQuad quad, RenderMaterial material, int cullFaceId) {
+	public final QuadEmitterImpl fromVanilla(BakedQuad quad, RenderMaterial material, int cullFaceId) {
 		return fromVanilla(quad, material, FaceUtil.faceFromIndex(cullFaceId));
 	}
 
 	@Override
-	public final MutableQuadViewImpl tangent(int vertexIndex, float x, float y, float z) {
+	public final QuadEmitterImpl tangent(int vertexIndex, float x, float y, float z) {
 		// unsupported
 		return this;
 	}
 
 	@Override
-	public MutableQuadViewImpl pos(int vertexIndex, float x, float y, float z) {
+	public QuadEmitterImpl pos(int vertexIndex, float x, float y, float z) {
 		final int index = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_X;
 		data[index] = Float.floatToRawIntBits(x);
 		data[index + 1] = Float.floatToRawIntBits(y);
@@ -158,7 +158,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public MutableQuadViewImpl normal(int vertexIndex, float x, float y, float z) {
+	public QuadEmitterImpl normal(int vertexIndex, float x, float y, float z) {
 		normalFlags(normalFlags() | (1 << vertexIndex));
 		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = NormalHelper.packNormal(x, y, z, 0);
 		return this;
@@ -184,51 +184,51 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public MutableQuadViewImpl lightmap(int vertexIndex, int lightmap) {
+	public QuadEmitterImpl lightmap(int vertexIndex, int lightmap) {
 		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_LIGHTMAP] = lightmap;
 		return this;
 	}
 
 	@Override
-	public MutableQuadViewImpl vertexColor(int vertexIndex, int color) {
+	public QuadEmitterImpl vertexColor(int vertexIndex, int color) {
 		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_COLOR] = color;
 		return this;
 	}
 
 	@Override
 	public QuadEmitter uv(int vertexIndex, float u, float v) {
-		return null;
+		// TODO: Is this even correct??
+		spriteFloat(vertexIndex, u, v);
+		return this;
 	}
 
 	@Override
-	public QuadEmitter uvSprite(@Nullable Sprite sprite, float v, float v1, float v2, float v3, float v4, float v5, float v6, float v7) {
-		return null;
+	public QuadEmitter uvSprite(@Nullable Sprite sprite, float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
+		this.spriteFloat(0, u0, v0);
+		this.spriteFloat(1, u1, v1);
+		this.spriteFloat(2, u2, v2);
+		this.spriteFloat(3, u3, v3);
+		if (sprite != null) {
+			cachedSprite(sprite);
+		}
+
+		return this;
+	}
+
+	public QuadEmitter spriteFloat(int vertexIndex, float u, float v) {
+		final int i = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U;
+		data[i] = Float.floatToRawIntBits(u);
+		data[i + 1] = Float.floatToRawIntBits(v);
+		cachedSprite = null;
+		return this;
 	}
 
 	@Override
-	public QuadEmitter spriteBake(Sprite sprite, int i) {
-		return null;
+	public QuadEmitter spriteBake(Sprite sprite, int bakeFlags) {
+		TextureHelper.bakeSprite(this, sprite, bakeFlags);
+		cachedSprite(sprite);
+		return this;
 	}
-
-//	@Override
-//	public MutableQuadViewImpl sprite(int vertexIndex, int spriteIndex, float u, float v) {
-//		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-//
-//		final int i = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U;
-//		data[i] = Float.floatToRawIntBits(u);
-//		data[i + 1] = Float.floatToRawIntBits(v);
-//		cachedSprite = null;
-//		return this;
-//	}
-//
-//	@Override
-//	public MutableQuadViewImpl spriteBake(int spriteIndex, Sprite sprite, int bakeFlags) {
-//		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-//
-//		TextureHelper.bakeSprite(this, spriteIndex, sprite, bakeFlags);
-//		cachedSprite(sprite);
-//		return this;
-//	}
 
 	public Sprite cachedSprite() {
 		return cachedSprite;

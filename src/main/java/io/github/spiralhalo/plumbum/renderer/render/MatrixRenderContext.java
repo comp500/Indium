@@ -21,19 +21,5 @@ import io.vram.frex.api.math.MatrixStack;
 import io.vram.frex.api.model.InputContext;
 import net.minecraft.util.math.Matrix4f;
 
-abstract class MatrixRenderContext implements InputContext {
-	protected Matrix4f matrix;
-	protected FastMatrix3f normalMatrix;
-	protected net.minecraft.client.util.math.MatrixStack matrixStack;
-	protected int overlay;
-
-	@Override
-	public int overlay() {
-		return overlay;
-	}
-
-	@Override
-	public MatrixStack matrixStack() {
-		return (MatrixStack) matrixStack;
-	}
+abstract class MatrixRenderContext {
 }

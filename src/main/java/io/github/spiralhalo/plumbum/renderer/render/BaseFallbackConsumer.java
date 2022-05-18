@@ -17,12 +17,12 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.model.util.FaceUtil;
 import io.github.spiralhalo.plumbum.renderer.PlumbumRenderer;
-import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl.Value;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -53,14 +53,14 @@ import java.util.function.Supplier;
  *  manipulating the data via NIO.
  */
 public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<BakedModel> {
-	private static final Value MATERIAL_FLAT = (Value) PlumbumRenderer.INSTANCE.materials().materialFinder().disableAo(true).find();
-	private static final Value MATERIAL_SHADED = (Value) PlumbumRenderer.INSTANCE.materials().materialFinder().find();
+	private static final RenderMaterial MATERIAL_FLAT = (RenderMaterial) PlumbumRenderer.INSTANCE.materials().materialFinder().disableAo(true).find();
+	private static final RenderMaterial MATERIAL_SHADED = (RenderMaterial) PlumbumRenderer.INSTANCE.materials().materialFinder().find();
 
 	BaseFallbackConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc) {
 		super(bufferer, blockInfo, aoCalc);
 	}
 
-	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {
+	private final QuadEmitterImpl editorQuad = new QuadEmitterImpl() {
 		{
 			data = new int[EncodingFormat.TOTAL_STRIDE];
 			material(MATERIAL_SHADED);
@@ -76,8 +76,8 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 	@Override
 	public void accept(BakedModel model) {
 		final Supplier<Random> random = blockInfo.randomSupplier;
-		final Value defaultMaterial = blockInfo.defaultAo && model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
-		final BlockState blockState = blockInfo.blockState;
+		final RenderMaterial defaultMaterial = blockInfo.defaultAo && model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
+		final BlockState blockState = blockInfo.blockState();
 
 		for (int i = 0; i < FaceUtil.FACE_INDEX_COUNT; i++) {
 			final Direction cullFace = FaceUtil.faceFromIndex(i);
@@ -93,8 +93,8 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 		}
 	}
 
-	private void renderQuad(BakedQuad quad, Direction cullFace, Value defaultMaterial) {
-		final MutableQuadViewImpl editorQuad = this.editorQuad;
+	private void renderQuad(BakedQuad quad, Direction cullFace, RenderMaterial defaultMaterial) {
+		final QuadEmitterImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
 
 		cullFace = editorQuad.cullFace();

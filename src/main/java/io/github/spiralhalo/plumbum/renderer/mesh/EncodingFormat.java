@@ -19,8 +19,10 @@ package io.github.spiralhalo.plumbum.renderer.mesh;
 import com.google.common.base.Preconditions;
 import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl;
 import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.mesh.QuadView;
 import io.vram.frex.api.model.util.FaceUtil;
+import io.vram.frex.api.renderer.Renderer;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.util.math.Direction;
@@ -130,11 +132,11 @@ public abstract class EncodingFormat {
 		return (bits & GEOMETRY_INVERSE_MASK) | ((geometryFlags & GEOMETRY_MASK) << GEOMETRY_SHIFT);
 	}
 
-	static RenderMaterialImpl.Value material(int bits) {
-		return RenderMaterialImpl.byIndex((bits >> MATERIAL_SHIFT) & MATERIAL_MASK);
+	static RenderMaterial material(int bits) {
+		return Renderer.get().materials().materialFromIndex((bits >> MATERIAL_SHIFT) & MATERIAL_MASK);
 	}
 
-	static int material(int bits, RenderMaterialImpl.Value material) {
+	static int material(int bits, RenderMaterial material) {
 		return (bits & MATERIAL_INVERSE_MASK) | (material.index() << MATERIAL_SHIFT);
 	}
 }

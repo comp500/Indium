@@ -18,15 +18,15 @@ package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.FastMatrix3f;
 import io.vram.frex.api.mesh.Mesh;
 import io.vram.frex.api.model.BlockItemModel;
-import io.vram.frex.api.model.ItemModel;
-import io.github.spiralhalo.plumbum.renderer.RenderMaterialImpl;
 import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
 import io.github.spiralhalo.plumbum.renderer.mesh.EncodingFormat;
 import io.github.spiralhalo.plumbum.renderer.mesh.MeshImpl;
-import io.github.spiralhalo.plumbum.renderer.mesh.MutableQuadViewImpl;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
@@ -38,7 +38,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.util.math.Matrix4f;
 
 import java.util.Random;
 import java.util.function.Consumer;
@@ -46,85 +46,9 @@ import java.util.function.Consumer;
 /**
  * The render context used for item rendering.
  */
-public class ItemRenderContext extends MatrixRenderContext implements ItemModel.ItemInputContext {
+public class ItemRenderContext extends BaseItemInputContext {
 	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
 	private static final long ITEM_RANDOM_SEED = 42L;
-
-	@Override
-	public Random random() {
-		random.setSeed(ITEM_RANDOM_SEED);
-		return random;
-	}
-
-	@Override
-	public boolean isGui() {
-		return transformMode.equals(Mode.GUI);
-	}
-
-	@Override
-	public boolean isFrontLit() {
-		return transformMode.equals(Mode.GUI); // ?
-	}
-
-	@Override
-	public boolean isBlockItem() {
-		return itemStack.getItem() instanceof BlockItem;
-	}
-
-	@Override
-	public boolean drawTranslucencyToMainTarget() {
-		return false;
-	}
-
-	@Override
-	public boolean isLeftHand() {
-		return transformMode.equals(Mode.FIRST_PERSON_LEFT_HAND);
-	}
-
-	@Override
-	public int lightmap() {
-		return lightmap;
-	}
-
-	@Override
-	public Type type() {
-		return Type.ITEM;
-	}
-
-	@Override
-	public ItemStack itemStack() {
-		return itemStack;
-	}
-
-	@Override
-	public Mode mode() {
-		return transformMode;
-	}
-
-	@Override
-	public int indexedColor(int colorIndex) {
-		return colorMap.getColor(itemStack, colorIndex);
-	}
-
-	@Override
-	public RenderLayer defaultRenderType() {
-		return isDefaultTranslucent ? RenderLayer.getTranslucent() : RenderLayer.getSolid();
-	}
-
-	@Override
-	public int defaultPreset() {
-		return isDefaultTranslucent ? MaterialConstants.PRESET_TRANSLUCENT : MaterialConstants.PRESET_DEFAULT;
-	}
-
-	@Override
-	public boolean cullTest(int faceId) {
-		return true;
-	}
-
-	@Override
-	public @Nullable BakedModel bakedModel() {
-		return model;
-	}
 
 	/** used to accept a method reference from the ItemRenderer. */
 	@FunctionalInterface
@@ -132,7 +56,9 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		void accept(BakedModel model, ItemStack stack, int color, int overlay, MatrixStack matrixStack, VertexConsumer buffer);
 	}
 
-	private final ItemColors colorMap;
+	protected Matrix4f matrix;
+	protected FastMatrix3f normalMatrix;
+	private final ItemColors rendererColorMap;
 	private final Random random = new Random();
 	private int packedNormalFrex;
 
@@ -140,10 +66,7 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 	private final MeshConsumer meshConsumer = new MeshConsumer();
 	private final FallbackConsumer fallbackConsumer = new FallbackConsumer();
 
-	private ItemStack itemStack;
-	private Mode transformMode;
 	private VertexConsumerProvider vertexConsumerProvider;
-	private int lightmap;
 	private VanillaQuadHandler vanillaHandler;
 
 	private boolean isDefaultTranslucent;
@@ -152,25 +75,20 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 	private VertexConsumer cutoutVertexConsumer;
 	private VertexConsumer modelVertexConsumer;
 
-	private BakedModel model;
-
-	public ItemRenderContext(ItemColors colorMap) {
-		this.colorMap = colorMap;
+	public ItemRenderContext(ItemColors rendererColorMap) {
+		this.rendererColorMap = rendererColorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
-		this.itemStack = itemStack;
-		this.transformMode = transformMode;
-		this.matrixStack = matrixStack;
+	public void renderModel(ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
 		this.vertexConsumerProvider = vertexConsumerProvider;
-		this.lightmap = lightmap;
-		this.overlay = overlay;
 		this.vanillaHandler = vanillaHandler;
-		this.model = model;
+
+		final boolean itemIsLeftHand = renderMode.equals(Mode.FIRST_PERSON_LEFT_HAND) || renderMode.equals(Mode.THIRD_PERSON_LEFT_HAND);
+		prepareForItem(model, itemStack, renderMode, lightmap, overlay, itemIsLeftHand, (io.vram.frex.api.math.MatrixStack) matrixStack);
 		computeOutputInfo();
 
 		matrixStack.push();
-		model.getTransformation().getTransformation(transformMode).apply(invert, matrixStack);
+		model.getTransformation().getTransformation(renderMode).apply(invert, matrixStack);
 		matrixStack.translate(-0.5D, -0.5D, -0.5D);
 		matrix = matrixStack.peek().getPositionMatrix();
 		normalMatrix = (FastMatrix3f) (Object) matrixStack.peek().getNormalMatrix();
@@ -181,11 +99,16 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 
 		this.itemStack = null;
 		this.matrixStack = null;
+		this.bakedModel = null;
 		this.vanillaHandler = null;
 		translucentVertexConsumer = null;
 		cutoutVertexConsumer = null;
 		modelVertexConsumer = null;
-		this.model = null;
+	}
+
+	@Override
+	public int indexedColor(int colorIndex) {
+		return colorIndex == -1 ? -1 : (rendererColorMap.getColor(itemStack, colorIndex) | 0xFF000000);
 	}
 
 	private void computeOutputInfo() {
@@ -202,7 +125,7 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 				isDefaultTranslucent = false;
 			}
 
-			if (transformMode != Mode.GUI && !transformMode.isFirstPerson()) {
+			if (renderMode != Mode.GUI && !renderMode.isFirstPerson()) {
 				isTranslucentDirect = false;
 			}
 		}
@@ -245,17 +168,17 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		}
 	}
 
-	private void bufferQuad(MutableQuadViewImpl quad, int preset) {
+	private void bufferQuad(QuadEmitterImpl quad, int preset) {
 		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(preset), quad, matrix, overlay, normalMatrix, packedNormalFrex);
 	}
 
-	private void colorizeQuad(MutableQuadViewImpl q, int colorIndex) {
+	private void colorizeQuad(QuadEmitterImpl q, int colorIndex) {
 		if (colorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
 				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(q.vertexColor(i)));
 			}
 		} else {
-			final int itemColor = 0xFF000000 | colorMap.getColor(itemStack, colorIndex);
+			final int itemColor = 0xFF000000 | indexedColor(colorIndex);
 
 			for (int i = 0; i < 4; i++) {
 				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.vertexColor(i))));
@@ -263,7 +186,7 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		}
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad, int preset, int colorIndex) {
+	private void renderQuad(QuadEmitterImpl quad, int preset, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		final int lightmap = this.lightmap;
@@ -275,7 +198,7 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		bufferQuad(quad, preset);
 	}
 
-	private void renderQuadEmissive(MutableQuadViewImpl quad, int preset, int colorIndex) {
+	private void renderQuadEmissive(QuadEmitterImpl quad, int preset, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -285,8 +208,8 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		bufferQuad(quad, preset);
 	}
 
-	private void renderMeshQuad(MutableQuadViewImpl quad) {
-		final RenderMaterialImpl.Value mat = quad.material();
+	private void renderMeshQuad(QuadEmitterImpl quad) {
+		final RenderMaterial mat = quad.material();
 
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
 		final int preset = mat.preset();
@@ -298,7 +221,7 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 		}
 	}
 
-	private class Maker extends MutableQuadViewImpl implements QuadEmitter {
+	private class Maker extends QuadEmitterImpl implements QuadEmitter {
 		{
 			data = new int[EncodingFormat.TOTAL_STRIDE];
 			clear();
@@ -333,19 +256,9 @@ public class ItemRenderContext extends MatrixRenderContext implements ItemModel.
 	private class FallbackConsumer implements Consumer<BakedModel> {
 		@Override
 		public void accept(BakedModel model) {
-			vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
+			vanillaHandler.accept(model, itemStack, lightmap, overlay, (MatrixStack) matrixStack, modelVertexConsumer);
 		}
 	}
-
-//	@Override
-//	public Consumer<Mesh> meshConsumer() {
-//		return meshConsumer;
-//	}
-//
-//	@Override
-//	public Consumer<BakedModel> fallbackConsumer() {
-//		return fallbackConsumer;
-//	}
 
 	public QuadEmitter getEmitter() {
 		editorQuad.clear();

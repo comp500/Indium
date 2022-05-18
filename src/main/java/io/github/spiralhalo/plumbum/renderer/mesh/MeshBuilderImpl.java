@@ -65,7 +65,7 @@ public class MeshBuilderImpl implements MeshBuilder {
 	 * at render time so we want to capture all geometry now and
 	 * apply non-location-dependent lighting.
 	 */
-	private class Maker extends MutableQuadViewImpl implements QuadEmitter {
+	private class Maker extends QuadEmitterImpl implements QuadEmitter {
 		@Override
 		public Maker emit() {
 			computeGeometry();

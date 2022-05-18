@@ -17,12 +17,15 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.model.BlockModel;
+import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
@@ -37,13 +40,10 @@ import java.util.function.Supplier;
  * <p>Exception: per-block position offsets are tracked in {@link ChunkRenderInfo}
  * so they can be applied together with chunk offsets.
  */
-public class BlockRenderInfo {
+public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
 	protected BlockOcclusionCache blockOcclusionCache;
 	public final Random random = new Random();
-	public BlockRenderView blockView;
-	public BlockPos blockPos;
-	public BlockState blockState;
 	public long seed;
 	boolean defaultAo;
 	RenderLayer defaultLayer;
@@ -69,17 +69,19 @@ public class BlockRenderInfo {
 		this.blockOcclusionCache = blockOcclusionCache;
 	}
 
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
+	public void prepareForBlock(BakedModel bakedModel, BlockState blockState, BlockPos blockPos) {
+		super.prepareForBlock(bakedModel, blockState, blockPos);
 		this.blockPos = blockPos;
 		this.blockState = blockState;
 		// in the unlikely case seed actually matches this, we'll simply retrieve it more than one
 		seed = -1L;
-		defaultAo = modelAO && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
+		defaultAo = bakedModel.useAmbientOcclusion() && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 	}
 
 	public void release() {
+		super.release();
 		blockPos = null;
 		blockState = null;
 		blockOcclusionCache = null;
