@@ -17,7 +17,6 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.material.MaterialConstants;
-import io.vram.frex.api.model.BlockModel;
 import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;

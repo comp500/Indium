@@ -16,14 +16,10 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.vram.frex.api.buffer.QuadEmitter;
-import io.vram.frex.api.material.MaterialConstants;
-import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.mesh.Mesh;
-import io.vram.frex.api.model.BlockModel;
-import io.vram.frex.api.model.fluid.FluidModel;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoLuminanceFix;
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.model.BlockModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -34,10 +30,8 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.BlockRenderView;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**

@@ -1,17 +1,16 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import java.util.function.Function;
-
-import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.math.PackedVector3f;
 import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
-import io.vram.frex.api.renderer.Renderer;
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.PackedVector3f;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Matrix4f;
+
+import java.util.function.Function;
 
 public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, VertexConsumer> bufferFunc;

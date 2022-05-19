@@ -24,6 +24,9 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.Sprite;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Same as {@link RootQuadEmitter} but with sprite cache and helper function
+ */
 public abstract class QuadEmitterImpl extends RootQuadEmitter {
 	private Sprite cachedSprite;
 
@@ -42,6 +45,9 @@ public abstract class QuadEmitterImpl extends RootQuadEmitter {
 		return uv2(u, v);
 	}
 
+	/**
+	 * Helper function to populate missing vertex normals
+	 */
 	public void populateMissingNormals() {
 		int normalFlag = normalFlags();
 		if (normalFlag == 0b1111) return;

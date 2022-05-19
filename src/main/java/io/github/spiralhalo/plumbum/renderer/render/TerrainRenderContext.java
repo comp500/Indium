@@ -1,16 +1,12 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
-import io.vram.frex.api.buffer.QuadEmitter;
-import io.vram.frex.api.buffer.QuadSink;
 import io.vram.frex.api.model.BlockModel;
-import io.vram.frex.base.renderer.mesh.RootQuadEmitter;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;

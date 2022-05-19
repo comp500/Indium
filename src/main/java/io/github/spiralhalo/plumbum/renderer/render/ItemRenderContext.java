@@ -38,46 +38,29 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Matrix4f;
 
-import java.util.Random;
-import java.util.function.Consumer;
-
 /**
  * The render context used for item rendering.
  */
 public class ItemRenderContext extends BaseItemInputContext {
-	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
-	private static final long ITEM_RANDOM_SEED = 42L;
-
-	/** used to accept a method reference from the ItemRenderer. */
-	@FunctionalInterface
-	public interface VanillaQuadHandler {
-		void accept(BakedModel model, ItemStack stack, int color, int overlay, MatrixStack matrixStack, VertexConsumer buffer);
-	}
-
 	protected Matrix4f matrix;
 	protected FastMatrix3f normalMatrix;
 	private final ItemColors rendererColorMap;
-	private final Random random = new Random();
-	private int packedNormalFrex;
 
 	private final Maker editorQuad = new Maker();
 
 	private VertexConsumerProvider vertexConsumerProvider;
-	private VanillaQuadHandler vanillaHandler;
 
 	private boolean isDefaultTranslucent;
 	private boolean isTranslucentDirect;
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
-	private VertexConsumer modelVertexConsumer;
 
 	public ItemRenderContext(ItemColors rendererColorMap) {
 		this.rendererColorMap = rendererColorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
+	public void renderModel(ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
 		this.vertexConsumerProvider = vertexConsumerProvider;
-		this.vanillaHandler = vanillaHandler;
 
 		final boolean itemIsLeftHand = renderMode.equals(Mode.FIRST_PERSON_LEFT_HAND) || renderMode.equals(Mode.THIRD_PERSON_LEFT_HAND);
 		prepareForItem(model, itemStack, renderMode, lightmap, overlay, itemIsLeftHand, (io.vram.frex.api.math.MatrixStack) matrixStack);
@@ -96,10 +79,8 @@ public class ItemRenderContext extends BaseItemInputContext {
 		this.itemStack = null;
 		this.matrixStack = null;
 		this.bakedModel = null;
-		this.vanillaHandler = null;
 		translucentVertexConsumer = null;
 		cutoutVertexConsumer = null;
-		modelVertexConsumer = null;
 	}
 
 	@Override
@@ -125,8 +106,6 @@ public class ItemRenderContext extends BaseItemInputContext {
 				isTranslucentDirect = false;
 			}
 		}
-
-		modelVertexConsumer = quadVertexConsumer(MaterialConstants.PRESET_DEFAULT);
 	}
 
 	/**
@@ -165,7 +144,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 	}
 
 	private void bufferQuad(QuadEmitterImpl quad, int preset) {
-		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(preset), quad, matrix, overlay, normalMatrix, packedNormalFrex);
+		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(preset), quad, matrix, overlay, normalMatrix, 0);
 	}
 
 	private void colorizeQuad(QuadEmitterImpl q, int colorIndex) {
@@ -229,13 +208,6 @@ public class ItemRenderContext extends BaseItemInputContext {
 			renderMeshQuad(this);
 			clear();
 			return this;
-		}
-	}
-
-	private class FallbackConsumer implements Consumer<BakedModel> {
-		@Override
-		public void accept(BakedModel model) {
-			vanillaHandler.accept(model, itemStack, lightmap, overlay, (MatrixStack) matrixStack, modelVertexConsumer);
 		}
 	}
 
