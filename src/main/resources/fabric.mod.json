@@ -5,6 +5,7 @@
 	"name": "Plumbum",
 	"description": "\"Plumbing system for Sodium render waste.\" \nFork of Indium. Supports FREX and FRAPI renders.",
 	"authors": [
+		"spiralhalo",
 		"comp500"
 	],
 	"contact": {
