@@ -51,7 +51,7 @@ public class BaseQuadRenderer {
 				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(q.vertexColor(i)));
 			}
 		} else {
-			final int blockColor = blockInfo.blockColor(blockColorIndex);
+			final int blockColor = blockInfo.indexedColor(blockColorIndex);
 
 			for (int i = 0; i < 4; i++) {
 				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.vertexColor(i))));

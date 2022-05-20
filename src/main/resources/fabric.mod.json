@@ -3,7 +3,7 @@
 	"id": "plumbum",
 	"version": "${version}",
 	"name": "Plumbum",
-	"description": "\"Plumbing system for Sodium render waste.\" \nFork of Indium. Supports FREX and FRAPI renders.",
+	"description": "\"Plumbing system for the Sodium render pipeline.\" \nFork of Indium. Supports FREX and FRAPI renders.",
 	"authors": [
 		"spiralhalo",
 		"comp500"

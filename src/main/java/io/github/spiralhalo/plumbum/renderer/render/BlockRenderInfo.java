@@ -17,6 +17,7 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
 import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
@@ -29,9 +30,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.Random;
-import java.util.function.Supplier;
-
 /**
  * Holds, manages and provides access to the block/world related state
  * needed by fallback and mesh consumers.
@@ -41,24 +39,14 @@ import java.util.function.Supplier;
  */
 public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
+	private final boolean isTerrain;
 	protected BlockOcclusionCache blockOcclusionCache;
-	public final Random random = new Random();
-	public long seed;
 	boolean defaultAo;
 	RenderLayer defaultLayer;
 
-	public final Supplier<Random> randomSupplier = () -> {
-		final Random result = random;
-		long seed = this.seed;
-
-		if (seed == -1L) {
-			seed = blockState.getRenderingSeed(blockPos);
-			this.seed = seed;
-		}
-
-		result.setSeed(seed);
-		return result;
-	};
+	public BlockRenderInfo(boolean isTerrain) {
+		this.isTerrain = isTerrain;
+	}
 
 	public void setBlockView(BlockRenderView blockView) {
 		this.blockView = blockView;
@@ -68,17 +56,18 @@ public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 		this.blockOcclusionCache = blockOcclusionCache;
 	}
 
+	@Override
 	public void prepareForBlock(BakedModel bakedModel, BlockState blockState, BlockPos blockPos) {
 		super.prepareForBlock(bakedModel, blockState, blockPos);
 		this.blockPos = blockPos;
 		this.blockState = blockState;
 		// in the unlikely case seed actually matches this, we'll simply retrieve it more than one
-		seed = -1L;
 		defaultAo = bakedModel.useAmbientOcclusion() && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 	}
 
+	@Override
 	public void release() {
 		super.release();
 		blockPos = null;
@@ -86,21 +75,34 @@ public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 		blockOcclusionCache = null;
 	}
 
-	int blockColor(int colorIndex) {
-		return 0xFF000000 | blockColorMap.getColor(blockState, blockView, blockPos, colorIndex);
+	@Override
+	public boolean cullTest(Direction face) {
+		return !isTerrain || super.cullTest(face);
 	}
 
-	boolean shouldDrawFace(Direction face) {
-		return true;
+	@Override
+	public boolean cullTest(int faceIndex) {
+		return !isTerrain || super.cullTest(faceIndex);
 	}
 
-	RenderLayer effectiveRenderLayer(int preset) {
-		return switch (preset) {
+	RenderLayer effectiveRenderLayer(RenderMaterial mat) {
+		return switch (mat.preset()) {
 			case MaterialConstants.PRESET_SOLID -> RenderLayer.getSolid();
 			case MaterialConstants.PRESET_CUTOUT_MIPPED -> RenderLayer.getCutoutMipped();
 			case MaterialConstants.PRESET_CUTOUT -> RenderLayer.getCutout();
 			case MaterialConstants.PRESET_TRANSLUCENT -> RenderLayer.getTranslucent();
-			default -> defaultLayer;
+			case MaterialConstants.PRESET_DEFAULT -> defaultLayer;
+			default -> {
+				if (mat.target() == MaterialConstants.TARGET_MAIN) {
+					if (mat.cutout() == MaterialConstants.CUTOUT_NONE) {
+						yield RenderLayer.getSolid();
+					} else {
+						yield mat.unmipped() ? RenderLayer.getCutout() : RenderLayer.getCutoutMipped();
+					}
+				} else {
+					yield RenderLayer.getTranslucent();
+				}
+			}
 		};
 	}
 }

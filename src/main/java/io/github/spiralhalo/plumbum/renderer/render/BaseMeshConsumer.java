@@ -62,8 +62,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 	}
 
 	private void renderQuad(QuadEmitterImpl quad) {
-
-		if (!blockInfo.shouldDrawFace(quad.cullFace())) {
+		if (!blockInfo.cullTest(quad.cullFaceId())) {
 			return;
 		}
 
@@ -83,7 +82,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 	 */
 	private void tessellateQuad(QuadEmitterImpl quad, RenderMaterial mat) {
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
-		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.preset());
+		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat);
 
 		if (blockInfo.defaultAo && !mat.disableAo()) {
 			if (mat.emissive()) {

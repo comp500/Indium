@@ -113,11 +113,15 @@ public class ItemRenderContext extends BaseItemInputContext {
 	 * in {@code RenderLayers.getEntityBlockLayer}. Layers other than
 	 * translucent are mapped to cutout.
 	 */
-	private VertexConsumer quadVertexConsumer(int preset) {
+	private VertexConsumer quadVertexConsumer(RenderMaterial mat) {
 		boolean translucent;
+
+		int preset = mat.preset();
 
 		if (preset == MaterialConstants.PRESET_DEFAULT) {
 			translucent = isDefaultTranslucent;
+		} else if (preset == MaterialConstants.PRESET_NONE) {
+			translucent = mat.target() != MaterialConstants.TARGET_MAIN;
 		} else {
 			translucent = preset == MaterialConstants.PRESET_TRANSLUCENT;
 		}
@@ -125,26 +129,26 @@ public class ItemRenderContext extends BaseItemInputContext {
 		if (translucent) {
 			if (translucentVertexConsumer == null) {
 				if (isTranslucentDirect) {
-					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, mat.foilOverlay());
 				} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, mat.foilOverlay());
 				} else {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, mat.foilOverlay());
 				}
 			}
 
 			return translucentVertexConsumer;
 		} else {
 			if (cutoutVertexConsumer == null) {
-				cutoutVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, itemStack.hasGlint());
+				cutoutVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, mat.foilOverlay());
 			}
 
 			return cutoutVertexConsumer;
 		}
 	}
 
-	private void bufferQuad(QuadEmitterImpl quad, int preset) {
-		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(preset), quad, matrix, overlay, normalMatrix, 0);
+	private void bufferQuad(QuadEmitterImpl quad) {
+		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(quad.material()), quad, matrix, overlay, normalMatrix);
 	}
 
 	private void colorizeQuad(QuadEmitterImpl q, int colorIndex) {
@@ -161,7 +165,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 		}
 	}
 
-	private void renderQuad(QuadEmitterImpl quad, int preset, int colorIndex) {
+	private void renderQuad(QuadEmitterImpl quad, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		final int lightmap = this.lightmap;
@@ -170,29 +174,27 @@ public class ItemRenderContext extends BaseItemInputContext {
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), lightmap));
 		}
 
-		bufferQuad(quad, preset);
+		bufferQuad(quad);
 	}
 
-	private void renderQuadEmissive(QuadEmitterImpl quad, int preset, int colorIndex) {
+	private void renderQuadEmissive(QuadEmitterImpl quad, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
-		bufferQuad(quad, preset);
+		bufferQuad(quad);
 	}
 
 	private void renderMeshQuad(QuadEmitterImpl quad) {
 		final RenderMaterial mat = quad.material();
-
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
-		final int preset = mat.preset();
 
 		if (mat.emissive()) {
-			renderQuadEmissive(quad, preset, colorIndex);
+			renderQuadEmissive(quad, colorIndex);
 		} else {
-			renderQuad(quad, preset, colorIndex);
+			renderQuad(quad, colorIndex);
 		}
 	}
 

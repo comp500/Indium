@@ -38,7 +38,7 @@ import java.util.function.Function;
  * Context for non-terrain block rendering.
  */
 public class BlockRenderContext {
-	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
+	private final BlockRenderInfo blockInfo = new BlockRenderInfo(false);
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc);
 	private VertexConsumer bufferBuilder;

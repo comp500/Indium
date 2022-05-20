@@ -14,7 +14,6 @@ import java.util.function.Function;
 
 public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, VertexConsumer> bufferFunc;
-	protected int packedNormalFrex;
 
 	protected abstract Matrix4f matrix();
 
@@ -28,17 +27,18 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 
 	@Override
 	public void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer) {
-		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix(), packedNormalFrex);
+		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix());
 	}
 
-	public static void bufferQuad(VertexConsumer buff, QuadEmitterImpl quad, Matrix4f matrix, int overlay, FastMatrix3f normalMatrix, int packedNormal) {
+	public static void bufferQuad(VertexConsumer buff, QuadEmitterImpl quad, Matrix4f matrix, int overlay, FastMatrix3f normalMatrix) {
 		final boolean useNormals = quad.hasVertexNormals();
+		final int packedFaceNormal;
 
 		if (useNormals) {
 			quad.populateMissingNormals();
+			packedFaceNormal = 0;
 		} else {
-			packedNormal = quad.packedFaceNormal();
-			packedNormal = normalMatrix.f_transformPacked3f(packedNormal);
+			packedFaceNormal = normalMatrix.f_transformPacked3f(quad.packedFaceNormal());
 		}
 
 		for (int i = 0; i < 4; i++) {
@@ -49,10 +49,7 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 			buff.overlay(overlay);
 			buff.light(quad.lightmap(i));
 
-			if (useNormals) {
-				packedNormal = quad.packedNormal(i);
-				packedNormal = normalMatrix.f_transformPacked3f(packedNormal);
-			}
+			final int packedNormal = useNormals ? normalMatrix.f_transformPacked3f(quad.packedNormal(i)) : packedFaceNormal;
 
 			buff.normal(PackedVector3f.unpackX(packedNormal), PackedVector3f.unpackY(packedNormal), PackedVector3f.unpackZ(packedNormal));
 			buff.next();
