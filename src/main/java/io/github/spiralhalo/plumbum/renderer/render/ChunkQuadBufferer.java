@@ -59,7 +59,7 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 
 		indices.add(vertexStart, ModelQuadWinding.CLOCKWISE);
 
-		Sprite sprite = quad.cachedSprite();
+		Sprite sprite = quad.material().texture().spriteIndex().fromIndex(quad.spriteId());
 
 		if (sprite == null) {
 			sprite = SpriteFinderCache.forBlockAtlas().find(quad);

@@ -180,10 +180,10 @@ public class AoCalculator {
 		quad.toVanilla(vertexData, 0);
 
 		VanillaAoHelper.updateShape(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), vertexData, face, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.fabric_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, !quad.material().disableDiffuse());
+		vanillaCalc.plumbum_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, !quad.material().disableDiffuse());
 
-		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.plumbum_colorMultiplier(), 0, aoDest, 0, 4);
+		System.arraycopy(vanillaCalc.plumbum_brightness(), 0, lightDest, 0, 4);
 	}
 
 	private void calcFastVanilla(QuadEmitterImpl quad) {

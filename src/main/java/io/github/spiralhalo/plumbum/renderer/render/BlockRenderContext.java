@@ -19,6 +19,7 @@ package io.github.spiralhalo.plumbum.renderer.render;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoLuminanceFix;
 import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.MatrixStack;
 import io.vram.frex.api.model.BlockModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -26,12 +27,10 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.Random;
 import java.util.function.Function;
 
 /**
@@ -66,13 +65,13 @@ public class BlockRenderContext {
 
 	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, int overlay, boolean enableCulling) {
 		this.bufferBuilder = buffer;
-		this.matrix = matrixStack.peek().getPositionMatrix();
-		this.normalMatrix = (FastMatrix3f) (Object) matrixStack.peek().getNormalMatrix();
+		this.matrix = (Matrix4f) (Object) matrixStack.modelMatrix();
+		this.normalMatrix = matrixStack.normalMatrix();
 
 		this.didOutput = false;
 		aoCalc.clear();
 		blockInfo.prepare(overlay);
-		blockInfo.prepareForWorld(blockView, enableCulling, (io.vram.frex.api.math.MatrixStack) matrixStack);
+		blockInfo.prepareForWorld(blockView, enableCulling, matrixStack);
 		blockInfo.prepareForBlock(model, state, pos);
 
 		((BlockModel) model).renderAsBlock(blockInfo, meshConsumer.getEmitter());

@@ -16,10 +16,12 @@
 
 package io.github.spiralhalo.plumbum.mixin.renderer;
 
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
 import io.github.spiralhalo.plumbum.renderer.render.ItemRenderContext;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.item.BuiltinModelItemRenderer;
+import net.minecraft.client.render.item.ItemModels;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
@@ -34,7 +36,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemRenderer.class)
-public abstract class MixinItemRenderer {
+public abstract class MixinItemRenderer implements AccessItemRenderer {
+	@Final
+	@Shadow
+	private BuiltinModelItemRenderer builtinModelItemRenderer;
+
+	@Shadow private ItemModels models;
+
 	@Final
 	@Shadow
 	private ItemColors colors;
@@ -44,9 +52,15 @@ public abstract class MixinItemRenderer {
 
 	@Inject(at = @At("HEAD"), method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformation$Mode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V", cancellable = true)
 	public void hook_renderItem(ItemStack stack, ModelTransformation.Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int overlay, BakedModel model, CallbackInfo ci) {
-		if (!stack.isEmpty() && !((FabricBakedModel) model).isVanillaAdapter()) {
-			fabric_contexts.get().renderModel(stack, transformMode, invert, matrixStack, vertexConsumerProvider, light, overlay, model);
-			ci.cancel();
+		if (!stack.isEmpty()) {
+			fabric_contexts.get().renderModel(models, stack, transformMode, invert, io.vram.frex.api.math.MatrixStack.fromVanilla(matrixStack), vertexConsumerProvider, light, overlay, model);
 		}
+
+		ci.cancel();
+	}
+
+	@Override
+	public BuiltinModelItemRenderer plumbum_builtInRenderer() {
+		return builtinModelItemRenderer;
 	}
 }

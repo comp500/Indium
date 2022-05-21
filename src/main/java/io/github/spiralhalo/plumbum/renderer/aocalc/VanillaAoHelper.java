@@ -77,6 +77,6 @@ public class VanillaAoHelper {
 	}
 
 	public static void updateShape(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
-		blockRenderer.fabric_updateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
+		blockRenderer.plumbum_updateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

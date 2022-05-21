@@ -16,26 +16,30 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
 import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.model.BlockItemModel;
+import io.vram.frex.api.math.MatrixStack;
+import io.vram.frex.api.model.ItemModel;
 import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
 import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.item.ItemModels;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation.Mode;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.Matrix4f;
 
 /**
@@ -45,6 +49,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 	protected Matrix4f matrix;
 	protected FastMatrix3f normalMatrix;
 	private final ItemColors rendererColorMap;
+	protected MaterialMap materialMap = MaterialMap.defaultMaterialMap();
 
 	private final Maker editorQuad = new Maker();
 
@@ -59,22 +64,48 @@ public class ItemRenderContext extends BaseItemInputContext {
 		this.rendererColorMap = rendererColorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+	public void renderModel(ItemModels models, ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+		// Prepare
 		this.vertexConsumerProvider = vertexConsumerProvider;
-
 		final boolean itemIsLeftHand = renderMode.equals(Mode.FIRST_PERSON_LEFT_HAND) || renderMode.equals(Mode.THIRD_PERSON_LEFT_HAND);
-		prepareForItem(model, itemStack, renderMode, lightmap, overlay, itemIsLeftHand, (io.vram.frex.api.math.MatrixStack) matrixStack);
+		final net.minecraft.client.util.math.MatrixStack vanillaStack = matrixStack.toVanilla();
+		prepareForItem(model, itemStack, renderMode, lightmap, overlay, itemIsLeftHand, matrixStack);
 		computeOutputInfo();
+		materialMap = MaterialMap.get(itemStack);
+		final var itemTransforms = model.getTransformation();
 
-		matrixStack.push();
-		model.getTransformation().getTransformation(renderMode).apply(invert, matrixStack);
-		matrixStack.translate(-0.5D, -0.5D, -0.5D);
-		matrix = matrixStack.peek().getPositionMatrix();
-		normalMatrix = (FastMatrix3f) (Object) matrixStack.peek().getNormalMatrix();
+		// Magic
+		final boolean detachedPerspective = renderMode == Mode.GUI || renderMode == Mode.GROUND || renderMode == Mode.FIXED;
 
-		((BlockItemModel) model).renderAsItem(this, getEmitter());
+		if (detachedPerspective) {
+			if (itemStack.isOf(Items.TRIDENT)) {
+				model = models.getModel(Items.TRIDENT);
+			} else if (itemStack.isOf(Items.SPYGLASS)) {
+				model = models.getModel(Items.SPYGLASS);
+			}
+		}
 
-		matrixStack.pop();
+		// Transform
+		if (itemTransforms != null) {
+			matrixStack.push();
+			itemTransforms.getTransformation(renderMode).apply(itemIsLeftHand, vanillaStack);
+			matrixStack.translate(-0.5f, -0.5f, -0.5f);
+		}
+
+		matrix = (Matrix4f) (Object) matrixStack.modelMatrix();
+		normalMatrix = matrixStack.normalMatrix();
+
+		// Render
+		if (model.isBuiltin() || itemStack.getItem() == Items.TRIDENT && !detachedPerspective) {
+			((AccessItemRenderer)MinecraftClient.getInstance().getItemRenderer()).plumbum_builtInRenderer().render(itemStack, renderMode, vanillaStack, vertexConsumerProvider, lightmap, overlay);
+		} else {
+			((ItemModel) model).renderAsItem(this, getEmitter());
+		}
+
+		// Closing
+		if (itemTransforms != null) {
+			matrixStack.pop();
+		}
 
 		this.itemStack = null;
 		this.matrixStack = null;

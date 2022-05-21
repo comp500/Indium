@@ -19,6 +19,7 @@ package io.github.spiralhalo.plumbum.mixin.renderer;
 import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
 import io.github.spiralhalo.plumbum.renderer.aocalc.VanillaAoHelper;
 import io.github.spiralhalo.plumbum.renderer.render.BlockRenderContext;
+import io.vram.frex.mixinterface.PoseStackExt;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
@@ -49,10 +50,8 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 
 	@Inject(at = @At("HEAD"), method = "render(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;ZLjava/util/Random;JI)Z", cancellable = true)
 	private void hookRender(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrix, VertexConsumer buffer, boolean checkSides, Random rand, long seed, int overlay, CallbackInfoReturnable<Boolean> ci) {
-		if (!((FabricBakedModel) model).isVanillaAdapter()) {
-			BlockRenderContext context = plumbum_contexts.get();
-			ci.setReturnValue(context.render(blockView, model, state, pos, matrix, buffer, overlay, checkSides));
-		}
+		BlockRenderContext context = plumbum_contexts.get();
+		ci.setReturnValue(context.render(blockView, model, state, pos, ((PoseStackExt) matrix).frx_asMatrixStack(), buffer, overlay, checkSides));
 	}
 
 	@Inject(at = @At("RETURN"), method = "<init>*")
@@ -61,7 +60,7 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 	}
 
 	@Override
-	public void fabric_updateShape(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
+	public void plumbum_updateShape(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
 		getQuadDimensions(blockView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

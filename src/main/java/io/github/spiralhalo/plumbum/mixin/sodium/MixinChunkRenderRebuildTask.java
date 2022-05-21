@@ -4,6 +4,8 @@ import io.github.spiralhalo.plumbum.Plumbum;
 import io.github.spiralhalo.plumbum.other.AccessBlockRenderer;
 import io.github.spiralhalo.plumbum.other.AccessChunkRenderCacheLocal;
 import io.github.spiralhalo.plumbum.renderer.render.TerrainRenderContext;
+import io.vram.frex.api.model.BlockModel;
+import io.vram.frex.api.model.DynamicModel;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
@@ -45,14 +47,8 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	@Redirect(method = "performBuild(Lme/jellysquid/mods/sodium/client/gl/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationSource;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildResult;",
 			at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/render/model/BakedModel;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;ZJ)Z"))
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
-		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
-
-		if (!Plumbum.ALWAYS_TESSELLATE_PLUMBUM && ((FabricBakedModel) model).isVanillaAdapter()) {
-			return blockRenderer.renderModel(world, state, pos, origin, model, buffers, cull, seed);
-		} else {
-			TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).plumbum_getTerrainRenderContext();
-			Vec3d modelOffset = state.getModelOffset(world, pos);
-			return context.tessellateBlock(state, pos, origin, model, modelOffset);
-		}
+		TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).plumbum_getTerrainRenderContext();
+		Vec3d modelOffset = state.getModelOffset(world, pos);
+		return context.tessellateBlock(state, pos, origin, model, modelOffset);
 	}
 }

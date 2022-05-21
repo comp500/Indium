@@ -43,17 +43,17 @@ public abstract class MixinAmbientOcclusionCalculator implements AccessAmbientOc
 	public abstract void apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 
 	@Override
-	public float[] fabric_colorMultiplier() {
+	public float[] plumbum_colorMultiplier() {
 		return brightness;
 	}
 
 	@Override
-	public int[] fabric_brightness() {
+	public int[] plumbum_brightness() {
 		return light;
 	}
 
 	@Override
-	public void fabric_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade) {
+	public void plumbum_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade) {
 		apply(blockRenderView, blockState, pos, face, aoData, controlBits, shade);
 	}
 }

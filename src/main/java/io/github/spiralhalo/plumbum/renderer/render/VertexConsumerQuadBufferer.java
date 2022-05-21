@@ -55,10 +55,11 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 			buff.next();
 		}
 
-		Sprite sprite = quad.cachedSprite();
+		// most vanilla sprites will return non-null
+		Sprite sprite = quad.material().texture().spriteIndex().fromIndex(quad.spriteId());
 
 		if (sprite == null) {
-			sprite = SpriteFinderCache.forBlockAtlas().find(quad);
+			sprite = quad.material().texture().spriteFinder().find(quad);
 		}
 
 		SpriteUtil.markSpriteActive(sprite);

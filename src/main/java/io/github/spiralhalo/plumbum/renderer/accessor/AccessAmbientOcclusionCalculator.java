@@ -24,9 +24,9 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
 public interface AccessAmbientOcclusionCalculator {
-	float[] fabric_colorMultiplier();
+	float[] plumbum_colorMultiplier();
 
-	int[] fabric_brightness();
+	int[] plumbum_brightness();
 
-	void fabric_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
+	void plumbum_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 }
