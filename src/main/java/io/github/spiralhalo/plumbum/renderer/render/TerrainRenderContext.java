@@ -19,7 +19,7 @@ import net.minecraft.world.BlockRenderView;
 import java.util.function.Function;
 
 public class TerrainRenderContext {
-	private final BlockRenderInfo blockInfo = new BlockRenderInfo(true);
+	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
 

@@ -38,7 +38,7 @@ import java.util.function.Function;
  * Context for non-terrain block rendering.
  */
 public class BlockRenderContext {
-	private final BlockRenderInfo blockInfo = new BlockRenderInfo(false);
+	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc);
 	private VertexConsumer bufferBuilder;
@@ -64,7 +64,7 @@ public class BlockRenderContext {
 		return bufferBuilder;
 	}
 
-	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, Random random, long seed, int overlay) {
+	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, int overlay, boolean enableCulling) {
 		this.bufferBuilder = buffer;
 		this.matrix = matrixStack.peek().getPositionMatrix();
 		this.normalMatrix = (FastMatrix3f) (Object) matrixStack.peek().getNormalMatrix();
@@ -72,7 +72,7 @@ public class BlockRenderContext {
 		this.didOutput = false;
 		aoCalc.clear();
 		blockInfo.prepare(overlay);
-		blockInfo.prepareForWorld(blockView, false, (io.vram.frex.api.math.MatrixStack) matrixStack);
+		blockInfo.prepareForWorld(blockView, enableCulling, (io.vram.frex.api.math.MatrixStack) matrixStack);
 		blockInfo.prepareForBlock(model, state, pos);
 
 		((BlockModel) model).renderAsBlock(blockInfo, meshConsumer.getEmitter());

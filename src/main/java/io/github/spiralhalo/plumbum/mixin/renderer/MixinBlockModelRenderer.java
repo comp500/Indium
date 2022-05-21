@@ -51,8 +51,7 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 	private void hookRender(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrix, VertexConsumer buffer, boolean checkSides, Random rand, long seed, int overlay, CallbackInfoReturnable<Boolean> ci) {
 		if (!((FabricBakedModel) model).isVanillaAdapter()) {
 			BlockRenderContext context = plumbum_contexts.get();
-			// Note that we do not support face-culling here (so checkSides is ignored)
-			ci.setReturnValue(context.render(blockView, model, state, pos, matrix, buffer, rand, seed, overlay));
+			ci.setReturnValue(context.render(blockView, model, state, pos, matrix, buffer, overlay, checkSides));
 		}
 	}
 

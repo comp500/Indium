@@ -28,24 +28,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ChunkRenderRebuildTask.class)
 public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
-	@Inject(method = "performBuild", at = @At("HEAD"), remap = false)
+	@Inject(method = "performBuild(Lme/jellysquid/mods/sodium/client/gl/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationSource;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildResult;", at = @At("HEAD"), remap = false)
 	public void beforePerformBuild(ChunkBuildContext buildContext, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).plumbum_getTerrainRenderContext();
 		// Set up our rendering context
 		context.prepare(buildContext.cache.getWorldSlice(), buildContext.buffers, ((AccessBlockRenderer) buildContext.cache.getBlockRenderer()).plumbum_getBlockOcclusionCache());
 	}
 
-	@Inject(method = "performBuild", at = @At("RETURN"), remap = false)
+	@Inject(method = "performBuild(Lme/jellysquid/mods/sodium/client/gl/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationSource;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildResult;", at = @At("RETURN"), remap = false)
 	public void afterPerformBuild(ChunkBuildContext buildContext, CancellationSource cancellationSource, CallbackInfoReturnable<ChunkBuildResult> cir) {
 		TerrainRenderContext context = ((AccessChunkRenderCacheLocal) buildContext.cache).plumbum_getTerrainRenderContext();
 		// Tear down our rendering context
 		context.release();
 	}
 
-	// Can't specify the arguments here, as the arguments wouldn't get remapped
-	// and remap = true fails as it tries to find a mapping for renderBlock
-	// so I just let MinecraftDev yell at me here
-	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/render/model/BakedModel;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;ZJ)Z"), remap = false)
+	@Redirect(method = "performBuild(Lme/jellysquid/mods/sodium/client/gl/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationSource;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildResult;",
+			at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/render/model/BakedModel;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;ZJ)Z"))
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 

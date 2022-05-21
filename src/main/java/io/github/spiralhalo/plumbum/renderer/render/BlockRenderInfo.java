@@ -22,12 +22,10 @@ import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
 /**
@@ -38,15 +36,9 @@ import net.minecraft.world.BlockRenderView;
  * so they can be applied together with chunk offsets.
  */
 public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
-	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	private final boolean isTerrain;
 	protected BlockOcclusionCache blockOcclusionCache;
 	boolean defaultAo;
 	RenderLayer defaultLayer;
-
-	public BlockRenderInfo(boolean isTerrain) {
-		this.isTerrain = isTerrain;
-	}
 
 	public void setBlockView(BlockRenderView blockView) {
 		this.blockView = blockView;
@@ -59,11 +51,7 @@ public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	@Override
 	public void prepareForBlock(BakedModel bakedModel, BlockState blockState, BlockPos blockPos) {
 		super.prepareForBlock(bakedModel, blockState, blockPos);
-		this.blockPos = blockPos;
-		this.blockState = blockState;
-		// in the unlikely case seed actually matches this, we'll simply retrieve it more than one
 		defaultAo = bakedModel.useAmbientOcclusion() && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
-
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 	}
 
@@ -73,16 +61,6 @@ public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 		blockPos = null;
 		blockState = null;
 		blockOcclusionCache = null;
-	}
-
-	@Override
-	public boolean cullTest(Direction face) {
-		return !isTerrain || super.cullTest(face);
-	}
-
-	@Override
-	public boolean cullTest(int faceIndex) {
-		return !isTerrain || super.cullTest(faceIndex);
 	}
 
 	RenderLayer effectiveRenderLayer(RenderMaterial mat) {
