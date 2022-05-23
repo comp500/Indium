@@ -10,8 +10,6 @@ The name means the chemical element *Pb*, and also "plumbing", in reference to t
 
 **This mod is currently experimental and temporary.** Possible merging with upstream Indium is being considered and deliberated.
 
-Custom FRAPI models render properly! Tested with Campanion, LambdaBetterGrass, and Continuity.
+Custom FREX and FRAPI models render properly! Tested with Campanion, LambdaBetterGrass, Continuity, and Exotic blocks.
 
-FREX extended features are technically implemented, but they are likely ignored. More support are added gradually. It hasn't been tested against pure FREX implementation at the time of writing.
-
-Still depends on FRAPI to differentiate vanilla baked models.
+All of FREX material properties that are supported by Pastel are supported at least partially. More support are added gradually.

@@ -20,7 +20,6 @@ import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
 import io.github.spiralhalo.plumbum.renderer.aocalc.VanillaAoHelper;
 import io.github.spiralhalo.plumbum.renderer.render.BlockRenderContext;
 import io.vram.frex.mixinterface.PoseStackExt;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockModelRenderer;

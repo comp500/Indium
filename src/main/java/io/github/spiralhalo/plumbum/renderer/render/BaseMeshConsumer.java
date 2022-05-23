@@ -47,7 +47,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 		// only used via RenderContext.getEmitter()
 		@Override
 		public Maker emit() {
-			computeGeometry();
+			complete();
 			renderQuad(this);
 			clear();
 			return this;
@@ -85,14 +85,14 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat);
 
 		if (blockInfo.defaultAo && !mat.disableAo()) {
-			if (mat.emissive()) {
-				tessellateSmoothEmissive(quad, renderLayer, colorIndex);
+			if (mat.emissive() || mat.unlit()) {
+				tessellateSmoothUnlit(quad, renderLayer, colorIndex);
 			} else {
 				tessellateSmooth(quad, renderLayer, colorIndex);
 			}
 		} else {
-			if (mat.emissive()) {
-				tessellateFlatEmissive(quad, renderLayer, colorIndex);
+			if (mat.emissive() || mat.unlit()) {
+				tessellateFlatUnlit(quad, renderLayer, colorIndex);
 			} else {
 				tessellateFlat(quad, renderLayer, colorIndex);
 			}

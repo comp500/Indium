@@ -157,14 +157,16 @@ public class ItemRenderContext extends BaseItemInputContext {
 			translucent = preset == MaterialConstants.PRESET_TRANSLUCENT;
 		}
 
+		boolean hasFoil = itemStack.hasGlint() || mat.foilOverlay();
+
 		if (translucent) {
 			if (translucentVertexConsumer == null) {
 				if (isTranslucentDirect) {
-					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, mat.foilOverlay());
+					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, hasFoil);
 				} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, mat.foilOverlay());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, hasFoil);
 				} else {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, mat.foilOverlay());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, hasFoil);
 				}
 			}
 
@@ -208,7 +210,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 		bufferQuad(quad);
 	}
 
-	private void renderQuadEmissive(QuadEmitterImpl quad, int colorIndex) {
+	private void renderQuadUnlit(QuadEmitterImpl quad, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -222,8 +224,8 @@ public class ItemRenderContext extends BaseItemInputContext {
 		final RenderMaterial mat = quad.material();
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
 
-		if (mat.emissive()) {
-			renderQuadEmissive(quad, colorIndex);
+		if (mat.emissive() || mat.unlit()) {
+			renderQuadUnlit(quad, colorIndex);
 		} else {
 			renderQuad(quad, colorIndex);
 		}
@@ -237,7 +239,7 @@ public class ItemRenderContext extends BaseItemInputContext {
 
 		@Override
 		public Maker emit() {
-			computeGeometry();
+			complete();
 			renderMeshQuad(this);
 			clear();
 			return this;

@@ -1,11 +1,8 @@
 package io.github.spiralhalo.plumbum.mixin.sodium;
 
-import io.github.spiralhalo.plumbum.Plumbum;
 import io.github.spiralhalo.plumbum.other.AccessBlockRenderer;
 import io.github.spiralhalo.plumbum.other.AccessChunkRenderCacheLocal;
 import io.github.spiralhalo.plumbum.renderer.render.TerrainRenderContext;
-import io.vram.frex.api.model.BlockModel;
-import io.vram.frex.api.model.DynamicModel;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
@@ -13,7 +10,6 @@ import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderBuildTask;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import me.jellysquid.mods.sodium.client.util.task.CancellationSource;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;

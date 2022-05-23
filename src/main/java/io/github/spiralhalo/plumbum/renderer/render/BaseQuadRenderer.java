@@ -79,7 +79,7 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with smooth lighting. */
-	protected void tessellateSmoothEmissive(QuadEmitterImpl q, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateSmoothUnlit(QuadEmitterImpl q, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
@@ -105,7 +105,7 @@ public class BaseQuadRenderer {
 	}
 
 	/** for emissive mesh quads with flat lighting. */
-	protected void tessellateFlatEmissive(QuadEmitterImpl quad, RenderLayer renderLayer, int blockColorIndex) {
+	protected void tessellateFlatUnlit(QuadEmitterImpl quad, RenderLayer renderLayer, int blockColorIndex) {
 		colorizeQuad(quad, blockColorIndex);
 		shadeFlatQuad(quad);
 

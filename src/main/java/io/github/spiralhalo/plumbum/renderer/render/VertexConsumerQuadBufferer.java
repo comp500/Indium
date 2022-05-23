@@ -1,10 +1,11 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.FastMatrix3f;
 import io.vram.frex.api.math.PackedVector3f;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.Sprite;
@@ -39,6 +40,14 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 			packedFaceNormal = 0;
 		} else {
 			packedFaceNormal = normalMatrix.f_transformPacked3f(quad.packedFaceNormal());
+		}
+
+		// overlay is not set, use material's instead
+		if (overlay == OverlayTexture.DEFAULT_UV) {
+			final RenderMaterial mat = quad.material();
+			final int overlayV = mat.hurtOverlay() ? 3 : 10;
+			final int overlayU = mat.flashOverlay() ? 10 : 0;
+			overlay = overlayU & 0xffff | (overlayV & 0xffff) << 16;
 		}
 
 		for (int i = 0; i < 4; i++) {
