@@ -66,6 +66,7 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 			return;
 		}
 
+		quad.mapMaterial(blockInfo.materialMap);
 		final RenderMaterial mat = quad.material();
 
 		if (!mat.disableAo() && MinecraftClient.isAmbientOcclusionEnabled()) {

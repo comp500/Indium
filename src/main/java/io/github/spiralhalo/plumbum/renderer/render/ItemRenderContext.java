@@ -221,6 +221,8 @@ public class ItemRenderContext extends BaseItemInputContext {
 	}
 
 	private void renderMeshQuad(QuadEmitterImpl quad) {
+		quad.mapMaterial(materialMap);
+
 		final RenderMaterial mat = quad.material();
 		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
 

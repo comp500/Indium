@@ -16,9 +16,12 @@
 
 package io.github.spiralhalo.plumbum.renderer.mesh;
 
+import io.vram.frex.api.material.MaterialMap;
+import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.PackedVector3f;
 import io.vram.frex.base.renderer.mesh.RootQuadEmitter;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.texture.Sprite;
 
 /**
  * Same as {@link RootQuadEmitter} but with sprite cache and helper function
@@ -51,6 +54,17 @@ public abstract class QuadEmitterImpl extends RootQuadEmitter {
 			if (((normalFlag >> i) & 1) == 0) {
 				normal(i, PackedVector3f.unpackX(packedNormal), PackedVector3f.unpackY(packedNormal), PackedVector3f.unpackZ(packedNormal));
 			}
+		}
+	}
+
+	public void mapMaterial(MaterialMap materialMap) {
+		if (materialMap == MaterialMap.defaultMaterialMap()) return;
+
+		final Sprite sprite = materialMap.needsSprite() ? material().texture().spriteIndex().fromIndex(spriteId()) : null;
+		final RenderMaterial mapped = materialMap.getMapped(sprite);
+
+		if (mapped != null) {
+			material(mapped);
 		}
 	}
 

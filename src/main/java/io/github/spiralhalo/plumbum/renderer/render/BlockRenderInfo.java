@@ -16,7 +16,9 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
@@ -37,6 +39,7 @@ import net.minecraft.world.BlockRenderView;
  */
 public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	protected BlockOcclusionCache blockOcclusionCache;
+	MaterialMap materialMap = MaterialMap.defaultMaterialMap();
 	boolean defaultAo;
 	RenderLayer defaultLayer;
 
@@ -51,6 +54,7 @@ public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	@Override
 	public void prepareForBlock(BakedModel bakedModel, BlockState blockState, BlockPos blockPos) {
 		super.prepareForBlock(bakedModel, blockState, blockPos);
+		materialMap = isFluidModel() ? MaterialMap.get(blockState.getFluidState()) : MaterialMap.get(blockState);
 		defaultAo = bakedModel.useAmbientOcclusion() && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 	}
