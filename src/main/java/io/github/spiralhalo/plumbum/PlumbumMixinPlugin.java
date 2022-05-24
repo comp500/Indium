@@ -1,12 +1,13 @@
 package io.github.spiralhalo.plumbum;
 
-import io.vram.frex.impl.RendererHolder;
+import java.util.List;
+import java.util.Set;
+
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import java.util.List;
-import java.util.Set;
+import io.vram.frex.impl.RendererHolder;
 
 public class PlumbumMixinPlugin implements IMixinConfigPlugin {
 	private final boolean shouldLoad;

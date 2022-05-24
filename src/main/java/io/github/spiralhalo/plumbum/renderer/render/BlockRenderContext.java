@@ -16,11 +16,8 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoLuminanceFix;
-import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.math.MatrixStack;
-import io.vram.frex.api.model.BlockModel;
+import java.util.function.Function;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -31,7 +28,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.function.Function;
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoLuminanceFix;
+
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.MatrixStack;
+import io.vram.frex.api.model.BlockModel;
 
 /**
  * Context for non-terrain block rendering.

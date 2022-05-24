@@ -16,19 +16,17 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
-import io.vram.frex.base.renderer.mesh.BaseQuadView;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import static io.github.spiralhalo.plumbum.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
+import static net.minecraft.util.math.Direction.*;
+
 import net.minecraft.util.Util;
 import net.minecraft.util.math.Direction;
 
-import static io.github.spiralhalo.plumbum.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
-import static net.minecraft.util.math.Direction.*;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
 
 /**
  * Adapted from vanilla BlockModelRenderer.AoCalculator.
  */
-@Environment(EnvType.CLIENT)
 enum AoFace {
 	AOF_DOWN(new Direction[] { WEST, EAST, NORTH, SOUTH }, (q, i) -> CLAMP_FUNC.clamp(q.y(i)), (q, i, w) -> {
 		final float u = CLAMP_FUNC.clamp(q.x(i));

@@ -16,18 +16,6 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
-import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
-import io.vram.frex.api.buffer.QuadEmitter;
-import io.vram.frex.api.material.MaterialConstants;
-import io.vram.frex.api.material.MaterialMap;
-import io.vram.frex.api.material.RenderMaterial;
-import io.vram.frex.api.math.FastMatrix3f;
-import io.vram.frex.api.math.MatrixStack;
-import io.vram.frex.api.model.ItemModel;
-import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
-import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
@@ -41,6 +29,20 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.Matrix4f;
+
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
+import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+
+import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
+import io.vram.frex.api.material.RenderMaterial;
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.MatrixStack;
+import io.vram.frex.api.model.ItemModel;
+import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 
 /**
  * The render context used for item rendering.

@@ -16,19 +16,21 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
-import io.github.spiralhalo.plumbum.Plumbum;
-import io.github.spiralhalo.plumbum.renderer.accessor.AccessAmbientOcclusionCalculator;
-import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
-import net.fabricmc.loader.api.FabricLoader;
+import java.lang.reflect.Constructor;
+import java.util.BitSet;
+import java.util.function.Supplier;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import java.lang.reflect.Constructor;
-import java.util.BitSet;
-import java.util.function.Supplier;
+import io.github.spiralhalo.plumbum.Plumbum;
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessAmbientOcclusionCalculator;
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
+
+import net.fabricmc.loader.api.FabricLoader;
 
 public class VanillaAoHelper {
 	private static Supplier<AccessAmbientOcclusionCalculator> factory;

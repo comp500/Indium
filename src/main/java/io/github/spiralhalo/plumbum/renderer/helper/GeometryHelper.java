@@ -16,15 +16,17 @@
 
 package io.github.spiralhalo.plumbum.renderer.helper;
 
-import io.vram.frex.api.math.PackedVector3f;
-import io.vram.frex.api.mesh.QuadView;
+import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
-import org.jetbrains.annotations.NotNull;
 
-import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.api.mesh.QuadView;
 
 /**
  * Static routines of general utility for renderer implementations.

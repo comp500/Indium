@@ -16,16 +16,6 @@
 
 package io.github.spiralhalo.plumbum;
 
-import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoConfig;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.util.TriState;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resource.ResourceType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +23,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Properties;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import net.minecraft.resource.ResourceType;
+
+import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoConfig;
+
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.util.TriState;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class Plumbum implements ClientModInitializer {
 	public static final boolean ALWAYS_TESSELLATE_PLUMBUM;

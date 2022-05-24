@@ -2,19 +2,21 @@ package io.github.spiralhalo.plumbum.renderer.render;
 
 import java.util.function.Function;
 
-import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
+
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+
+import io.github.spiralhalo.plumbum.other.SpriteFinderCache;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 
 public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, ChunkModelBuilder> builderFunc;

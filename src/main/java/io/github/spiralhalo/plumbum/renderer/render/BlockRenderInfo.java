@@ -16,12 +16,8 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
-import io.vram.frex.api.material.MaterialConstants;
-import io.vram.frex.api.material.MaterialMap;
-import io.vram.frex.api.material.RenderMaterial;
-import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
@@ -29,6 +25,11 @@ import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockRenderView;
+
+import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
+import io.vram.frex.api.material.RenderMaterial;
+import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 
 /**
  * Holds, manages and provides access to the block/world related state

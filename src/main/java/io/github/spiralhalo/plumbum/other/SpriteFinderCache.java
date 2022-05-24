@@ -1,16 +1,18 @@
 package io.github.spiralhalo.plumbum.other;
 
-import io.vram.frex.api.texture.SpriteFinder;
-import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import java.util.Collection;
+import java.util.List;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedModelManager;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 
-import java.util.Collection;
-import java.util.List;
+import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+
+import io.vram.frex.api.texture.SpriteFinder;
 
 /**
  * Cache SpriteFinders for maximum efficiency.

@@ -16,8 +16,14 @@
 
 package io.github.spiralhalo.plumbum.mixin.renderer;
 
-import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
-import io.github.spiralhalo.plumbum.renderer.render.ItemRenderContext;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.BuiltinModelItemRenderer;
@@ -27,13 +33,9 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessItemRenderer;
+import io.github.spiralhalo.plumbum.renderer.render.ItemRenderContext;
 
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer implements AccessItemRenderer {

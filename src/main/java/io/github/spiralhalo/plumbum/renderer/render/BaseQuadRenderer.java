@@ -16,11 +16,6 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
-import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
-import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
-import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
-import io.vram.frex.api.math.PackedVector3f;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -28,6 +23,13 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
+import io.github.spiralhalo.plumbum.renderer.helper.ColorHelper;
+import io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper;
+import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+
+import io.vram.frex.api.math.PackedVector3f;
 
 /**
  * Base quad-rendering class for fallback and mesh consumers.

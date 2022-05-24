@@ -1,10 +1,9 @@
 package io.github.spiralhalo.plumbum.renderer.render;
 
-import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
-import io.vram.frex.api.model.BlockModel;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.model.BakedModel;
@@ -15,6 +14,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.BlockRenderView;
+
+import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
+
+import io.vram.frex.api.model.BlockModel;
 
 import java.util.function.Function;
 

@@ -16,14 +16,16 @@
 
 package io.github.spiralhalo.plumbum.renderer.render;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.RenderLayer;
+
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoCalculator;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
+
 import io.vram.frex.api.buffer.QuadEmitter;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.renderer.Renderer;
 import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
 
 /**
  * Consumer for pre-baked meshes.  Works by copying the mesh data to an

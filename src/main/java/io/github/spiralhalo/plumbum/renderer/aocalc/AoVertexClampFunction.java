@@ -16,11 +16,8 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import io.github.spiralhalo.plumbum.Plumbum;
 
-@Environment(EnvType.CLIENT)
 @FunctionalInterface
 interface AoVertexClampFunction {
 	float clamp(float x);

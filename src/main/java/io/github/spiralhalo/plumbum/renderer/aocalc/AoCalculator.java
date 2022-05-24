@@ -16,16 +16,19 @@
 
 package io.github.spiralhalo.plumbum.renderer.aocalc;
 
+import static io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper.*;
+import static java.lang.Math.max;
+import static net.minecraft.util.math.Direction.*;
+
+import java.util.BitSet;
+import java.util.function.ToIntFunction;
+
 import io.github.spiralhalo.plumbum.Plumbum;
 import io.github.spiralhalo.plumbum.renderer.accessor.AccessAmbientOcclusionCalculator;
 import io.github.spiralhalo.plumbum.renderer.aocalc.AoFace.WeightFunction;
 import io.github.spiralhalo.plumbum.renderer.mesh.QuadEmitterImpl;
 import io.github.spiralhalo.plumbum.renderer.render.BlockRenderInfo;
-import io.vram.frex.api.math.PackedVector3f;
-import io.vram.frex.base.renderer.mesh.BaseQuadView;
-import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -35,17 +38,13 @@ import net.minecraft.world.BlockRenderView;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.BitSet;
-import java.util.function.ToIntFunction;
-
-import static io.github.spiralhalo.plumbum.renderer.helper.GeometryHelper.*;
-import static java.lang.Math.max;
-import static net.minecraft.util.math.Direction.*;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 
 /**
  * Adaptation of inner, non-static class in BlockModelRenderer that serves same purpose.
  */
-@Environment(EnvType.CLIENT)
 public class AoCalculator {
 	/** Used to receive a method reference in constructor for ao value lookup. */
 	@FunctionalInterface

@@ -16,18 +16,9 @@
 
 package io.github.spiralhalo.plumbum.mixin.renderer;
 
-import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
-import io.github.spiralhalo.plumbum.renderer.aocalc.VanillaAoHelper;
-import io.github.spiralhalo.plumbum.renderer.render.BlockRenderContext;
-import io.vram.frex.mixinterface.PoseStackExt;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
+import java.util.BitSet;
+import java.util.Random;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,8 +27,20 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.BitSet;
-import java.util.Random;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.block.BlockModelRenderer;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
+
+import io.github.spiralhalo.plumbum.renderer.accessor.AccessBlockModelRenderer;
+import io.github.spiralhalo.plumbum.renderer.aocalc.VanillaAoHelper;
+import io.github.spiralhalo.plumbum.renderer.render.BlockRenderContext;
+
+import io.vram.frex.mixinterface.PoseStackExt;
 
 @Mixin(BlockModelRenderer.class)
 public abstract class MixinBlockModelRenderer implements AccessBlockModelRenderer {

@@ -16,12 +16,13 @@
 
 package io.github.spiralhalo.plumbum.renderer.mesh;
 
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.texture.Sprite;
+
 import io.vram.frex.api.material.MaterialMap;
 import io.vram.frex.api.material.RenderMaterial;
 import io.vram.frex.api.math.PackedVector3f;
 import io.vram.frex.base.renderer.mesh.RootQuadEmitter;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.texture.Sprite;
 
 /**
  * Same as {@link RootQuadEmitter} but with sprite cache and helper function
