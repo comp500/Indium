@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,107 +16,109 @@
 
 package link.infra.indium.renderer.render;
 
-import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.RenderMaterialImpl;
-import link.infra.indium.renderer.helper.ColorHelper;
-import link.infra.indium.renderer.mesh.EncodingFormat;
-import link.infra.indium.renderer.mesh.MeshImpl;
-import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.item.ItemModels;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.render.model.json.ModelTransformation.Mode;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3f;
+import net.minecraft.item.Items;
+import net.minecraft.util.math.Matrix4f;
 
-import java.util.List;
-import java.util.Random;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import link.infra.indium.renderer.accessor.AccessItemRenderer;
+import link.infra.indium.renderer.helper.ColorHelper;
+import link.infra.indium.renderer.mesh.QuadEmitterImpl;
+
+import io.vram.frex.api.buffer.QuadEmitter;
+import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
+import io.vram.frex.api.material.RenderMaterial;
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.MatrixStack;
+import io.vram.frex.api.model.ItemModel;
+import io.vram.frex.base.renderer.context.input.BaseItemInputContext;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 
 /**
  * The render context used for item rendering.
  */
-public class ItemRenderContext extends MatrixRenderContext {
-	/** Value vanilla uses for item rendering.  The only sensible choice, of course.  */
-	private static final long ITEM_RANDOM_SEED = 42L;
-
-	/** used to accept a method reference from the ItemRenderer. */
-	@FunctionalInterface
-	public interface VanillaQuadHandler {
-		void accept(BakedModel model, ItemStack stack, int color, int overlay, MatrixStack matrixStack, VertexConsumer buffer);
-	}
-
-	private final ItemColors colorMap;
-	private final Random random = new Random();
-	private final Vec3f normalVec = new Vec3f();
-
-	private final Supplier<Random> randomSupplier = () -> {
-		random.setSeed(ITEM_RANDOM_SEED);
-		return random;
-	};
+public class ItemRenderContext extends BaseItemInputContext {
+	protected Matrix4f matrix;
+	protected FastMatrix3f normalMatrix;
+	private final ItemColors rendererColorMap;
+	protected MaterialMap materialMap = MaterialMap.defaultMaterialMap();
 
 	private final Maker editorQuad = new Maker();
-	private final MeshConsumer meshConsumer = new MeshConsumer();
-	private final FallbackConsumer fallbackConsumer = new FallbackConsumer();
 
-	private ItemStack itemStack;
-	private Mode transformMode;
-	private MatrixStack matrixStack;
 	private VertexConsumerProvider vertexConsumerProvider;
-	private int lightmap;
-	private VanillaQuadHandler vanillaHandler;
 
 	private boolean isDefaultTranslucent;
 	private boolean isTranslucentDirect;
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
-	private VertexConsumer modelVertexConsumer;
 
-	public ItemRenderContext(ItemColors colorMap) {
-		this.colorMap = colorMap;
+	public ItemRenderContext(ItemColors rendererColorMap) {
+		this.rendererColorMap = rendererColorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
-		this.itemStack = itemStack;
-		this.transformMode = transformMode;
-		this.matrixStack = matrixStack;
+	public void renderModel(ItemModels models, ItemStack itemStack, Mode renderMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+		// Prepare
 		this.vertexConsumerProvider = vertexConsumerProvider;
-		this.lightmap = lightmap;
-		this.overlay = overlay;
-		this.vanillaHandler = vanillaHandler;
+		final boolean itemIsLeftHand = renderMode.equals(Mode.FIRST_PERSON_LEFT_HAND) || renderMode.equals(Mode.THIRD_PERSON_LEFT_HAND);
+		final net.minecraft.client.util.math.MatrixStack vanillaStack = matrixStack.toVanilla();
+		prepareForItem(model, itemStack, renderMode, lightmap, overlay, itemIsLeftHand, matrixStack);
 		computeOutputInfo();
+		materialMap = MaterialMap.get(itemStack);
+		final var itemTransforms = model.getTransformation();
 
-		matrixStack.push();
-		model.getTransformation().getTransformation(transformMode).apply(invert, matrixStack);
-		matrixStack.translate(-0.5D, -0.5D, -0.5D);
-		matrix = matrixStack.peek().getPositionMatrix();
-		normalMatrix = matrixStack.peek().getNormalMatrix();
+		// Magic
+		final boolean detachedPerspective = renderMode == Mode.GUI || renderMode == Mode.GROUND || renderMode == Mode.FIXED;
 
-		((FabricBakedModel) model).emitItemQuads(itemStack, randomSupplier, this);
+		if (detachedPerspective) {
+			if (itemStack.isOf(Items.TRIDENT)) {
+				model = models.getModel(Items.TRIDENT);
+			} else if (itemStack.isOf(Items.SPYGLASS)) {
+				model = models.getModel(Items.SPYGLASS);
+			}
+		}
 
-		matrixStack.pop();
+		// Transform
+		if (itemTransforms != null) {
+			matrixStack.push();
+			itemTransforms.getTransformation(renderMode).apply(itemIsLeftHand, vanillaStack);
+			matrixStack.translate(-0.5f, -0.5f, -0.5f);
+		}
+
+		matrix = (Matrix4f) (Object) matrixStack.modelMatrix();
+		normalMatrix = matrixStack.normalMatrix();
+
+		// Render
+		if (model.isBuiltin() || itemStack.getItem() == Items.TRIDENT && !detachedPerspective) {
+			((AccessItemRenderer)MinecraftClient.getInstance().getItemRenderer()).indium_builtInRenderer().render(itemStack, renderMode, vanillaStack, vertexConsumerProvider, lightmap, overlay);
+		} else {
+			((ItemModel) model).renderAsItem(this, getEmitter());
+		}
+
+		// Closing
+		if (itemTransforms != null) {
+			matrixStack.pop();
+		}
 
 		this.itemStack = null;
 		this.matrixStack = null;
-		this.vanillaHandler = null;
+		this.bakedModel = null;
 		translucentVertexConsumer = null;
 		cutoutVertexConsumer = null;
-		modelVertexConsumer = null;
+	}
+
+	@Override
+	public int indexedColor(int colorIndex) {
+		return colorIndex == -1 ? -1 : (rendererColorMap.getColor(itemStack, colorIndex) | 0xFF000000);
 	}
 
 	private void computeOutputInfo() {
@@ -133,12 +135,10 @@ public class ItemRenderContext extends MatrixRenderContext {
 				isDefaultTranslucent = false;
 			}
 
-			if (transformMode != Mode.GUI && !transformMode.isFirstPerson()) {
+			if (renderMode != Mode.GUI && !renderMode.isFirstPerson()) {
 				isTranslucentDirect = false;
 			}
 		}
-
-		modelVertexConsumer = quadVertexConsumer(BlendMode.DEFAULT);
 	}
 
 	/**
@@ -146,55 +146,61 @@ public class ItemRenderContext extends MatrixRenderContext {
 	 * in {@code RenderLayers.getEntityBlockLayer}. Layers other than
 	 * translucent are mapped to cutout.
 	 */
-	private VertexConsumer quadVertexConsumer(BlendMode blendMode) {
+	private VertexConsumer quadVertexConsumer(RenderMaterial mat) {
 		boolean translucent;
 
-		if (blendMode == BlendMode.DEFAULT) {
+		int preset = mat.preset();
+
+		if (preset == MaterialConstants.PRESET_DEFAULT) {
 			translucent = isDefaultTranslucent;
+		} else if (preset == MaterialConstants.PRESET_NONE) {
+			translucent = mat.target() != MaterialConstants.TARGET_MAIN;
 		} else {
-			translucent = blendMode == BlendMode.TRANSLUCENT;
+			translucent = preset == MaterialConstants.PRESET_TRANSLUCENT;
 		}
+
+		boolean hasFoil = itemStack.hasGlint() || mat.foilOverlay();
 
 		if (translucent) {
 			if (translucentVertexConsumer == null) {
 				if (isTranslucentDirect) {
-					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, hasFoil);
 				} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, hasFoil);
 				} else {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
+					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, hasFoil);
 				}
 			}
 
 			return translucentVertexConsumer;
 		} else {
 			if (cutoutVertexConsumer == null) {
-				cutoutVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, itemStack.hasGlint());
+				cutoutVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, mat.foilOverlay());
 			}
 
 			return cutoutVertexConsumer;
 		}
 	}
 
-	private void bufferQuad(MutableQuadViewImpl quad, BlendMode blendMode) {
-		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(blendMode), quad, matrix, overlay, normalMatrix, normalVec);
+	private void bufferQuad(QuadEmitterImpl quad) {
+		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(quad.material()), quad, matrix, overlay, normalMatrix);
 	}
 
-	private void colorizeQuad(MutableQuadViewImpl q, int colorIndex) {
+	private void colorizeQuad(QuadEmitterImpl q, int colorIndex) {
 		if (colorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(q.vertexColor(i)));
 			}
 		} else {
-			final int itemColor = 0xFF000000 | colorMap.getColor(itemStack, colorIndex);
+			final int itemColor = 0xFF000000 | indexedColor(colorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.spriteColor(i, 0))));
+				q.vertexColor(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.vertexColor(i))));
 			}
 		}
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad, BlendMode blendMode, int colorIndex) {
+	private void renderQuad(QuadEmitterImpl quad, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		final int lightmap = this.lightmap;
@@ -203,114 +209,47 @@ public class ItemRenderContext extends MatrixRenderContext {
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), lightmap));
 		}
 
-		bufferQuad(quad, blendMode);
+		bufferQuad(quad);
 	}
 
-	private void renderQuadEmissive(MutableQuadViewImpl quad, BlendMode blendMode, int colorIndex) {
+	private void renderQuadUnlit(QuadEmitterImpl quad, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
-		bufferQuad(quad, blendMode);
+		bufferQuad(quad);
 	}
 
-	private void renderMeshQuad(MutableQuadViewImpl quad) {
-		if (!transform(quad)) {
-			return;
-		}
+	private void renderMeshQuad(QuadEmitterImpl quad) {
+		quad.mapMaterial(materialMap);
 
-		final RenderMaterialImpl.Value mat = quad.material();
+		final RenderMaterial mat = quad.material();
+		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
 
-		final int colorIndex = mat.disableColorIndex(0) ? -1 : quad.colorIndex();
-		final BlendMode blendMode = mat.blendMode(0);
-
-		if (mat.emissive(0)) {
-			renderQuadEmissive(quad, blendMode, colorIndex);
+		if (mat.emissive() || mat.unlit()) {
+			renderQuadUnlit(quad, colorIndex);
 		} else {
-			renderQuad(quad, blendMode, colorIndex);
+			renderQuad(quad, colorIndex);
 		}
 	}
 
-	private class Maker extends MutableQuadViewImpl implements QuadEmitter {
+	private class Maker extends QuadEmitterImpl implements QuadEmitter {
 		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
+			data = new int[MeshEncodingHelper.TOTAL_MESH_QUAD_STRIDE];
 			clear();
 		}
 
 		@Override
 		public Maker emit() {
-			computeGeometry();
+			complete();
 			renderMeshQuad(this);
 			clear();
 			return this;
 		}
 	}
 
-	private class MeshConsumer implements Consumer<Mesh> {
-		@Override
-		public void accept(Mesh mesh) {
-			final MeshImpl m = (MeshImpl) mesh;
-			final int[] data = m.data();
-			final int limit = data.length;
-			int index = 0;
-
-			while (index < limit) {
-				System.arraycopy(data, index, editorQuad.data(), 0, EncodingFormat.TOTAL_STRIDE);
-				editorQuad.load();
-				index += EncodingFormat.TOTAL_STRIDE;
-				renderMeshQuad(editorQuad);
-			}
-		}
-	}
-
-	private class FallbackConsumer implements Consumer<BakedModel> {
-		@Override
-		public void accept(BakedModel model) {
-			if (hasTransform()) {
-				// if there's a transform in effect, convert to mesh-based quads so that we can apply it
-				for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-					final Direction cullFace = ModelHelper.faceFromIndex(i);
-					random.setSeed(ITEM_RANDOM_SEED);
-					final List<BakedQuad> quads = model.getQuads(null, cullFace, random);
-					final int count = quads.size();
-
-					if (count != 0) {
-						for (int j = 0; j < count; j++) {
-							final BakedQuad q = quads.get(j);
-							renderQuadWithTransform(q, cullFace);
-						}
-					}
-				}
-			} else {
-				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
-			}
-		}
-
-		private void renderQuadWithTransform(BakedQuad quad, Direction cullFace) {
-			final Maker editorQuad = ItemRenderContext.this.editorQuad;
-			editorQuad.fromVanilla(quad, IndiumRenderer.MATERIAL_STANDARD, cullFace);
-
-			if (!transform(editorQuad)) {
-				return;
-			}
-
-			renderQuad(editorQuad, BlendMode.DEFAULT, editorQuad.colorIndex());
-		}
-	}
-
-	@Override
-	public Consumer<Mesh> meshConsumer() {
-		return meshConsumer;
-	}
-
-	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
-		return fallbackConsumer;
-	}
-
-	@Override
 	public QuadEmitter getEmitter() {
 		editorQuad.clear();
 		return editorQuad;

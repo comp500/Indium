@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import link.infra.indium.Indium;
 
-@Environment(EnvType.CLIENT)
 @FunctionalInterface
 interface AoVertexClampFunction {
 	float clamp(float x);

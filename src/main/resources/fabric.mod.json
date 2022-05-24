@@ -5,7 +5,8 @@
 	"name": "Indium",
 	"description": "Sodium addon providing support for the Fabric Rendering API, based on Indigo",
 	"authors": [
-		"comp500"
+		"comp500",
+		"spiralhalo"
 	],
 	"contact": {
 		"sources": "https://github.com/comp500/Indium",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,19 @@
 package link.infra.indium.renderer.render;
 
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.Random;
-import java.util.function.Supplier;
+import io.vram.frex.api.material.MaterialConstants;
+import io.vram.frex.api.material.MaterialMap;
+import io.vram.frex.api.material.RenderMaterial;
+import io.vram.frex.base.renderer.context.input.BaseBlockInputContext;
 
 /**
  * Holds, manages and provides access to the block/world related state
@@ -37,29 +38,11 @@ import java.util.function.Supplier;
  * <p>Exception: per-block position offsets are tracked in {@link ChunkRenderInfo}
  * so they can be applied together with chunk offsets.
  */
-public class BlockRenderInfo {
-	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
+public class BlockRenderInfo extends BaseBlockInputContext<BlockRenderView> {
 	protected BlockOcclusionCache blockOcclusionCache;
-	public final Random random = new Random();
-	public BlockRenderView blockView;
-	public BlockPos blockPos;
-	public BlockState blockState;
-	public long seed;
+	MaterialMap materialMap = MaterialMap.defaultMaterialMap();
 	boolean defaultAo;
 	RenderLayer defaultLayer;
-
-	public final Supplier<Random> randomSupplier = () -> {
-		final Random result = random;
-		long seed = this.seed;
-
-		if (seed == -1L) {
-			seed = blockState.getRenderingSeed(blockPos);
-			this.seed = seed;
-		}
-
-		result.setSeed(seed);
-		return result;
-	};
 
 	public void setBlockView(BlockRenderView blockView) {
 		this.blockView = blockView;
@@ -69,31 +52,40 @@ public class BlockRenderInfo {
 		this.blockOcclusionCache = blockOcclusionCache;
 	}
 
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
-		this.blockPos = blockPos;
-		this.blockState = blockState;
-		// in the unlikely case seed actually matches this, we'll simply retrieve it more than one
-		seed = -1L;
-		defaultAo = modelAO && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
-
+	@Override
+	public void prepareForBlock(BakedModel bakedModel, BlockState blockState, BlockPos blockPos) {
+		super.prepareForBlock(bakedModel, blockState, blockPos);
+		materialMap = isFluidModel() ? MaterialMap.get(blockState.getFluidState()) : MaterialMap.get(blockState);
+		defaultAo = bakedModel.useAmbientOcclusion() && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 	}
 
+	@Override
 	public void release() {
+		super.release();
 		blockPos = null;
 		blockState = null;
 		blockOcclusionCache = null;
 	}
 
-	int blockColor(int colorIndex) {
-		return 0xFF000000 | blockColorMap.getColor(blockState, blockView, blockPos, colorIndex);
-	}
-
-	boolean shouldDrawFace(Direction face) {
-		return true;
-	}
-
-	RenderLayer effectiveRenderLayer(BlendMode blendMode) {
-		return blendMode == BlendMode.DEFAULT ? this.defaultLayer : blendMode.blockRenderLayer;
+	RenderLayer effectiveRenderLayer(RenderMaterial mat) {
+		return switch (mat.preset()) {
+			case MaterialConstants.PRESET_SOLID -> RenderLayer.getSolid();
+			case MaterialConstants.PRESET_CUTOUT_MIPPED -> RenderLayer.getCutoutMipped();
+			case MaterialConstants.PRESET_CUTOUT -> RenderLayer.getCutout();
+			case MaterialConstants.PRESET_TRANSLUCENT -> RenderLayer.getTranslucent();
+			case MaterialConstants.PRESET_DEFAULT -> defaultLayer;
+			default -> {
+				if (mat.target() == MaterialConstants.TARGET_MAIN) {
+					if (mat.cutout() == MaterialConstants.CUTOUT_NONE) {
+						yield RenderLayer.getSolid();
+					} else {
+						yield mat.unmipped() ? RenderLayer.getCutout() : RenderLayer.getCutoutMipped();
+					}
+				} else {
+					yield RenderLayer.getTranslucent();
+				}
+			}
+		};
 	}
 }

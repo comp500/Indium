@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
 public interface AccessAmbientOcclusionCalculator {
-	float[] fabric_colorMultiplier();
+	float[] indium_colorMultiplier();
 
-	int[] fabric_brightness();
+	int[] indium_brightness();
 
-	void fabric_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
+	void indium_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 }

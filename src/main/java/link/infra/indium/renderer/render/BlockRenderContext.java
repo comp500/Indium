@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +16,47 @@
 
 package link.infra.indium.renderer.render;
 
-import java.util.Random;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-import link.infra.indium.renderer.aocalc.AoCalculator;
-import link.infra.indium.renderer.aocalc.AoLuminanceFix;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Matrix3f;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.BlockRenderView;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import link.infra.indium.renderer.aocalc.AoCalculator;
+import link.infra.indium.renderer.aocalc.AoLuminanceFix;
+
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.MatrixStack;
+import io.vram.frex.api.model.BlockModel;
 
 /**
  * Context for non-terrain block rendering.
  */
-public class BlockRenderContext extends MatrixRenderContext {
+public class BlockRenderContext {
 	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
-	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
+	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc);
 	private VertexConsumer bufferBuilder;
 	private boolean didOutput = false;
-	// These are kept as fields to avoid the heap allocation for a supplier.
-	// BlockModelRenderer allows the caller to supply both the random object and seed.
-	private Random random;
-	private long seed;
-	private final Supplier<Random> randomSupplier = () -> {
-		random.setSeed(seed);
-		return random;
-	};
-
-	/**
-	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
-	 * apply the current transforms to vanilla models.
-	 */
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
+	protected Matrix4f matrix;
+	protected FastMatrix3f normalMatrix;
 
 	private int brightness(BlockPos pos) {
-		if (blockInfo.blockView == null) {
+		if (blockInfo.blockView() == null) {
 			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
 		}
 
-		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, blockInfo.blockView.getBlockState(pos), pos);
+		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView(), blockInfo.blockView().getBlockState(pos), pos);
 	}
 
 	private float aoLevel(BlockPos pos) {
-		final BlockRenderView blockView = blockInfo.blockView;
+		final BlockRenderView blockView = blockInfo.blockView();
 		return blockView == null ? 1f : AoLuminanceFix.INSTANCE.apply(blockView, pos);
 	}
 
@@ -81,25 +65,21 @@ public class BlockRenderContext extends MatrixRenderContext {
 		return bufferBuilder;
 	}
 
-	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, Random random, long seed, int overlay) {
+	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, int overlay, boolean enableCulling) {
 		this.bufferBuilder = buffer;
-		this.matrix = matrixStack.peek().getPositionMatrix();
-		this.normalMatrix = matrixStack.peek().getNormalMatrix();
-		this.random = random;
-		this.seed = seed;
+		this.matrix = (Matrix4f) (Object) matrixStack.modelMatrix();
+		this.normalMatrix = matrixStack.normalMatrix();
 
-		this.overlay = overlay;
 		this.didOutput = false;
 		aoCalc.clear();
-		blockInfo.setBlockView(blockView);
-		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion());
+		blockInfo.prepare(overlay);
+		blockInfo.prepareForWorld(blockView, enableCulling, matrixStack);
+		blockInfo.prepareForBlock(model, state, pos);
 
-		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, randomSupplier, this);
+		((BlockModel) model).renderAsBlock(blockInfo, meshConsumer.getEmitter());
 
 		blockInfo.release();
 		this.bufferBuilder = null;
-		this.random = null;
-		this.seed = seed;
 
 		return didOutput;
 	}
@@ -115,28 +95,13 @@ public class BlockRenderContext extends MatrixRenderContext {
 		}
 
 		@Override
-		protected Matrix3f normalMatrix() {
+		protected FastMatrix3f normalMatrix() {
 			return normalMatrix;
 		}
 
 		@Override
 		protected int overlay() {
-			return overlay;
+			return blockInfo.overlay();
 		}
-	}
-
-	@Override
-	public Consumer<Mesh> meshConsumer() {
-		return meshConsumer;
-	}
-
-	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
-		return fallbackConsumer;
-	}
-
-	@Override
-	public QuadEmitter getEmitter() {
-		return meshConsumer.getEmitter();
 	}
 }

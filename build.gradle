@@ -22,9 +22,8 @@ if (grgit != null) {
 group = project.maven_group
 
 repositories {
-	maven {
-		url = "https://api.modrinth.com/maven"
-	}
+    maven { url "https://maven.vram.io/" }
+	maven { url "https://api.modrinth.com/maven" }
 }
 
 dependencies {
@@ -33,8 +32,11 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+    // FREX
+    modImplementation("io.vram:frex-fabric-mc118:6.0.254")
+    include("io.vram:frex-fabric-mc118:6.0.254:fat")
+
     // Fabric API
-    modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
 	modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
 
     // For testing in dev environment

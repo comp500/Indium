@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import link.infra.indium.Indium;
-import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
-import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
-import net.fabricmc.loader.api.FabricLoader;
+import java.lang.reflect.Constructor;
+import java.util.BitSet;
+import java.util.function.Supplier;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import java.lang.reflect.Constructor;
-import java.util.BitSet;
-import java.util.function.Supplier;
+import link.infra.indium.Indium;
+import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
+import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
+
+import net.fabricmc.loader.api.FabricLoader;
 
 public class VanillaAoHelper {
 	private static Supplier<AccessAmbientOcclusionCalculator> factory;
@@ -77,6 +79,6 @@ public class VanillaAoHelper {
 	}
 
 	public static void updateShape(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
-		blockRenderer.fabric_updateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
+		blockRenderer.indium_updateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

@@ -1,6 +1,7 @@
 {
   "required": true,
   "package": "link.infra.indium.mixin",
+  "plugin": "link.infra.indium.IndiumMixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "client": [
     "renderer.MixinAmbientOcclusionCalculator",

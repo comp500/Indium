@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,16 @@
 package link.infra.indium.renderer.aocalc;
 
 import static link.infra.indium.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
-import static net.minecraft.util.math.Direction.DOWN;
-import static net.minecraft.util.math.Direction.EAST;
-import static net.minecraft.util.math.Direction.NORTH;
-import static net.minecraft.util.math.Direction.SOUTH;
-import static net.minecraft.util.math.Direction.UP;
-import static net.minecraft.util.math.Direction.WEST;
+import static net.minecraft.util.math.Direction.*;
 
-import link.infra.indium.renderer.mesh.QuadViewImpl;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.Direction;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
 
 /**
  * Adapted from vanilla BlockModelRenderer.AoCalculator.
  */
-@Environment(EnvType.CLIENT)
 enum AoFace {
 	AOF_DOWN(new Direction[] { WEST, EAST, NORTH, SOUTH }, (q, i) -> CLAMP_FUNC.clamp(q.y(i)), (q, i, w) -> {
 		final float u = CLAMP_FUNC.clamp(q.x(i));
@@ -118,11 +110,11 @@ enum AoFace {
 	 */
 	@FunctionalInterface
 	interface WeightFunction {
-		void apply(QuadViewImpl q, int vertexIndex, float[] out);
+		void apply(BaseQuadView q, int vertexIndex, float[] out);
 	}
 
 	@FunctionalInterface
 	interface Vertex2Float {
-		float apply(QuadViewImpl q, int vertexIndex);
+		float apply(BaseQuadView q, int vertexIndex);
 	}
 }

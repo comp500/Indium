@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,50 +16,13 @@
 
 package link.infra.indium.renderer;
 
-import java.util.HashMap;
+import io.vram.frex.base.renderer.BaseRenderer;
 
-import link.infra.indium.renderer.mesh.MeshBuilderImpl;
-import net.minecraft.util.Identifier;
-
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
-
-public class IndiumRenderer implements Renderer {
+public class IndiumRenderer extends BaseRenderer<IndiumRenderMaterial> {
 	public static final IndiumRenderer INSTANCE = new IndiumRenderer();
 
-	public static final RenderMaterialImpl.Value MATERIAL_STANDARD = (RenderMaterialImpl.Value) INSTANCE.materialFinder().find();
-
-	static {
-		INSTANCE.registerMaterial(RenderMaterial.MATERIAL_STANDARD, MATERIAL_STANDARD);
+	public IndiumRenderer() {
+		super(IndiumRenderMaterial::new);
 	}
 
-	private final HashMap<Identifier, RenderMaterial> materialMap = new HashMap<>();
-
-	private IndiumRenderer() { }
-
-	@Override
-	public MeshBuilder meshBuilder() {
-		return new MeshBuilderImpl();
-	}
-
-	@Override
-	public MaterialFinder materialFinder() {
-		return new RenderMaterialImpl.Finder();
-	}
-
-	@Override
-	public RenderMaterial materialById(Identifier id) {
-		return materialMap.get(id);
-	}
-
-	@Override
-	public boolean registerMaterial(Identifier id, RenderMaterial material) {
-		if (materialMap.containsKey(id)) return false;
-
-		// cast to prevent acceptance of impostor implementations
-		materialMap.put(id, material);
-		return true;
-	}
 }

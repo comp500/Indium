@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,29 @@
 
 package link.infra.indium;
 
-import link.infra.indium.other.SpriteFinderCache;
-import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.aocalc.AoConfig;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.util.TriState;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.resource.ResourceType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import net.minecraft.resource.ResourceType;
+
+import link.infra.indium.other.SpriteFinderCache;
+import link.infra.indium.renderer.aocalc.AoConfig;
+
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.util.TriState;
+import net.fabricmc.loader.api.FabricLoader;
+
 public class Indium implements ClientModInitializer {
+	/** This property isn't currently used since FREX always tessellates all model */
 	public static final boolean ALWAYS_TESSELLATE_INDIUM;
 	public static final AoConfig AMBIENT_OCCLUSION_MODE;
 	/** Set true in dev env to confirm results match vanilla when they should. */
@@ -104,6 +104,7 @@ public class Indium implements ClientModInitializer {
 			}
 		}
 
+		// This property isn't currently used since FREX always tessellates all model
 		ALWAYS_TESSELLATE_INDIUM = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
 		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "auto"), AoConfig.ENHANCED);
 		DEBUG_COMPARE_LIGHTING = asBoolean((String) properties.computeIfAbsent("debug-compare-lighting", (a) -> "auto"), false);
@@ -120,32 +121,6 @@ public class Indium implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		try {
-			RendererAccess.INSTANCE.registerRenderer(IndiumRenderer.INSTANCE);
-		} catch (UnsupportedOperationException e) {
-			if (FabricLoader.getInstance().isModLoaded("canvas")) {
-				throw new RuntimeException("Failed to load Indium: Indium and Sodium are not compatible with Canvas");
-			} else if (FabricLoader.getInstance().isModLoaded("frex")) {
-				String msg = "Failed to load Indium: Indium is not currently compatible with FREX 6.x, as it provides an incompatible implementation of the Fabric Rendering API; the FREX API may be directly supported in future.";
-				Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("frex");
-				if (container.isPresent()) {
-					StringBuilder sb = new StringBuilder(msg);
-					boolean first = true;
-					Optional<ModContainer> parent = container.get().getContainingMod();
-					while (parent.isPresent()) {
-						sb.append('\n').append(first ? "  FREX" : "  which");
-						first = false;
-						sb.append(" is bundled as part of ").append(parent.get().getMetadata().getName());
-
-						parent = parent.get().getContainingMod();
-					}
-					throw new RuntimeException(sb.toString());
-				}
-				throw new RuntimeException(msg);
-			}
-			throw e;
-		}
-
 		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(SpriteFinderCache.ReloadListener.INSTANCE);
 	}
 }

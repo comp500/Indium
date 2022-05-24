@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,17 @@
 
 package link.infra.indium.renderer.helper;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
-import net.minecraft.util.math.Vec3f;
-import org.jetbrains.annotations.NotNull;
 
-import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.api.mesh.QuadView;
 
 /**
  * Static routines of general utility for renderer implementations.
@@ -191,21 +193,15 @@ public abstract class GeometryHelper {
 	 * <p>Derived from the quad face normal and expects convex quads with all points co-planar.
 	 */
 	public static Direction lightFace(QuadView quad) {
-		final Vec3f normal = quad.faceNormal();
-		switch (GeometryHelper.longestAxis(normal)) {
-		case X:
-			return normal.getX() > 0 ? Direction.EAST : Direction.WEST;
-
-		case Y:
-			return normal.getY() > 0 ? Direction.UP : Direction.DOWN;
-
-		case Z:
-			return normal.getZ() > 0 ? Direction.SOUTH : Direction.NORTH;
-
-		default:
-			// handle WTF case
-			return Direction.UP;
-		}
+		final int normal = quad.packedFaceNormal();
+		return switch (GeometryHelper.longestAxis(normal)) {
+			case X -> PackedVector3f.unpackX(normal) > 0 ? Direction.EAST : Direction.WEST;
+			case Y -> PackedVector3f.unpackY(normal) > 0 ? Direction.UP : Direction.DOWN;
+			case Z -> PackedVector3f.unpackZ(normal) > 0 ? Direction.SOUTH : Direction.NORTH;
+			default ->
+					// handle WTF case
+					Direction.UP;
+		};
 	}
 
 	/**
@@ -229,8 +225,8 @@ public abstract class GeometryHelper {
 	/**
 	 * @see #longestAxis(float, float, float)
 	 */
-	public static Axis longestAxis(Vec3f vec) {
-		return longestAxis(vec.getX(), vec.getY(), vec.getZ());
+	public static Axis longestAxis(int packedVec) {
+		return longestAxis(PackedVector3f.unpackX(packedVec), PackedVector3f.unpackY(packedVec), PackedVector3f.unpackZ(packedVec));
 	}
 
 	/**

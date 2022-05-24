@@ -1,12 +1,9 @@
 package link.infra.indium.renderer.render;
 
-import link.infra.indium.renderer.aocalc.AoCalculator;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.model.BakedModel;
@@ -18,20 +15,21 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.function.Consumer;
+import link.infra.indium.renderer.aocalc.AoCalculator;
+
+import io.vram.frex.api.model.BlockModel;
+
 import java.util.function.Function;
 
-public class TerrainRenderContext extends AbstractRenderContext {
-	private final TerrainBlockRenderInfo blockInfo = new TerrainBlockRenderInfo();
+public class TerrainRenderContext {
+	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
 
 	private Vec3i origin;
 	private Vec3d modelOffset;
 
-	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
-
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc);
 
 	public void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
 		blockInfo.setBlockOcclusionCache(cache);
@@ -52,8 +50,8 @@ public class TerrainRenderContext extends AbstractRenderContext {
 		try {
 			chunkInfo.didOutput = false;
 			aoCalc.clear();
-			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
-			((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
+			blockInfo.prepareForBlock(model, blockState, blockPos);
+			((BlockModel) model).renderDynamic(blockInfo, meshConsumer.getEmitter());
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Indium Renderer");
 			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
@@ -78,20 +76,5 @@ public class TerrainRenderContext extends AbstractRenderContext {
 		protected Vec3d blockOffset() {
 			return modelOffset;
 		}
-	}
-
-	@Override
-	public Consumer<Mesh> meshConsumer() {
-		return meshConsumer;
-	}
-
-	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
-		return fallbackConsumer;
-	}
-
-	@Override
-	public QuadEmitter getEmitter() {
-		return meshConsumer.getEmitter();
 	}
 }

@@ -2,23 +2,26 @@ package link.infra.indium.renderer.render;
 
 import java.util.function.Function;
 
-import link.infra.indium.other.SpriteFinderCache;
-import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Matrix3f;
 import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3f;
+
+import link.infra.indium.renderer.mesh.QuadEmitterImpl;
+
+import io.vram.frex.api.material.RenderMaterial;
+import io.vram.frex.api.math.FastMatrix3f;
+import io.vram.frex.api.math.PackedVector3f;
 
 public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, VertexConsumer> bufferFunc;
-	protected final Vec3f normalVec = new Vec3f();
 
 	protected abstract Matrix4f matrix();
 
-	protected abstract Matrix3f normalMatrix();
+	protected abstract FastMatrix3f normalMatrix();
 
 	protected abstract int overlay();
 
@@ -27,42 +30,48 @@ public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.Qua
 	}
 
 	@Override
-	public void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
-		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix(), normalVec);
+	public void bufferQuad(QuadEmitterImpl quad, RenderLayer renderLayer) {
+		bufferQuad(bufferFunc.apply(renderLayer), quad, matrix(), overlay(), normalMatrix());
 	}
 
-	public static void bufferQuad(VertexConsumer buff, MutableQuadViewImpl quad, Matrix4f matrix, int overlay, Matrix3f normalMatrix, Vec3f normalVec) {
+	public static void bufferQuad(VertexConsumer buff, QuadEmitterImpl quad, Matrix4f matrix, int overlay, FastMatrix3f normalMatrix) {
 		final boolean useNormals = quad.hasVertexNormals();
+		final int packedFaceNormal;
 
 		if (useNormals) {
 			quad.populateMissingNormals();
+			packedFaceNormal = 0;
 		} else {
-			final Vec3f faceNormal = quad.faceNormal();
-			normalVec.set(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
-			normalVec.transform(normalMatrix);
+			packedFaceNormal = normalMatrix.f_transformPacked3f(quad.packedFaceNormal());
+		}
+
+		// overlay is not set, use material's instead
+		if (overlay == OverlayTexture.DEFAULT_UV) {
+			final RenderMaterial mat = quad.material();
+			final int overlayV = mat.hurtOverlay() ? 3 : 10;
+			final int overlayU = mat.flashOverlay() ? 10 : 0;
+			overlay = overlayU & 0xffff | (overlayV & 0xffff) << 16;
 		}
 
 		for (int i = 0; i < 4; i++) {
 			buff.vertex(matrix, quad.x(i), quad.y(i), quad.z(i));
-			final int color = quad.spriteColor(i, 0);
+			final int color = quad.vertexColor(i);
 			buff.color(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
-			buff.texture(quad.spriteU(i, 0), quad.spriteV(i, 0));
+			buff.texture(quad.u(i), quad.v(i));
 			buff.overlay(overlay);
 			buff.light(quad.lightmap(i));
 
-			if (useNormals) {
-				normalVec.set(quad.normalX(i), quad.normalY(i), quad.normalZ(i));
-				normalVec.transform(normalMatrix);
-			}
+			final int packedNormal = useNormals ? normalMatrix.f_transformPacked3f(quad.packedNormal(i)) : packedFaceNormal;
 
-			buff.normal(normalVec.getX(), normalVec.getY(), normalVec.getZ());
+			buff.normal(PackedVector3f.unpackX(packedNormal), PackedVector3f.unpackY(packedNormal), PackedVector3f.unpackZ(packedNormal));
 			buff.next();
 		}
 
-		Sprite sprite = quad.cachedSprite();
+		// most vanilla sprites will return non-null
+		Sprite sprite = quad.material().texture().spriteIndex().fromIndex(quad.spriteId());
 
 		if (sprite == null) {
-			sprite = SpriteFinderCache.forBlockAtlas().find(quad, 0);
+			sprite = quad.material().texture().spriteFinder().find(quad);
 		}
 
 		SpriteUtil.markSpriteActive(sprite);

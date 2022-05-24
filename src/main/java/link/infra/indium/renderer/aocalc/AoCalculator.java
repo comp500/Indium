@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
 
 package link.infra.indium.renderer.aocalc;
 
+import static link.infra.indium.renderer.helper.GeometryHelper.*;
+import static java.lang.Math.max;
+import static net.minecraft.util.math.Direction.*;
+
+import java.util.BitSet;
+import java.util.function.ToIntFunction;
+
 import link.infra.indium.Indium;
 import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.aocalc.AoFace.WeightFunction;
-import link.infra.indium.renderer.mesh.EncodingFormat;
-import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import link.infra.indium.renderer.mesh.QuadViewImpl;
+import link.infra.indium.renderer.mesh.QuadEmitterImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -34,17 +38,13 @@ import net.minecraft.world.BlockRenderView;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.BitSet;
-import java.util.function.ToIntFunction;
-
-import static java.lang.Math.max;
-import static link.infra.indium.renderer.helper.GeometryHelper.*;
-import static net.minecraft.util.math.Direction.*;
+import io.vram.frex.api.math.PackedVector3f;
+import io.vram.frex.base.renderer.mesh.BaseQuadView;
+import io.vram.frex.base.renderer.mesh.MeshEncodingHelper;
 
 /**
  * Adaptation of inner, non-static class in BlockModelRenderer that serves same purpose.
  */
-@Environment(EnvType.CLIENT)
 public class AoCalculator {
 	/** Used to receive a method reference in constructor for ao value lookup. */
 	@FunctionalInterface
@@ -75,7 +75,7 @@ public class AoCalculator {
 	private final ToIntFunction<BlockPos> brightnessFunc;
 	private final AoFunc aoFunc;
 
-	/** caches results of {@link #computeFace(Direction, boolean)} for the current block. */
+	/** caches results of {@link #computeFace} for the current block. */
 	private final AoFaceData[] faceData = new AoFaceData[12];
 
 	/** indicates which elements of {@link #faceData} have been computed for the current block. */
@@ -104,7 +104,7 @@ public class AoCalculator {
 		completionFlags = 0;
 	}
 
-	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
+	public void compute(QuadEmitterImpl quad, boolean isVanilla) {
 		final AoConfig config = Indium.AMBIENT_OCCLUSION_MODE;
 		final boolean shouldCompare;
 
@@ -150,7 +150,7 @@ public class AoCalculator {
 
 			for (int i = 0; i < 4; i++) {
 				if (light[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(ao[i], vanillaAo[i])) {
-					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState.toString(), blockInfo.blockPos.toString()));
+					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState().toString(), blockInfo.pos().toString()));
 					LOGGER.info(String.format("Flags = %d, LightFace = %s", quad.geometryFlags(), quad.lightFace().toString()));
 					LOGGER.info(String.format("    Old Multiplier: %.2f, %.2f, %.2f, %.2f", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]));
 					LOGGER.info(String.format("    New Multiplier: %.2f, %.2f, %.2f, %.2f", ao[0], ao[1], ao[2], ao[3]));
@@ -162,7 +162,7 @@ public class AoCalculator {
 		}
 	}
 
-	private void calcVanilla(MutableQuadViewImpl quad) {
+	private void calcVanilla(QuadEmitterImpl quad) {
 		calcVanilla(quad, ao, light);
 	}
 
@@ -171,25 +171,25 @@ public class AoCalculator {
 	// to avoid making a new allocation each call.
 	private final float[] vanillaAoData = new float[Direction.values().length * 2];
 	private final BitSet vanillaAoControlBits = new BitSet(3);
-	private final int[] vertexData = new int[EncodingFormat.QUAD_STRIDE];
+	private final int[] vertexData = new int[MeshEncodingHelper.TOTAL_MESH_QUAD_STRIDE];
 
-	private void calcVanilla(MutableQuadViewImpl quad, float[] aoDest, int[] lightDest) {
+	private void calcVanilla(QuadEmitterImpl quad, float[] aoDest, int[] lightDest) {
 		vanillaAoControlBits.clear();
 		final Direction face = quad.lightFace();
-		quad.toVanilla(0, vertexData, 0, false);
+		quad.toVanilla(vertexData, 0);
 
-		VanillaAoHelper.updateShape(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, face, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.fabric_apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
+		VanillaAoHelper.updateShape(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), vertexData, face, vanillaAoData, vanillaAoControlBits);
+		vanillaCalc.indium_apply(blockInfo.blockView(), blockInfo.blockState(), blockInfo.pos(), quad.lightFace(), vanillaAoData, vanillaAoControlBits, !quad.material().disableDiffuse());
 
-		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.indium_colorMultiplier(), 0, aoDest, 0, 4);
+		System.arraycopy(vanillaCalc.indium_brightness(), 0, lightDest, 0, 4);
 	}
 
-	private void calcFastVanilla(MutableQuadViewImpl quad) {
+	private void calcFastVanilla(QuadEmitterImpl quad) {
 		int flags = quad.geometryFlags();
 
 		// force to block face if shape is full cube - matches vanilla logic
-		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) == AXIS_ALIGNED_FLAG && Block.isShapeFullCube(blockInfo.blockState.getCollisionShape(blockInfo.blockView, blockInfo.blockPos))) {
+		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) == AXIS_ALIGNED_FLAG && Block.isShapeFullCube(blockInfo.blockState().getCollisionShape(blockInfo.blockView(), blockInfo.pos()))) {
 			flags |= LIGHT_FACE_FLAG;
 		}
 
@@ -200,7 +200,7 @@ public class AoCalculator {
 		}
 	}
 
-	private void calcEnhanced(MutableQuadViewImpl quad) {
+	private void calcEnhanced(QuadEmitterImpl quad) {
 		switch (quad.geometryFlags()) {
 		case AXIS_ALIGNED_FLAG | CUBIC_FLAG | LIGHT_FACE_FLAG:
 		case AXIS_ALIGNED_FLAG | LIGHT_FACE_FLAG:
@@ -218,14 +218,14 @@ public class AoCalculator {
 		}
 	}
 
-	private void vanillaFullFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaFullFace(BaseQuadView quad, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
-		computeFace(lightFace, isOnLightFace, quad.hasShade()).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
+		computeFace(lightFace, isOnLightFace, !quad.material().disableDiffuse()).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
 	}
 
-	private void vanillaPartialFace(QuadViewImpl quad, boolean isOnLightFace) {
+	private void vanillaPartialFace(BaseQuadView quad, boolean isOnLightFace) {
 		final Direction lightFace = quad.lightFace();
-		AoFaceData faceData = computeFace(lightFace, isOnLightFace, quad.hasShade());
+		AoFaceData faceData = computeFace(lightFace, isOnLightFace, !quad.material().disableDiffuse());
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;
 		final float[] w = this.w;
 
@@ -236,34 +236,34 @@ public class AoCalculator {
 		}
 	}
 
-	/** used in {@link #blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace)} as return variable to avoid new allocation. */
+	/** used in {@link #blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace)} as return variable to avoid new allocation. */
 	AoFaceData tmpFace = new AoFaceData();
 
 	/** Returns linearly interpolated blend of outer and inner face based on depth of vertex in face. */
-	private AoFaceData blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace) {
+	private AoFaceData blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace) {
 		final float w1 = AoFace.get(lightFace).depthFunc.apply(quad, vertexIndex);
 		final float w0 = 1 - w1;
-		return AoFaceData.weightedMean(computeFace(lightFace, true, quad.hasShade()), w0, computeFace(lightFace, false, quad.hasShade()), w1, tmpFace);
+		return AoFaceData.weightedMean(computeFace(lightFace, true, !quad.material().disableDiffuse()), w0, computeFace(lightFace, false, !quad.material().disableDiffuse()), w1, tmpFace);
 	}
 
 	/**
-	 * Like {@link #blendedInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace)} but optimizes if depth is 0 or 1.
+	 * Like {@link #blendedInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace)} but optimizes if depth is 0 or 1.
 	 * Used for irregular faces when depth varies by vertex to avoid unneeded interpolation.
 	 */
-	private AoFaceData gatherInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace) {
+	private AoFaceData gatherInsetFace(BaseQuadView quad, int vertexIndex, Direction lightFace) {
 		final float w1 = AoFace.get(lightFace).depthFunc.apply(quad, vertexIndex);
 
 		if (MathHelper.approximatelyEquals(w1, 0)) {
-			return computeFace(lightFace, true, quad.hasShade());
+			return computeFace(lightFace, true, !quad.material().disableDiffuse());
 		} else if (MathHelper.approximatelyEquals(w1, 1)) {
-			return computeFace(lightFace, false, quad.hasShade());
+			return computeFace(lightFace, false, !quad.material().disableDiffuse());
 		} else {
 			final float w0 = 1 - w1;
-			return AoFaceData.weightedMean(computeFace(lightFace, true, quad.hasShade()), w0, computeFace(lightFace, false, quad.hasShade()), w1, tmpFace);
+			return AoFaceData.weightedMean(computeFace(lightFace, true, !quad.material().disableDiffuse()), w0, computeFace(lightFace, false, !quad.material().disableDiffuse()), w1, tmpFace);
 		}
 	}
 
-	private void blendedPartialFace(QuadViewImpl quad) {
+	private void blendedPartialFace(BaseQuadView quad) {
 		final Direction lightFace = quad.lightFace();
 		AoFaceData faceData = blendedInsetFace(quad, 0, lightFace);
 		final WeightFunction wFunc = AoFace.get(lightFace).weightFunc;
@@ -278,8 +278,9 @@ public class AoCalculator {
 	/** used exclusively in irregular face to avoid new heap allocations each call. */
 	private final Vec3f vertexNormal = new Vec3f();
 
-	private void irregularFace(MutableQuadViewImpl quad) {
-		final Vec3f faceNorm = quad.faceNormal();
+	private void irregularFace(QuadEmitterImpl quad) {
+		final Vec3f faceNorm = new Vec3f();
+		PackedVector3f.unpackTo(quad.packedFaceNormal(), faceNorm);
 		Vec3f normal;
 		final float[] w = this.w;
 		final float[] aoResult = this.ao;
@@ -365,8 +366,8 @@ public class AoCalculator {
 		if ((completionFlags & mask) == 0) {
 			completionFlags |= mask;
 
-			final BlockRenderView world = blockInfo.blockView;
-			final BlockPos pos = blockInfo.blockPos;
+			final BlockRenderView world = blockInfo.blockView();
+			final BlockPos pos = blockInfo.pos();
 			final BlockPos.Mutable lightPos = this.lightPos;
 			final BlockPos.Mutable searchPos = this.searchPos;
 

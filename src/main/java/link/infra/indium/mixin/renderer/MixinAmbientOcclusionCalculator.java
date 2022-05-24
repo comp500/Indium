@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package link.infra.indium.mixin.renderer;
 
 import java.util.BitSet;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -30,26 +31,29 @@ import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
 
 @Mixin(targets = "net.minecraft.client.render.block.BlockModelRenderer$AmbientOcclusionCalculator")
 public abstract class MixinAmbientOcclusionCalculator implements AccessAmbientOcclusionCalculator {
+	@Final
 	@Shadow
-	private float[] brightness;
+	float[] brightness;
+
+	@Final
 	@Shadow
-	private int[] light;
+	int[] light;
 
 	@Shadow
 	public abstract void apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 
 	@Override
-	public float[] fabric_colorMultiplier() {
+	public float[] indium_colorMultiplier() {
 		return brightness;
 	}
 
 	@Override
-	public int[] fabric_brightness() {
+	public int[] indium_brightness() {
 		return light;
 	}
 
 	@Override
-	public void fabric_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade) {
+	public void indium_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade) {
 		apply(blockRenderView, blockState, pos, face, aoData, controlBits, shade);
 	}
 }

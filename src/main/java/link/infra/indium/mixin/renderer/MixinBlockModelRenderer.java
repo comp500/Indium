@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ * Copyright (c) 2016-2022 Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
 import link.infra.indium.renderer.aocalc.VanillaAoHelper;
 import link.infra.indium.renderer.render.BlockRenderContext;
+
+import io.vram.frex.mixinterface.PoseStackExt;
 
 @Mixin(BlockModelRenderer.class)
 public abstract class MixinBlockModelRenderer implements AccessBlockModelRenderer {
@@ -51,11 +52,8 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 
 	@Inject(at = @At("HEAD"), method = "render(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;ZLjava/util/Random;JI)Z", cancellable = true)
 	private void hookRender(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrix, VertexConsumer buffer, boolean checkSides, Random rand, long seed, int overlay, CallbackInfoReturnable<Boolean> ci) {
-		if (!((FabricBakedModel) model).isVanillaAdapter()) {
-			BlockRenderContext context = indium_contexts.get();
-			// Note that we do not support face-culling here (so checkSides is ignored)
-			ci.setReturnValue(context.render(blockView, model, state, pos, matrix, buffer, rand, seed, overlay));
-		}
+		BlockRenderContext context = indium_contexts.get();
+		ci.setReturnValue(context.render(blockView, model, state, pos, ((PoseStackExt) matrix).frx_asMatrixStack(), buffer, overlay, checkSides));
 	}
 
 	@Inject(at = @At("RETURN"), method = "<init>*")
@@ -64,7 +62,7 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 	}
 
 	@Override
-	public void fabric_updateShape(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
+	public void indium_updateShape(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
 		getQuadDimensions(blockView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }
