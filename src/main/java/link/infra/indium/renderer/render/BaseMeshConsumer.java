@@ -64,11 +64,12 @@ public class BaseMeshConsumer extends BaseQuadRenderer {
 	}
 
 	private void renderQuad(QuadEmitterImpl quad) {
+		quad.mapMaterial(blockInfo.materialMap);
+
 		if (!blockInfo.cullTest(quad.cullFaceId())) {
 			return;
 		}
 
-		quad.mapMaterial(blockInfo.materialMap);
 		final RenderMaterial mat = quad.material();
 
 		if (!mat.disableAo() && MinecraftClient.isAmbientOcclusionEnabled()) {
