@@ -42,9 +42,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3f;
+import net.minecraft.util.math.random.Random;
 
 import java.util.List;
-import java.util.Random;
+
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -62,7 +63,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	}
 
 	private final ItemColors colorMap;
-	private final Random random = new Random();
+	private final Random random = Random.create();
 	private final Vec3f normalVec = new Vec3f();
 
 	private final Supplier<Random> randomSupplier = () -> {

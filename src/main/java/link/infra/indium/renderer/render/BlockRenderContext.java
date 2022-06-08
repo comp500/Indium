@@ -16,7 +16,7 @@
 
 package link.infra.indium.renderer.render;
 
-import java.util.Random;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,6 +33,7 @@ import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Matrix3f;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
