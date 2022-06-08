@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.11-SNAPSHOT'
+    id 'fabric-loom' version '0.12-SNAPSHOT'
     id 'maven-publish'
 
 	id 'org.ajoberstar.grgit' version '4.1.0'
@@ -43,7 +43,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	modImplementation "maven.modrinth:sodium:mc1.18.2-0.4.1"
+	modImplementation "maven.modrinth:sodium:mc1.19-0.4.2"
 
 	// Transitive dependency of Sodium
 	implementation("org.joml:joml:1.10.2")

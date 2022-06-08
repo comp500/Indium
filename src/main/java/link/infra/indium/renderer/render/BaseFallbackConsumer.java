@@ -28,9 +28,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 
 import java.util.List;
-import java.util.Random;
+
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
