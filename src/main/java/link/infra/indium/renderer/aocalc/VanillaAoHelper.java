@@ -52,7 +52,7 @@ public class VanillaAoHelper {
 					@Override
 					public AccessAmbientOcclusionCalculator get() {
 						try {
-							return (AccessAmbientOcclusionCalculator) constructor.newInstance(instance);
+							return (AccessAmbientOcclusionCalculator) constructor.newInstance();
 						} catch (Exception e) {
 							Indium.LOGGER.warn("[Indium] Exception accessing vanilla smooth lighter", e);
 							return null;
