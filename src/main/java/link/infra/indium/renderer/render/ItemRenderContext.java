@@ -34,7 +34,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
@@ -101,15 +100,10 @@ public class ItemRenderContext extends MatrixRenderContext {
 		this.vanillaHandler = vanillaHandler;
 		computeOutputInfo();
 
-		matrixStack.push();
-		model.getTransformation().getTransformation(transformMode).apply(invert, matrixStack);
-		matrixStack.translate(-0.5D, -0.5D, -0.5D);
 		matrix = matrixStack.peek().getPositionMatrix();
 		normalMatrix = matrixStack.peek().getNormalMatrix();
 
 		((FabricBakedModel) model).emitItemQuads(itemStack, randomSupplier, this);
-
-		matrixStack.pop();
 
 		this.itemStack = null;
 		this.matrixStack = null;
