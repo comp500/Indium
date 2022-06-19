@@ -16,6 +16,10 @@
 
 package link.infra.indium.renderer.render;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.ColorHelper;
@@ -30,11 +34,15 @@ import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.TexturedRenderLayers;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
@@ -43,11 +51,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3f;
 import net.minecraft.util.math.random.Random;
-
-import java.util.List;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * The render context used for item rendering.
@@ -102,15 +105,10 @@ public class ItemRenderContext extends MatrixRenderContext {
 		this.vanillaHandler = vanillaHandler;
 		computeOutputInfo();
 
-		matrixStack.push();
-		model.getTransformation().getTransformation(transformMode).apply(invert, matrixStack);
-		matrixStack.translate(-0.5D, -0.5D, -0.5D);
 		matrix = matrixStack.peek().getPositionMatrix();
 		normalMatrix = matrixStack.peek().getNormalMatrix();
 
 		((FabricBakedModel) model).emitItemQuads(itemStack, randomSupplier, this);
-
-		matrixStack.pop();
 
 		this.itemStack = null;
 		this.matrixStack = null;
