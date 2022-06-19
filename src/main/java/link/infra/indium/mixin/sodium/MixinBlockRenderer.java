@@ -9,12 +9,12 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BlockRenderer.class)
 public class MixinBlockRenderer implements AccessBlockRenderer {
-    @Shadow
-    @Final
-    private BlockOcclusionCache occlusionCache;
+	@Shadow
+	@Final
+	private BlockOcclusionCache occlusionCache;
 
-    @Override
-    public BlockOcclusionCache indium$getBlockOcclusionCache() {
-        return this.occlusionCache;
-    }
+	@Override
+	public BlockOcclusionCache indium$getBlockOcclusionCache() {
+		return this.occlusionCache;
+	}
 }
