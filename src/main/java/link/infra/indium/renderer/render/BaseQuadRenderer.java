@@ -21,7 +21,6 @@ import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -131,8 +130,12 @@ public class BaseQuadRenderer {
 		// for reference.
 		if (quad.cullFace() != null) {
 			mpos.move(quad.cullFace());
-		} else if ((quad.geometryFlags() & GeometryHelper.LIGHT_FACE_FLAG) != 0 || Block.isShapeFullCube(blockState.getCollisionShape(blockInfo.blockView, pos))) {
-			mpos.move(quad.lightFace());
+		} else {
+			final int flags = quad.geometryFlags();
+
+			if ((flags & GeometryHelper.LIGHT_FACE_FLAG) != 0 || ((flags & GeometryHelper.AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
+				mpos.move(quad.lightFace());
+			}
 		}
 
 		// Unfortunately cannot use brightness cache here unless we implement one specifically for flat lighting. See #329
