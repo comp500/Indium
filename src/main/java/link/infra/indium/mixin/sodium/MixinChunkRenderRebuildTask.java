@@ -1,13 +1,7 @@
 package link.infra.indium.mixin.sodium;
 
-import link.infra.indium.other.AccessBlockRenderer;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
 import link.infra.indium.Indium;
+import link.infra.indium.other.AccessBlockRenderer;
 import link.infra.indium.other.AccessChunkRenderCacheLocal;
 import link.infra.indium.renderer.render.TerrainRenderContext;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
@@ -23,6 +17,11 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockRenderView;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * The main injection point into Sodium - here we stop Sodium from rendering FRAPI block models, and do it ourselves
@@ -43,10 +42,7 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 		context.release();
 	}
 
-	// Can't specify the arguments here, as the arguments wouldn't get remapped
-	// and remap = true fails as it tries to find a mapping for renderBlock
-	// so I just let MinecraftDev yell at me here
-	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel"), remap = false)
+	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderModel(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/render/model/BakedModel;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;ZJ)Z"))
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderView world, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 
