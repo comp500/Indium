@@ -22,7 +22,6 @@ import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
@@ -91,25 +90,22 @@ public class BaseMeshConsumer extends BaseQuadRenderer implements Consumer<Mesh>
 			return;
 		}
 
-		final RenderMaterialImpl.Value mat = quad.material();
-
-		if (!mat.disableAo(0) && MinecraftClient.isAmbientOcclusionEnabled()) {
-			// needs to happen before offsets are applied
-			aoCalc.compute(quad, false);
-		}
-
-		tessellateQuad(quad, mat, 0);
+		tessellateQuad(quad, 0);
 	}
 
 	/**
 	 * Determines color index and render layer, then routes to appropriate
 	 * tessellate routine based on material properties.
 	 */
-	private void tessellateQuad(MutableQuadViewImpl quad, RenderMaterialImpl.Value mat, int textureIndex) {
+	private void tessellateQuad(MutableQuadViewImpl quad, int textureIndex) {
+		final RenderMaterialImpl.Value mat = quad.material();
 		final int colorIndex = mat.disableColorIndex(textureIndex) ? -1 : quad.colorIndex();
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode(textureIndex));
 
 		if (blockInfo.defaultAo && !mat.disableAo(textureIndex)) {
+			// needs to happen before offsets are applied
+			aoCalc.compute(quad, false);
+
 			if (mat.emissive(textureIndex)) {
 				tessellateSmoothEmissive(quad, renderLayer, colorIndex);
 			} else {
