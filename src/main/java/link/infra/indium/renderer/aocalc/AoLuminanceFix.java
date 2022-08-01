@@ -28,16 +28,15 @@ import link.infra.indium.Indium;
  */
 @FunctionalInterface
 public interface AoLuminanceFix {
-	float apply(BlockView view, BlockPos pos);
+	float apply(BlockView view, BlockPos pos, BlockState state);
 
 	AoLuminanceFix INSTANCE = Indium.FIX_LUMINOUS_AO_SHADE ? AoLuminanceFix::fixed : AoLuminanceFix::vanilla;
 
-	static float vanilla(BlockView view, BlockPos pos) {
-		return view.getBlockState(pos).getAmbientOcclusionLightLevel(view, pos);
+	static float vanilla(BlockView view, BlockPos pos, BlockState state) {
+		return state.getAmbientOcclusionLightLevel(view, pos);
 	}
 
-	static float fixed(BlockView view, BlockPos pos) {
-		final BlockState state = view.getBlockState(pos);
+	static float fixed(BlockView view, BlockPos pos, BlockState state) {
 		return state.getLuminance() == 0 ? state.getAmbientOcclusionLightLevel(view, pos) : 1f;
 	}
 }
