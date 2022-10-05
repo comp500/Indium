@@ -13,7 +13,7 @@ Indium's impact on performance should be negligible, however mods that use the F
 No, Indium is an addon mod for Sodium - you must use both mods together to get Fabric Rendering API support with Sodium's rendering optimisations.
 
 ## Do I need Indium if I don't use Sodium?
-No, Indigo is provided as part of Fabric API as the reference implementation of the Fabric Rendering API. Indigo disables itself when Sodium is installed.
+No, Indigo (not In*dium*) is provided as part of Fabric API as the reference implementation of the Fabric Rendering API. Indigo disables itself when Sodium is installed.
 
 ## Will it be merged into Sodium?
 Fabric Rendering API support is not currently a priority for upstream Sodium, and will not be explored until Sodium is in a more stable state.
