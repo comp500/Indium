@@ -21,7 +21,7 @@ import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 import org.jetbrains.annotations.NotNull;
 
 import static net.minecraft.util.math.MathHelper.approximatelyEquals;
@@ -191,16 +191,16 @@ public abstract class GeometryHelper {
 	 * <p>Derived from the quad face normal and expects convex quads with all points co-planar.
 	 */
 	public static Direction lightFace(QuadView quad) {
-		final Vec3f normal = quad.faceNormal();
+		final Vector3f normal = quad.faceNormal();
 		switch (GeometryHelper.longestAxis(normal)) {
 		case X:
-			return normal.getX() > 0 ? Direction.EAST : Direction.WEST;
+			return normal.x() > 0 ? Direction.EAST : Direction.WEST;
 
 		case Y:
-			return normal.getY() > 0 ? Direction.UP : Direction.DOWN;
+			return normal.y() > 0 ? Direction.UP : Direction.DOWN;
 
 		case Z:
-			return normal.getZ() > 0 ? Direction.SOUTH : Direction.NORTH;
+			return normal.z() > 0 ? Direction.SOUTH : Direction.NORTH;
 
 		default:
 			// handle WTF case
@@ -229,8 +229,8 @@ public abstract class GeometryHelper {
 	/**
 	 * @see #longestAxis(float, float, float)
 	 */
-	public static Axis longestAxis(Vec3f vec) {
-		return longestAxis(vec.getX(), vec.getY(), vec.getZ());
+	public static Axis longestAxis(Vector3f vec) {
+		return longestAxis(vec.x(), vec.y(), vec.z());
 	}
 
 	/**

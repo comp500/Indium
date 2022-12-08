@@ -49,7 +49,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 import net.minecraft.util.math.random.Random;
 
 /**
@@ -67,7 +67,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 
 	private final ItemColors colorMap;
 	private final Random random = Random.create();
-	private final Vec3f normalVec = new Vec3f();
+	private final Vector3f normalVec = new Vector3f();
 
 	private final Supplier<Random> randomSupplier = () -> {
 		random.setSeed(ITEM_RANDOM_SEED);

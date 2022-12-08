@@ -19,7 +19,7 @@ package link.infra.indium.renderer.helper;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,8 +48,8 @@ public abstract class NormalHelper {
 	/**
 	 * Version of {@link #packNormal(float, float, float, float)} that accepts a vector type.
 	 */
-	public static int packNormal(Vec3f normal, float w) {
-		return packNormal(normal.getX(), normal.getY(), normal.getZ(), w);
+	public static int packNormal(Vector3f normal, float w) {
+		return packNormal(normal.x(), normal.y(), normal.z(), w);
 	}
 
 	/**
@@ -69,7 +69,7 @@ public abstract class NormalHelper {
 	 * <p>Will work with triangles also. Assumes counter-clockwise winding order, which is the norm.
 	 * Expects convex quads with all points co-planar.
 	 */
-	public static void computeFaceNormal(@NotNull Vec3f saveTo, QuadView q) {
+	public static void computeFaceNormal(@NotNull Vector3f saveTo, QuadView q) {
 		final Direction nominalFace = q.nominalFace();
 
 		if (GeometryHelper.isQuadParallelToFace(nominalFace, q)) {
