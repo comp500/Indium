@@ -16,8 +16,8 @@
 
 package link.infra.indium.renderer.render;
 
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Matrix3f;
 
 abstract class MatrixRenderContext extends AbstractRenderContext {
 	protected Matrix4f matrix;
