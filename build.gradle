@@ -14,7 +14,7 @@ targetCompatibility = JavaVersion.VERSION_17
 String getGitVersion(Project project) {
 	if (grgit != null) {
 		var dirty = grgit.status().clean ? "" : "-dirty"
-		// If we're going to create a git tag, don't use dev version
+		// If we're going to create (or have created) a git tag, don't use dev version
 		var willCreate = System.getenv("EXPECTED_VERSION") !== null && System.getenv("GITHUB_TOKEN")
 		if (willCreate || grgit.describe(tags: true) == "${project.mod_version}+mc${project.minecraft_version}") {
 			version = "${project.mod_version}+mc${project.minecraft_version}${dirty}"
@@ -33,7 +33,7 @@ String getChangelog(String githubUrl) {
 			grgit.describe(commit: "HEAD~", tags: true).replaceAll("-\\d+-[a-z0-9]+\$", "")
 	]).collect {
 		"- ${it.shortMessage} (${it.author.name})"
-	}.join("\n") + (githubUrl == null ? "" : "\n\nSee the full changes on Github: ${githubUrl}commits/${grgit.describe(tags: true)}")
+	}.join("\n") + (githubUrl == null ? "" : "\n\nSee the full changes on Github: ${githubUrl}commits/${getGitVersion(project)}")
 }
 
 archivesBaseName = project.archives_base_name
