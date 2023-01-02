@@ -2,23 +2,42 @@ plugins {
     id 'fabric-loom' version '0.12-SNAPSHOT'
     id 'maven-publish'
 
-	id 'org.ajoberstar.grgit' version '4.1.0'
+	id "com.github.breadmoirai.github-release" version "2.4.1"
+	id "org.ajoberstar.grgit" version "4.1.0"
+	id "com.modrinth.minotaur" version "2.+"
+	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = project.archives_base_name
-if (grgit != null) {
-	var dirty = grgit.status().clean ? "" : "-dirty"
-	if (grgit.describe(tags: true) == "${project.mod_version}+mc${project.minecraft_version}") {
-		version = "${project.mod_version}+mc${project.minecraft_version}${dirty}"
+String getGitVersion(Project project) {
+	if (grgit != null) {
+		var dirty = grgit.status().clean ? "" : "-dirty"
+		// If we're going to create a git tag, don't use dev version
+		var willCreate = System.getenv("EXPECTED_VERSION") !== null && System.getenv("GITHUB_TOKEN")
+		if (willCreate || grgit.describe(tags: true) == "${project.mod_version}+mc${project.minecraft_version}") {
+			version = "${project.mod_version}+mc${project.minecraft_version}${dirty}"
+		} else {
+			version = "${project.mod_version}-dev.${grgit.head().abbreviatedId}+mc${project.minecraft_version}${dirty}"
+		}
 	} else {
-		version = "${project.mod_version}-dev.${grgit.head().abbreviatedId}+mc${project.minecraft_version}${dirty}"
+		version = "${project.mod_version}-dev.unknown+mc${project.minecraft_version}"
 	}
-} else {
-	version = "${project.mod_version}-dev.unknown+mc${project.minecraft_version}"
 }
+
+String getChangelog(String githubUrl) {
+	// Get changes since the last tag
+	return grgit.log(includes: ["HEAD"], excludes: [
+			// Get the last tag, removing the number of commits since the tag and the current HEAD~ hash
+			grgit.describe(commit: "HEAD~", tags: true).replaceAll("-\\d+-[a-z0-9]+\$", "")
+	]).collect {
+		"- ${it.shortMessage} (${it.author.name})"
+	}.join("\n") + (githubUrl == null ? "" : "\n\nSee the full changes on Github: ${githubUrl}commits/${grgit.describe(tags: true)}")
+}
+
+archivesBaseName = project.archives_base_name
+version = getGitVersion(project)
 group = project.maven_group
 
 repositories {
@@ -43,7 +62,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	modImplementation "maven.modrinth:sodium:mc1.19.3-0.4.7"
+	modImplementation "maven.modrinth:sodium:mc${project.minecraft_version}-${project.sodium_version}"
 }
 
 processResources {
@@ -95,4 +114,85 @@ publishing {
         // uncomment to publish to the local maven
         // mavenLocal()
     }
+}
+
+// TODO: infer from fabric.mod.json?!
+def supportedVersions = ["1.19.3"]
+def verName = "Indium ${project.mod_version} for Minecraft ${project.minecraft_version}/Sodium ${project.sodium_version}"
+
+// Check version is as expected
+if (System.getenv("EXPECTED_VERSION") !== null) {
+	assert System.getenv("EXPECTED_VERSION") == project.version
+}
+
+publish {
+	doFirst {
+		// Require the user to "expect" a version to publish
+		assert System.getenv("EXPECTED_VERSION") !== null : "EXPECTED_VERSION environment variable must be set to publish"
+	}
+}
+
+if (System.getenv("GITHUB_TOKEN")) {
+	assert System.getenv("GITHUB_REF_NAME")
+	githubRelease {
+		owner = System.getenv("GITHUB_REPOSITORY_OWNER")
+		repo = System.getenv("GITHUB_REPOSITORY").split("/", 2)[1]
+		tagName = project.version
+		releaseName = verName
+		targetCommitish = System.getenv("GITHUB_REF_NAME")
+		draft = false
+		body = getChangelog(null)
+		token System.getenv("GITHUB_TOKEN")
+		releaseAssets.from(remapJar)
+	}
+
+	publish.dependsOn(tasks.githubRelease)
+}
+
+if (System.getenv("MODRINTH_TOKEN")) {
+	modrinth {
+		token = System.getenv("MODRINTH_TOKEN")
+		projectId = project.modrinth_id
+		versionNumber = project.version
+		uploadFile = remapJar
+		for (version in supportedVersions) {
+			addGameVersion(version)
+		}
+		addLoader("fabric")
+		addLoader("quilt")
+		detectLoaders = false
+		versionName = verName
+		changelog = getChangelog(project.source_url)
+		dependencies {
+			required.version project.sodium_mr_version_id
+		}
+	}
+
+	publish.dependsOn(tasks.modrinth)
+}
+
+if (System.getenv("CURSEFORGE_TOKEN")) {
+	curseforge {
+		apiKey = System.getenv("CURSEFORGE_TOKEN")
+		project {
+			id = project.curseforge_id
+			releaseType = "release"
+
+			mainArtifact(remapJar) {
+				displayName = verName
+			}
+			for (version in supportedVersions) {
+				addGameVersion(version)
+			}
+			addGameVersion("Fabric")
+			addGameVersion("Quilt")
+			changelog = getChangelog(project.source_url)
+			changelogType = "markdown"
+			relations {
+				requiredDependency "sodium"
+			}
+		}
+	}
+
+	publish.dependsOn(tasks.named("curseforge"))
 }
