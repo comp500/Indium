@@ -155,11 +155,8 @@ if (System.getenv("MODRINTH_TOKEN")) {
 		projectId = project.modrinth_id
 		versionNumber = project.version
 		uploadFile = remapJar
-		for (version in supportedVersions) {
-			addGameVersion(version)
-		}
-		addLoader("fabric")
-		addLoader("quilt")
+		gameVersions = supportedVersions
+		loaders = ["fabric", "quilt"]
 		detectLoaders = false
 		versionName = verName
 		changelog = getChangelog(project.source_url)
