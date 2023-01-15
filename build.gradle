@@ -161,7 +161,7 @@ if (System.getenv("MODRINTH_TOKEN")) {
 		versionName = verName
 		changelog = getChangelog(project.source_url)
 		dependencies {
-			required.version project.sodium_mr_version_id
+			required.version "mc${project.minecraft_version}-${project.sodium_version}"
 		}
 	}
 
