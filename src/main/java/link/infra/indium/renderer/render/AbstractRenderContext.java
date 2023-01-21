@@ -17,7 +17,6 @@
 package link.infra.indium.renderer.render;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 

@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.joml.Vector3f;
+
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.ColorHelper;
@@ -49,7 +51,6 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
-import org.joml.Vector3f;
 import net.minecraft.util.math.random.Random;
 
 /**

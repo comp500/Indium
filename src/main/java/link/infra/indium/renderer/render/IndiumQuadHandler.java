@@ -31,6 +31,6 @@ public class IndiumQuadHandler implements ItemRenderContext.VanillaQuadHandler {
 
 	@Override
 	public void accept(BakedModel model, ItemStack stack, int color, int overlay, MatrixStack matrixStack, VertexConsumer buffer) {
-		itemRenderer.fabric_renderBakedItemModel(model, stack, color, overlay, matrixStack, buffer);
+		itemRenderer.indium$renderBakedItemModel(model, stack, color, overlay, matrixStack, buffer);
 	}
 }

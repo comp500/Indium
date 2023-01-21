@@ -16,15 +16,16 @@
 
 package link.infra.indium.renderer.helper;
 
+import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
-import org.joml.Vector3f;
-import org.jetbrains.annotations.NotNull;
-
-import static net.minecraft.util.math.MathHelper.approximatelyEquals;
 
 /**
  * Static routines of general utility for renderer implementations.

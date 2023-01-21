@@ -18,11 +18,10 @@ package link.infra.indium.renderer;
 
 import com.google.common.base.Preconditions;
 
-import net.minecraft.util.math.MathHelper;
-
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.minecraft.util.math.MathHelper;
 
 /**
  * Default implementation of the standard render materials.

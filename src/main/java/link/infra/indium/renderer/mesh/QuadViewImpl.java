@@ -16,7 +16,25 @@
 
 package link.infra.indium.renderer.mesh;
 
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
+import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_LIGHTMAP;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_NORMAL;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_U;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_V;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Y;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Z;
+
+import org.joml.Vector3f;
+
 import com.google.common.base.Preconditions;
+
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
@@ -24,9 +42,6 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.util.math.Direction;
-import org.joml.Vector3f;
-
-import static link.infra.indium.renderer.mesh.EncodingFormat.*;
 
 /**
  * Base class for all quads / quad makers. Handles the ugly bits

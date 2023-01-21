@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package link.infra.indium.renderer.accessor;
+package link.infra.indium.mixin.renderer;
 
 import java.util.BitSet;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
 
+@Mixin(targets = "net.minecraft.client.render.block.BlockModelRenderer$AmbientOcclusionCalculator")
 public interface AccessAmbientOcclusionCalculator {
-	float[] fabric_colorMultiplier();
+	@Accessor("brightness")
+	float[] indium$brightness();
 
-	int[] fabric_brightness();
+	@Accessor("light")
+	int[] indium$light();
 
-	void fabric_apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
+	@Invoker("apply(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Direction;[FLjava/util/BitSet;Z)V")
+	void indium$apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 }

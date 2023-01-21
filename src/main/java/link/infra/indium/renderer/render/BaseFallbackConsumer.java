@@ -16,6 +16,10 @@
 
 package link.infra.indium.renderer.render;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.aocalc.AoCalculator;
@@ -29,11 +33,6 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
-
-import java.util.List;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Consumer for vanilla baked models. Generally intended to give visual results matching a vanilla render,

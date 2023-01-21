@@ -16,13 +16,20 @@
 
 package link.infra.indium.renderer.render;
 
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
 public class TerrainBlockRenderInfo extends BlockRenderInfo {
+	protected final BlockOcclusionCache blockOcclusionCache;
+
 	private int cullCompletionFlags;
 	private int cullResultFlags;
+
+	public TerrainBlockRenderInfo(BlockOcclusionCache blockOcclusionCache) {
+		this.blockOcclusionCache = blockOcclusionCache;
+	}
 
 	@Override
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {

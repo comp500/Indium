@@ -16,8 +16,12 @@
 
 package link.infra.indium.renderer.aocalc;
 
+import java.lang.reflect.Constructor;
+import java.util.BitSet;
+import java.util.function.Supplier;
+
 import link.infra.indium.Indium;
-import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
+import link.infra.indium.mixin.renderer.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
@@ -25,10 +29,6 @@ import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
-
-import java.lang.reflect.Constructor;
-import java.util.BitSet;
-import java.util.function.Supplier;
 
 public class VanillaAoHelper {
 	private static Supplier<AccessAmbientOcclusionCalculator> factory;
@@ -76,7 +76,7 @@ public class VanillaAoHelper {
 		return factory == null ? null : factory.get();
 	}
 
-	public static void updateShape(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
-		blockRenderer.fabric_updateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
+	public static void getQuadDimensions(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
+		blockRenderer.indium$getQuadDimensions(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

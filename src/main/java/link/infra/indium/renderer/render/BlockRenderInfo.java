@@ -16,7 +16,8 @@
 
 package link.infra.indium.renderer.render;
 
-import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+import java.util.function.Supplier;
+
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -28,9 +29,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 
-
-import java.util.function.Supplier;
-
 /**
  * Holds, manages and provides access to the block/world related state
  * needed by fallback and mesh consumers.
@@ -40,7 +38,6 @@ import java.util.function.Supplier;
  */
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	protected BlockOcclusionCache blockOcclusionCache;
 	public final Random random = Random.create();
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
@@ -66,10 +63,6 @@ public class BlockRenderInfo {
 		this.blockView = blockView;
 	}
 
-	public void setBlockOcclusionCache(BlockOcclusionCache blockOcclusionCache) {
-		this.blockOcclusionCache = blockOcclusionCache;
-	}
-
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
@@ -83,7 +76,6 @@ public class BlockRenderInfo {
 	public void release() {
 		blockPos = null;
 		blockState = null;
-		blockOcclusionCache = null;
 	}
 
 	int blockColor(int colorIndex) {

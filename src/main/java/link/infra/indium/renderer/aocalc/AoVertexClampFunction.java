@@ -16,11 +16,8 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import link.infra.indium.Indium;
 
-@Environment(EnvType.CLIENT)
 @FunctionalInterface
 interface AoVertexClampFunction {
 	float clamp(float x);

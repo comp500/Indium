@@ -16,6 +16,9 @@
 
 package link.infra.indium.renderer.render;
 
+import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
+
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
@@ -25,7 +28,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 /**
  * Base quad-rendering class for fallback and mesh consumers.
@@ -133,7 +137,7 @@ public class BaseQuadRenderer {
 		} else {
 			final int flags = quad.geometryFlags();
 
-			if ((flags & GeometryHelper.LIGHT_FACE_FLAG) != 0 || ((flags & GeometryHelper.AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
+			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
 				mpos.move(quad.lightFace());
 			}
 		}

@@ -18,15 +18,14 @@ package link.infra.indium.renderer.mesh;
 
 import com.google.common.base.Preconditions;
 
+import link.infra.indium.renderer.RenderMaterialImpl;
+import link.infra.indium.renderer.helper.GeometryHelper;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import link.infra.indium.renderer.RenderMaterialImpl;
-import link.infra.indium.renderer.helper.GeometryHelper;
 
 /**
  * Holds all the array offsets and bit-wise encoders/decoders for

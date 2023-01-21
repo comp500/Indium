@@ -18,17 +18,16 @@ package link.infra.indium.renderer.render;
 
 import java.util.function.Consumer;
 
+import link.infra.indium.renderer.IndiumRenderer;
+import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import net.minecraft.client.render.RenderLayer;
-
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
-import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.RenderMaterialImpl;
+import net.minecraft.client.render.RenderLayer;
 
 /**
  * Consumer for pre-baked meshes.  Works by copying the mesh data to an
