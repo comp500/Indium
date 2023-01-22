@@ -118,7 +118,7 @@ public class BlockRenderContext extends MatrixRenderContext {
 	}
 
 	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
+	public BakedModelConsumer bakedModelConsumer() {
 		return fallbackConsumer;
 	}
 

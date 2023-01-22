@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import link.infra.indium.renderer.IndiumRenderer;
@@ -265,38 +266,33 @@ public class ItemRenderContext extends MatrixRenderContext {
 		}
 	}
 
-	private class FallbackConsumer implements Consumer<BakedModel> {
+	private class FallbackConsumer implements BakedModelConsumer {
 		@Override
 		public void accept(BakedModel model) {
+			accept(model, null);
+		}
+
+		@Override
+		public void accept(BakedModel model, @Nullable BlockState state) {
 			if (hasTransform()) {
 				// if there's a transform in effect, convert to mesh-based quads so that we can apply it
 				for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 					final Direction cullFace = ModelHelper.faceFromIndex(i);
 					random.setSeed(ITEM_RANDOM_SEED);
-					final List<BakedQuad> quads = model.getQuads(null, cullFace, random);
+					final List<BakedQuad> quads = model.getQuads(state, cullFace, random);
 					final int count = quads.size();
 
 					if (count != 0) {
 						for (int j = 0; j < count; j++) {
 							final BakedQuad q = quads.get(j);
-							renderQuadWithTransform(q, cullFace);
+							editorQuad.fromVanilla(q, IndiumRenderer.MATERIAL_STANDARD, cullFace);
+							renderMeshQuad(editorQuad);
 						}
 					}
 				}
 			} else {
 				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
 			}
-		}
-
-		private void renderQuadWithTransform(BakedQuad quad, Direction cullFace) {
-			final Maker editorQuad = ItemRenderContext.this.editorQuad;
-			editorQuad.fromVanilla(quad, IndiumRenderer.MATERIAL_STANDARD, cullFace);
-
-			if (!transform(editorQuad)) {
-				return;
-			}
-
-			renderQuad(editorQuad, BlendMode.DEFAULT, editorQuad.colorIndex());
 		}
 	}
 
@@ -306,7 +302,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	}
 
 	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
+	public BakedModelConsumer bakedModelConsumer() {
 		return fallbackConsumer;
 	}
 
