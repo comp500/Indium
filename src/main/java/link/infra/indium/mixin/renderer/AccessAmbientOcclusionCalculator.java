@@ -35,6 +35,6 @@ public interface AccessAmbientOcclusionCalculator {
 	@Accessor("light")
 	int[] indium$light();
 
-	@Invoker("apply(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Direction;[FLjava/util/BitSet;Z)V")
+	@Invoker("apply")
 	void indium$apply(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, Direction face, float[] aoData, BitSet controlBits, boolean shade);
 }
