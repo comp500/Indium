@@ -19,12 +19,11 @@ package link.infra.indium.renderer;
 import java.util.HashMap;
 
 import link.infra.indium.renderer.mesh.MeshBuilderImpl;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.minecraft.util.Identifier;
 
 public class IndiumRenderer implements Renderer {
 	public static final IndiumRenderer INSTANCE = new IndiumRenderer();

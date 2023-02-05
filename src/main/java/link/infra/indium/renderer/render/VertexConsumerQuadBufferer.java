@@ -2,15 +2,16 @@ package link.infra.indium.renderer.render;
 
 import java.util.function.Function;
 
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
 import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.Sprite;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 public abstract class VertexConsumerQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, VertexConsumer> bufferFunc;

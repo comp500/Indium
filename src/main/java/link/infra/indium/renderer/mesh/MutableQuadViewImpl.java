@@ -16,7 +16,21 @@
 
 package link.infra.indium.renderer.mesh;
 
+import static link.infra.indium.renderer.mesh.EncodingFormat.EMPTY;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
+import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_LIGHTMAP;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_NORMAL;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_STRIDE;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_U;
+import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
+
 import com.google.common.base.Preconditions;
+
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.helper.NormalHelper;
@@ -26,8 +40,6 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
-
-import static link.infra.indium.renderer.mesh.EncodingFormat.*;
 
 /**
  * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emit()},

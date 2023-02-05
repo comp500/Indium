@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,46 +16,41 @@
 
 package link.infra.indium.renderer.aocalc;
 
+import static java.lang.Math.max;
+import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.CUBIC_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackAO;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackFO;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackLM;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackOP;
+import static net.minecraft.util.math.Direction.DOWN;
+import static net.minecraft.util.math.Direction.EAST;
+import static net.minecraft.util.math.Direction.NORTH;
+import static net.minecraft.util.math.Direction.SOUTH;
+import static net.minecraft.util.math.Direction.UP;
+import static net.minecraft.util.math.Direction.WEST;
+
+import java.util.BitSet;
+
+import org.joml.Vector3f;
+
 import link.infra.indium.Indium;
-import link.infra.indium.renderer.accessor.AccessAmbientOcclusionCalculator;
+import link.infra.indium.mixin.renderer.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.aocalc.AoFace.WeightFunction;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.mesh.QuadViewImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
+import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Vector3f;
-import net.minecraft.world.BlockRenderView;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.BitSet;
-
-import static java.lang.Math.max;
-import static link.infra.indium.renderer.helper.GeometryHelper.*;
-import static net.minecraft.util.math.Direction.*;
 
 /**
  * Adaptation of inner, non-static class in BlockModelRenderer that serves same purpose.
  */
-@Environment(EnvType.CLIENT)
 public class AoCalculator {
-	@FunctionalInterface
-	public interface BrightnessFunc {
-		int apply(BlockPos pos, BlockState state);
-	}
-
-	/** Used to receive a method reference in constructor for ao value lookup. */
-	@FunctionalInterface
-	public interface AoFunc {
-		float apply(BlockPos pos, BlockState state);
-	}
-
 	/**
 	 * Vanilla models with cubic quads have vertices in a certain order, which allows
 	 * us to map them using a lookup. Adapted from enum in vanilla AoCalculator.
@@ -70,14 +65,9 @@ public class AoCalculator {
 		VERTEX_MAP[EAST.getId()] = new int[] { 1, 2, 3, 0 };
 	}
 
-	private static final Logger LOGGER = LogManager.getLogger();
-
 	private final AccessAmbientOcclusionCalculator vanillaCalc;
-	private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
-	private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
 	private final BlockRenderInfo blockInfo;
-	private final BrightnessFunc brightnessFunc;
-	private final AoFunc aoFunc;
+	private final LightDataAccess lightCache;
 
 	/** caches results of {@link #computeFace(Direction, boolean, boolean)} for the current block. */
 	private final AoFaceData[] faceData = new AoFaceData[12];
@@ -92,10 +82,9 @@ public class AoCalculator {
 	public final float[] ao = new float[4];
 	public final int[] light = new int[4];
 
-	public AoCalculator(BlockRenderInfo blockInfo, BrightnessFunc brightnessFunc, AoFunc aoFunc) {
+	public AoCalculator(BlockRenderInfo blockInfo, LightDataAccess lightCache) {
 		this.blockInfo = blockInfo;
-		this.brightnessFunc = brightnessFunc;
-		this.aoFunc = aoFunc;
+		this.lightCache = lightCache;
 		this.vanillaCalc = VanillaAoHelper.get();
 
 		for (int i = 0; i < 12; i++) {
@@ -110,7 +99,6 @@ public class AoCalculator {
 
 	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
 		final AoConfig config = Indium.AMBIENT_OCCLUSION_MODE;
-		final boolean shouldCompare;
 
 		switch (config) {
 		case VANILLA:
@@ -121,48 +109,24 @@ public class AoCalculator {
 				calcVanilla(quad);
 			}
 
-			// no point in comparing vanilla with itself
-			shouldCompare = false;
 			break;
 
 		case EMULATE:
 			calcFastVanilla(quad);
-			shouldCompare = Indium.DEBUG_COMPARE_LIGHTING && isVanilla;
 			break;
 
 		case HYBRID:
 		default:
 			if (isVanilla) {
-				shouldCompare = Indium.DEBUG_COMPARE_LIGHTING;
 				calcFastVanilla(quad);
 			} else {
-				shouldCompare = false;
 				calcEnhanced(quad);
 			}
 
 			break;
 
 		case ENHANCED:
-			shouldCompare = false;
 			calcEnhanced(quad);
-		}
-
-		if (shouldCompare && vanillaCalc != null) {
-			float[] vanillaAo = new float[4];
-			int[] vanillaLight = new int[4];
-			calcVanilla(quad, vanillaAo, vanillaLight);
-
-			for (int i = 0; i < 4; i++) {
-				if (light[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(ao[i], vanillaAo[i])) {
-					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState.toString(), blockInfo.blockPos.toString()));
-					LOGGER.info(String.format("Flags = %d, LightFace = %s", quad.geometryFlags(), quad.lightFace().toString()));
-					LOGGER.info(String.format("    Old Multiplier: %.2f, %.2f, %.2f, %.2f", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]));
-					LOGGER.info(String.format("    New Multiplier: %.2f, %.2f, %.2f, %.2f", ao[0], ao[1], ao[2], ao[3]));
-					LOGGER.info(String.format("    Old Brightness: %s, %s, %s, %s", Integer.toHexString(vanillaLight[0]), Integer.toHexString(vanillaLight[1]), Integer.toHexString(vanillaLight[2]), Integer.toHexString(vanillaLight[3])));
-					LOGGER.info(String.format("    New Brightness: %s, %s, %s, %s", Integer.toHexString(light[0]), Integer.toHexString(light[1]), Integer.toHexString(light[2]), Integer.toHexString(light[3])));
-					break;
-				}
-			}
 		}
 	}
 
@@ -182,11 +146,11 @@ public class AoCalculator {
 		final Direction face = quad.lightFace();
 		quad.toVanilla(0, vertexData, 0, false);
 
-		VanillaAoHelper.updateShape(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, face, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.fabric_apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
+		VanillaAoHelper.getQuadDimensions(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, face, vanillaAoData, vanillaAoControlBits);
+		vanillaCalc.indium$apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, quad.lightFace(), vanillaAoData, vanillaAoControlBits, quad.hasShade());
 
-		System.arraycopy(vanillaCalc.fabric_colorMultiplier(), 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.fabric_brightness(), 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.indium$brightness(), 0, aoDest, 0, 4);
+		System.arraycopy(vanillaCalc.indium$light(), 0, lightDest, 0, 4);
 	}
 
 	private void calcFastVanilla(MutableQuadViewImpl quad) {
@@ -369,72 +333,53 @@ public class AoCalculator {
 		if ((completionFlags & mask) == 0) {
 			completionFlags |= mask;
 
-			final BlockRenderView world = blockInfo.blockView;
+			final LightDataAccess cache = lightCache;
 			final BlockPos pos = blockInfo.blockPos;
-			final BlockState blockState = blockInfo.blockState;
-			final BlockPos.Mutable lightPos = this.lightPos;
-			final BlockPos.Mutable searchPos = this.searchPos;
-			BlockState searchState;
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
+			final int lightPosX;
+			final int lightPosY;
+			final int lightPosZ;
 
 			if (isOnBlockFace) {
-				lightPos.set(pos, lightFace);
+				lightPosX = x + lightFace.getOffsetX();
+				lightPosY = y + lightFace.getOffsetY();
+				lightPosZ = z + lightFace.getOffsetZ();
 			} else {
-				lightPos.set(pos);
+				lightPosX = x;
+				lightPosY = y;
+				lightPosZ = z;
 			}
 
 			AoFace aoFace = AoFace.get(lightFace);
+			Direction[] neighbors = aoFace.neighbors;
 
 			// Vanilla was further offsetting the positions for opaque block checks in the
 			// direction of the light face, but it was actually mis-sampling and causing
 			// visible artifacts in certain situations
 
-			searchPos.set(lightPos, aoFace.neighbors[0]);
-			searchState = world.getBlockState(searchPos);
-			final int light0 = brightnessFunc.apply(searchPos, searchState);
-			final float ao0 = aoFunc.apply(searchPos, searchState);
+			final long word0 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0]);
+			final int light0 = unpackLM(word0);
+			final float ao0 = unpackAO(word0);
+			final boolean isClear0 = unpackOP(word0);
 
-			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
-				searchPos.move(lightFace);
-				searchState = world.getBlockState(searchPos);
-			}
+			final long word1 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1]);
+			final int light1 = unpackLM(word1);
+			final float ao1 = unpackAO(word1);
+			final boolean isClear1 = unpackOP(word1);
 
-			final boolean isClear0 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+			final long word2 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[2]);
+			final int light2 = unpackLM(word2);
+			final float ao2 = unpackAO(word2);
+			final boolean isClear2 = unpackOP(word2);
 
-			searchPos.set(lightPos, aoFace.neighbors[1]);
-			searchState = world.getBlockState(searchPos);
-			final int light1 = brightnessFunc.apply(searchPos, searchState);
-			final float ao1 = aoFunc.apply(searchPos, searchState);
-
-			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
-				searchPos.move(lightFace);
-				searchState = world.getBlockState(searchPos);
-			}
-
-			final boolean isClear1 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
-
-			searchPos.set(lightPos, aoFace.neighbors[2]);
-			searchState = world.getBlockState(searchPos);
-			final int light2 = brightnessFunc.apply(searchPos, searchState);
-			final float ao2 = aoFunc.apply(searchPos, searchState);
-
-			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
-				searchPos.move(lightFace);
-				searchState = world.getBlockState(searchPos);
-			}
-
-			final boolean isClear2 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
-
-			searchPos.set(lightPos, aoFace.neighbors[3]);
-			searchState = world.getBlockState(searchPos);
-			final int light3 = brightnessFunc.apply(searchPos, searchState);
-			final float ao3 = aoFunc.apply(searchPos, searchState);
-
-			if (!Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
-				searchPos.move(lightFace);
-				searchState = world.getBlockState(searchPos);
-			}
-
-			final boolean isClear3 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+			final long word3 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[3]);
+			final int light3 = unpackLM(word3);
+			final float ao3 = unpackAO(word3);
+			final boolean isClear3 = unpackOP(word3);
 
 			// c = corner - values at corners of face
 			int cLight0, cLight1, cLight2, cLight3;
@@ -447,56 +392,52 @@ public class AoCalculator {
 				cAo0 = ao0;
 				cLight0 = light0;
 			} else {
-				searchPos.set(lightPos).move(aoFace.neighbors[0]).move(aoFace.neighbors[2]);
-				searchState = world.getBlockState(searchPos);
-				cAo0 = aoFunc.apply(searchPos, searchState);
-				cLight0 = brightnessFunc.apply(searchPos, searchState);
+				final long word02 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[2]);
+				cAo0 = unpackAO(word02);
+				cLight0 = unpackLM(word02);
 			}
 
 			if (!isClear3 && !isClear0) {
 				cAo1 = ao0;
 				cLight1 = light0;
 			} else {
-				searchPos.set(lightPos).move(aoFace.neighbors[0]).move(aoFace.neighbors[3]);
-				searchState = world.getBlockState(searchPos);
-				cAo1 = aoFunc.apply(searchPos, searchState);
-				cLight1 = brightnessFunc.apply(searchPos, searchState);
+				final long word03 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[3]);
+				cAo1 = unpackAO(word03);
+				cLight1 = unpackLM(word03);
 			}
 
 			if (!isClear2 && !isClear1) {
 				cAo2 = ao1;
 				cLight2 = light1;
 			} else {
-				searchPos.set(lightPos).move(aoFace.neighbors[1]).move(aoFace.neighbors[2]);
-				searchState = world.getBlockState(searchPos);
-				cAo2 = aoFunc.apply(searchPos, searchState);
-				cLight2 = brightnessFunc.apply(searchPos, searchState);
+				final long word12 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[2]);
+				cAo2 = unpackAO(word12);
+				cLight2 = unpackLM(word12);
 			}
 
 			if (!isClear3 && !isClear1) {
 				cAo3 = ao1;
 				cLight3 = light1;
 			} else {
-				searchPos.set(lightPos).move(aoFace.neighbors[1]).move(aoFace.neighbors[3]);
-				searchState = world.getBlockState(searchPos);
-				cAo3 = aoFunc.apply(searchPos, searchState);
-				cLight3 = brightnessFunc.apply(searchPos, searchState);
+				final long word13 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[3]);
+				cAo3 = unpackAO(word13);
+				cLight3 = unpackLM(word13);
 			}
+
+			long centerWord = cache.get(lightPosX, lightPosY, lightPosZ);
 
 			// If on block face or neighbor isn't occluding, "center" will be neighbor brightness
 			// Doesn't use light pos because logic not based solely on this block's geometry
 			int lightCenter;
-			searchPos.set(pos, lightFace);
-			searchState = world.getBlockState(searchPos);
 
-			if (isOnBlockFace || !searchState.isOpaqueFullCube(world, searchPos)) {
-				lightCenter = brightnessFunc.apply(searchPos, searchState);
+			if (isOnBlockFace || !unpackFO(centerWord)) {
+				lightCenter = unpackLM(centerWord);
 			} else {
-				lightCenter = brightnessFunc.apply(pos, blockState);
+				lightCenter = unpackLM(cache.get(x, y, z));
 			}
 
-			float aoCenter = aoFunc.apply(lightPos, world.getBlockState(lightPos));
-			float worldBrightness = world.getBrightness(lightFace, shade);
+			float aoCenter = unpackAO(centerWord);
+			float worldBrightness = blockInfo.blockView.getBrightness(lightFace, shade);
 
 			result.a0 = ((ao3 + ao0 + cAo1 + aoCenter) * 0.25F) * worldBrightness;
 			result.a1 = ((ao2 + ao0 + cAo0 + aoCenter) * 0.25F) * worldBrightness;
@@ -518,20 +459,7 @@ public class AoCalculator {
 	 * value from all four samples.
 	 */
 	private static int meanBrightness(int a, int b, int c, int d) {
-		if (Indium.FIX_SMOOTH_LIGHTING_OFFSET) {
-			return a == 0 || b == 0 || c == 0 || d == 0 ? meanEdgeBrightness(a, b, c, d) : meanInnerBrightness(a, b, c, d);
-		} else {
-			return vanillaMeanBrightness(a, b, c, d);
-		}
-	}
-
-	/** vanilla logic - excludes missing light values from mean and has anisotropy defect mentioned above. */
-	private static int vanillaMeanBrightness(int a, int b, int c, int d) {
-		if (a == 0) a = d;
-		if (b == 0) b = d;
-		if (c == 0) c = d;
-		// bitwise divide by 4, clamp to expected (positive) range
-		return a + b + c + d >> 2 & 0xFF00FF;
+		return a == 0 || b == 0 || c == 0 || d == 0 ? meanEdgeBrightness(a, b, c, d) : meanInnerBrightness(a, b, c, d);
 	}
 
 	private static int meanInnerBrightness(int a, int b, int c, int d) {

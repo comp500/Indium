@@ -16,12 +16,13 @@
 
 package link.infra.indium.renderer.helper;
 
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Vector3f;
 import net.minecraft.util.math.Vec3i;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Static routines of general utility for renderer implementations.

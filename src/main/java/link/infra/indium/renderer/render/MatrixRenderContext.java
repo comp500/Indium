@@ -16,8 +16,8 @@
 
 package link.infra.indium.renderer.render;
 
-import org.joml.Matrix4f;
 import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 abstract class MatrixRenderContext extends AbstractRenderContext {
 	protected Matrix4f matrix;

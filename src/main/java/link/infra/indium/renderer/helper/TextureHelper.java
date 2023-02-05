@@ -16,10 +16,9 @@
 
 package link.infra.indium.renderer.helper;
 
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
-
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 
 /**
  * Handles most texture-baking use cases for model loaders and model libraries

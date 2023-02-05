@@ -16,6 +16,10 @@
 
 package link.infra.indium.renderer.render;
 
+import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
+
+import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
@@ -25,7 +29,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 /**
  * Base quad-rendering class for fallback and mesh consumers.
@@ -42,6 +47,45 @@ public class BaseQuadRenderer {
 		this.blockInfo = blockInfo;
 		this.aoCalc = aoCalc;
 		this.transform = transform;
+	}
+
+	protected void renderQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+		if (!transform.transform(quad)) {
+			return;
+		}
+
+		if (!blockInfo.shouldDrawFace(quad.cullFace())) {
+			return;
+		}
+
+		tessellateQuad(quad, 0, isVanilla);
+	}
+
+	/**
+	 * Determines color index and render layer, then routes to appropriate
+	 * tessellate routine based on material properties.
+	 */
+	private void tessellateQuad(MutableQuadViewImpl quad, int textureIndex, boolean isVanilla) {
+		final RenderMaterialImpl.Value mat = quad.material();
+		final int colorIndex = mat.disableColorIndex(textureIndex) ? -1 : quad.colorIndex();
+		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode(textureIndex));
+
+		if (blockInfo.defaultAo && !mat.disableAo(textureIndex)) {
+			// needs to happen before offsets are applied
+			aoCalc.compute(quad, isVanilla);
+
+			if (mat.emissive(textureIndex)) {
+				tessellateSmoothEmissive(quad, renderLayer, colorIndex);
+			} else {
+				tessellateSmooth(quad, renderLayer, colorIndex);
+			}
+		} else {
+			if (mat.emissive(textureIndex)) {
+				tessellateFlatEmissive(quad, renderLayer, colorIndex);
+			} else {
+				tessellateFlat(quad, renderLayer, colorIndex);
+			}
+		}
 	}
 
 	/** handles block color and red-blue swizzle, common to all renders. */
@@ -133,7 +177,7 @@ public class BaseQuadRenderer {
 		} else {
 			final int flags = quad.geometryFlags();
 
-			if ((flags & GeometryHelper.LIGHT_FACE_FLAG) != 0 || ((flags & GeometryHelper.AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
+			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
 				mpos.move(quad.lightFace());
 			}
 		}

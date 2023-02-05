@@ -16,6 +16,11 @@
 
 package link.infra.indium.renderer.render;
 
+import java.util.List;
+import java.util.function.Supplier;
+
+import org.jetbrains.annotations.Nullable;
+
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.aocalc.AoCalculator;
@@ -23,17 +28,13 @@ import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.BakedModelConsumer;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
-
-import java.util.List;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Consumer for vanilla baked models. Generally intended to give visual results matching a vanilla render,
@@ -54,7 +55,7 @@ import java.util.function.Supplier;
  *  vertex data is sent to the byte buffer.  Generally POJO array access will be faster than
  *  manipulating the data via NIO.
  */
-public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<BakedModel> {
+public class BaseFallbackConsumer extends BaseQuadRenderer implements BakedModelConsumer {
 	private static final Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
 	private static final Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
 
@@ -77,13 +78,17 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 
 	@Override
 	public void accept(BakedModel model) {
+		accept(model, blockInfo.blockState);
+	}
+
+	@Override
+	public void accept(BakedModel model, @Nullable BlockState state) {
 		final Supplier<Random> random = blockInfo.randomSupplier;
 		final Value defaultMaterial = blockInfo.defaultAo && model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
-		final BlockState blockState = blockInfo.blockState;
 
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 			final Direction cullFace = ModelHelper.faceFromIndex(i);
-			final List<BakedQuad> quads = model.getQuads(blockState, cullFace, random.get());
+			final List<BakedQuad> quads = model.getQuads(state, cullFace, random.get());
 			final int count = quads.size();
 
 			if (count != 0) {
@@ -99,29 +104,6 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements Consumer<B
 		final MutableQuadViewImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
 
-		if (!transform.transform(editorQuad)) {
-			return;
-		}
-
-		cullFace = editorQuad.cullFace();
-
-		if (cullFace != null && !blockInfo.shouldDrawFace(cullFace)) {
-			return;
-		}
-
-		if (!editorQuad.material().disableAo(0)) {
-			// needs to happen before offsets are applied
-			aoCalc.compute(editorQuad, true);
-			tessellateSmooth(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
-		} else {
-			// Recomputing whether the quad has a light face is only needed if it doesn't also have a cull face,
-			// as in those cases, the cull face will always be used to offset the light sampling position
-			if (cullFace == null) {
-				// Can't rely on lazy computation in tessellateFlat() because needs to happen before offsets are applied
-				editorQuad.geometryFlags();
-			}
-
-			tessellateFlat(editorQuad, blockInfo.defaultLayer, editorQuad.colorIndex());
-		}
+		renderQuad(editorQuad, true);
 	}
 }

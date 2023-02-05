@@ -28,13 +28,9 @@ import link.infra.indium.renderer.mesh.QuadViewImpl;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.Direction;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
 /**
  * Adapted from vanilla BlockModelRenderer.AoCalculator.
  */
-@Environment(EnvType.CLIENT)
 enum AoFace {
 	AOF_DOWN(new Direction[] { WEST, EAST, NORTH, SOUTH }, (q, i) -> CLAMP_FUNC.clamp(q.y(i)), (q, i, w) -> {
 		final float u = CLAMP_FUNC.clamp(q.x(i));

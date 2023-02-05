@@ -1,9 +1,17 @@
 package link.infra.indium.renderer.render;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import link.infra.indium.mixin.sodium.AccessBlockRenderer;
+import link.infra.indium.renderer.accessor.AccessChunkRenderCacheLocal;
 import link.infra.indium.renderer.aocalc.AoCalculator;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
+import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheLocal;
+import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
@@ -16,27 +24,38 @@ import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.BlockRenderView;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class TerrainRenderContext extends AbstractRenderContext {
-	private final TerrainBlockRenderInfo blockInfo = new TerrainBlockRenderInfo();
-	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
-	private final AoCalculator aoCalc = new AoCalculator(blockInfo, chunkInfo::cachedBrightness, chunkInfo::cachedAoLevel);
+	private final TerrainBlockRenderInfo blockInfo;
+	private final ChunkRenderInfo chunkInfo;
+	private final AoCalculator aoCalc;
 
 	private Vec3i origin;
 	private Vec3d modelOffset;
 
-	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	private final BaseMeshConsumer meshConsumer;
+	private final BaseFallbackConsumer fallbackConsumer;
 
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	public TerrainRenderContext(ChunkRenderCacheLocal renderCache) {
+		WorldSlice worldSlice = renderCache.getWorldSlice();
+		BlockOcclusionCache blockOcclusionCache = ((AccessBlockRenderer) renderCache.getBlockRenderer()).indium$occlusionCache();
+		ArrayLightDataCache lightCache = ((AccessChunkRenderCacheLocal) renderCache).indium$getLightDataCache();
 
-	public void prepare(BlockRenderView blockView, ChunkBuildBuffers buffers, BlockOcclusionCache cache) {
-		blockInfo.setBlockOcclusionCache(cache);
-		blockInfo.setBlockView(blockView);
-		chunkInfo.prepare(blockView, buffers);
+		blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
+		blockInfo.setBlockView(worldSlice);
+		chunkInfo = new ChunkRenderInfo(worldSlice);
+		aoCalc = new AoCalculator(blockInfo, lightCache);
+
+		meshConsumer = new BaseMeshConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+		fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(chunkInfo::getChunkModelBuilder), blockInfo, aoCalc, this::transform);
+	}
+
+	public static TerrainRenderContext get(ChunkBuildContext buildContext) {
+		return ((AccessChunkRenderCacheLocal) buildContext.cache).indium$getTerrainRenderContext();
+	}
+
+	public void prepare(ChunkBuildContext buildContext) {
+		chunkInfo.prepare(buildContext.buffers);
 	}
 
 	public void release() {
@@ -86,7 +105,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
+	public BakedModelConsumer bakedModelConsumer() {
 		return fallbackConsumer;
 	}
 

@@ -18,16 +18,17 @@ package link.infra.indium.mixin.renderer;
 
 import java.util.BitSet;
 
-
-import net.minecraft.util.math.random.Random;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
+import link.infra.indium.renderer.aocalc.VanillaAoHelper;
+import link.infra.indium.renderer.render.BlockRenderContext;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockModelRenderer;
@@ -35,12 +36,8 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
-
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
-import link.infra.indium.renderer.aocalc.VanillaAoHelper;
-import link.infra.indium.renderer.render.BlockRenderContext;
 
 @Mixin(BlockModelRenderer.class)
 public abstract class MixinBlockModelRenderer implements AccessBlockModelRenderer {
@@ -55,7 +52,6 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 		if (!((FabricBakedModel) model).isVanillaAdapter()) {
 			BlockRenderContext context = indium_contexts.get();
 			// Note that we do not support face-culling here (so checkSides is ignored)
-
 			context.render(blockView, model, state, pos, matrix, buffer, rand, seed, overlay);
 			ci.cancel();
 		}
@@ -67,7 +63,7 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 	}
 
 	@Override
-	public void fabric_updateShape(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
+	public void indium$getQuadDimensions(BlockRenderView blockView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
 		getQuadDimensions(blockView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

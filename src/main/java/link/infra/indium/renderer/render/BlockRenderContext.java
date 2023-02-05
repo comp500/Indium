@@ -21,31 +21,29 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
 import link.infra.indium.renderer.aocalc.AoCalculator;
-import link.infra.indium.renderer.aocalc.AoLuminanceFix;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-
 /**
  * Context for non-terrain block rendering.
  */
 public class BlockRenderContext extends MatrixRenderContext {
 	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
-	private final AoCalculator aoCalc = new AoCalculator(blockInfo, this::brightness, this::aoLevel);
+	private final SingleBlockLightDataCache lightCache = new SingleBlockLightDataCache();
+	private final AoCalculator aoCalc = new AoCalculator(blockInfo, lightCache);
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 	private VertexConsumer bufferBuilder;
 	private boolean didOutput = false;
@@ -64,19 +62,6 @@ public class BlockRenderContext extends MatrixRenderContext {
 	 */
 	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 
-	private int brightness(BlockPos pos, BlockState state) {
-		if (blockInfo.blockView == null) {
-			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
-		}
-
-		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, state, pos);
-	}
-
-	private float aoLevel(BlockPos pos, BlockState state) {
-		final BlockRenderView blockView = blockInfo.blockView;
-		return blockView == null ? 1f : AoLuminanceFix.INSTANCE.apply(blockView, pos, state);
-	}
-
 	private VertexConsumer outputBuffer(RenderLayer renderLayer) {
 		didOutput = true;
 		return bufferBuilder;
@@ -94,6 +79,7 @@ public class BlockRenderContext extends MatrixRenderContext {
 		aoCalc.clear();
 		blockInfo.setBlockView(blockView);
 		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion());
+		lightCache.reset(pos, blockView);
 
 		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, randomSupplier, this);
 
@@ -132,7 +118,7 @@ public class BlockRenderContext extends MatrixRenderContext {
 	}
 
 	@Override
-	public Consumer<BakedModel> fallbackConsumer() {
+	public BakedModelConsumer bakedModelConsumer() {
 		return fallbackConsumer;
 	}
 
