@@ -3,12 +3,12 @@
   "package": "link.infra.indium.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "renderer.MixinAmbientOcclusionCalculator",
+    "renderer.AccessAmbientOcclusionCalculator",
     "renderer.MixinBlockModelRenderer",
     "renderer.MixinItemRenderer",
+    "sodium.AccessBlockRenderer",
     "sodium.MixinChunkRenderCacheLocal",
-    "sodium.MixinChunkRenderRebuildTask",
-    "sodium.MixinBlockRenderer"
+    "sodium.MixinChunkRenderRebuildTask"
   ],
   "injectors": {
     "defaultRequire": 1
