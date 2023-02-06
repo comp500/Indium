@@ -26,7 +26,9 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.util.math.random.RandomSeed;
 import net.minecraft.world.BlockRenderView;
 
 /**
@@ -38,7 +40,7 @@ import net.minecraft.world.BlockRenderView;
  */
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	public final Random random = Random.create();
+	public final Random random = new LocalRandom(RandomSeed.getSeed());
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
 	public BlockState blockState;

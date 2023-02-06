@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import net.minecraft.util.math.random.LocalRandom;
+import net.minecraft.util.math.random.RandomSeed;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -68,7 +70,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	}
 
 	private final ItemColors colorMap;
-	private final Random random = Random.create();
+	private final Random random = new LocalRandom(RandomSeed.getSeed());
 	private final Vector3f normalVec = new Vector3f();
 
 	private final Supplier<Random> randomSupplier = () -> {
