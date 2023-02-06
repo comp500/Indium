@@ -77,7 +77,7 @@ public class NonTerrainBlockRenderContext extends MatrixRenderContext {
 		this.didOutput = false;
 		aoCalc.clear();
 		blockInfo.setBlockView(blockView);
-		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion());
+		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion(), seed);
 		lightCache.reset(pos, blockView);
 
 		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, randomSupplier, this);

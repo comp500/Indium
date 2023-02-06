@@ -1,8 +1,5 @@
 package link.infra.indium.renderer.render;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import link.infra.indium.mixin.sodium.AccessBlockRenderer;
 import link.infra.indium.renderer.accessor.AccessBlockRenderCache;
 import link.infra.indium.renderer.aocalc.AoCalculator;
@@ -10,22 +7,21 @@ import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import org.joml.Vector3f;
 import org.joml.Vector3fc;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TerrainRenderContext extends AbstractRenderContext {
 	private final TerrainBlockRenderInfo blockInfo;
@@ -66,19 +62,19 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public boolean tessellateBlock(BlockState blockState, BlockPos blockPos, Vector3fc origin, final BakedModel model, Vec3d modelOffset) {
-		this.origin = origin;
-		this.modelOffset = modelOffset;
+	public boolean tessellateBlock(BlockRenderContext ctx) {
+		this.origin = ctx.origin();
+		this.modelOffset = ctx.state().getModelOffset(ctx.world(), ctx.pos());
 
 		try {
 			chunkInfo.didOutput = false;
 			aoCalc.clear();
-			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
-			((FabricBakedModel) model).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
+			blockInfo.prepareForBlock(ctx.state(), ctx.pos(), ctx.model().useAmbientOcclusion(), ctx.seed());
+			((FabricBakedModel) ctx.model()).emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Indium Renderer");
 			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
-			CrashReportSection.addBlockInfo(crashReportSection, chunkInfo.blockView, blockPos, blockState);
+			CrashReportSection.addBlockInfo(crashReportSection, chunkInfo.blockView, ctx.pos(), ctx.state());
 			throw new CrashException(crashReport);
 		}
 

@@ -16,8 +16,6 @@
 
 package link.infra.indium.renderer.render;
 
-import java.util.function.Supplier;
-
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -30,6 +28,8 @@ import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.math.random.RandomSeed;
 import net.minecraft.world.BlockRenderView;
+
+import java.util.function.Supplier;
 
 /**
  * Holds, manages and provides access to the block/world related state
@@ -49,27 +49,18 @@ public class BlockRenderInfo {
 	RenderLayer defaultLayer;
 
 	public final Supplier<Random> randomSupplier = () -> {
-		final Random result = random;
-		long seed = this.seed;
-
-		if (seed == -1L) {
-			seed = blockState.getRenderingSeed(blockPos);
-			this.seed = seed;
-		}
-
-		result.setSeed(seed);
-		return result;
+		random.setSeed(this.seed);
+		return random;
 	};
 
 	public void setBlockView(BlockRenderView blockView) {
 		this.blockView = blockView;
 	}
 
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
+	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO, long seed) {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
-		// in the unlikely case seed actually matches this, we'll simply retrieve it more than one
-		seed = -1L;
+		this.seed = seed;
 		defaultAo = modelAO && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);

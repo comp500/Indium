@@ -32,8 +32,8 @@ public class TerrainBlockRenderInfo extends BlockRenderInfo {
 	}
 
 	@Override
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO) {
-		super.prepareForBlock(blockState, blockPos, modelAO);
+	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO, long seed) {
+		super.prepareForBlock(blockState, blockPos, modelAO, seed);
 		cullCompletionFlags = 0;
 		cullResultFlags = 0;
 	}
