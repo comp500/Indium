@@ -6,20 +6,24 @@ import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
-import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
+import me.jellysquid.mods.sodium.client.render.vertex.type.ChunkVertexEncoder;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, ChunkModelBuilder> builderFunc;
+	private ChunkVertexEncoder.Vertex[] vertices = ChunkVertexEncoder.Vertex.uninitializedQuad();
 
-	protected abstract Vec3i origin();
+	protected abstract Vector3fc origin();
 
 	protected abstract Vec3d blockOffset();
 
@@ -32,32 +36,28 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset());
 	}
 
-	public static void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vec3i origin, Vec3d blockOffset) {
-		ModelVertexSink vertices = builder.getVertexSink();
-		vertices.ensureCapacity(4);
+	public void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vector3fc origin, Vec3d blockOffset) {
+		var vertices = this.vertices;
 
 		Direction cullFace = quad.cullFace();
-		IndexBufferBuilder indices = builder.getIndexBufferBuilder(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED);
-
-		int vertexStart = vertices.getVertexCount();
+		IndexBufferBuilder indices = builder.getIndexBuffer(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED);
 
 		for (int i = 0; i < 4; i++) {
-			float x = quad.x(i) + (float) blockOffset.getX();
-			float y = quad.y(i) + (float) blockOffset.getY();
-			float z = quad.z(i) + (float) blockOffset.getZ();
+			var out = vertices[i];
+			out.x = origin.x() + quad.x(i) + (float) blockOffset.getX();
+			out.y = origin.y() + quad.y(i) + (float) blockOffset.getY();
+			out.z = origin.z() + quad.z(i) + (float) blockOffset.getZ();
 
 			int color = quad.spriteColor(i, 0);
-			color = ColorABGR.pack(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
+			out.color = ColorABGR.pack(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
 
-			float u = quad.spriteU(i, 0);
-			float v = quad.spriteV(i, 0);
+			out.u = quad.spriteU(i, 0);
+			out.v = quad.spriteV(i, 0);
 
-			int lm = quad.lightmap(i);
-
-			vertices.writeVertex(origin, x, y, z, color, u, v, lm, builder.getChunkId());
+			out.light = quad.lightmap(i);
 		}
 
-		indices.add(vertexStart, ModelQuadWinding.CLOCKWISE);
+		indices.add(builder.getVertexBuffer().push(vertices), ModelQuadWinding.CLOCKWISE);
 
 		Sprite sprite = quad.cachedSprite();
 
@@ -66,7 +66,5 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 		}
 
 		builder.addSprite(sprite);
-
-		vertices.flush();
 	}
 }

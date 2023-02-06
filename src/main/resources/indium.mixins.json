@@ -7,7 +7,7 @@
     "renderer.MixinBlockModelRenderer",
     "renderer.MixinItemRenderer",
     "sodium.AccessBlockRenderer",
-    "sodium.MixinChunkRenderCacheLocal",
+    "sodium.MixinBlockRenderCache",
     "sodium.MixinChunkRenderRebuildTask"
   ],
   "injectors": {

@@ -4,13 +4,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import link.infra.indium.mixin.sodium.AccessBlockRenderer;
-import link.infra.indium.renderer.accessor.AccessChunkRenderCacheLocal;
+import link.infra.indium.renderer.accessor.AccessBlockRenderCache;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
-import me.jellysquid.mods.sodium.client.render.pipeline.context.ChunkRenderCacheLocal;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -24,22 +24,24 @@ import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 public class TerrainRenderContext extends AbstractRenderContext {
 	private final TerrainBlockRenderInfo blockInfo;
 	private final ChunkRenderInfo chunkInfo;
 	private final AoCalculator aoCalc;
 
-	private Vec3i origin;
+	private Vector3fc origin;
 	private Vec3d modelOffset;
 
 	private final BaseMeshConsumer meshConsumer;
 	private final BaseFallbackConsumer fallbackConsumer;
 
-	public TerrainRenderContext(ChunkRenderCacheLocal renderCache) {
+	public TerrainRenderContext(BlockRenderCache renderCache) {
 		WorldSlice worldSlice = renderCache.getWorldSlice();
 		BlockOcclusionCache blockOcclusionCache = ((AccessBlockRenderer) renderCache.getBlockRenderer()).indium$occlusionCache();
-		ArrayLightDataCache lightCache = ((AccessChunkRenderCacheLocal) renderCache).indium$getLightDataCache();
+		ArrayLightDataCache lightCache = ((AccessBlockRenderCache) renderCache).indium$getLightDataCache();
 
 		blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
 		blockInfo.setBlockView(worldSlice);
@@ -51,7 +53,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	public static TerrainRenderContext get(ChunkBuildContext buildContext) {
-		return ((AccessChunkRenderCacheLocal) buildContext.cache).indium$getTerrainRenderContext();
+		return ((AccessBlockRenderCache) buildContext.cache).indium$getTerrainRenderContext();
 	}
 
 	public void prepare(ChunkBuildContext buildContext) {
@@ -64,7 +66,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public boolean tessellateBlock(BlockState blockState, BlockPos blockPos, BlockPos origin, final BakedModel model, Vec3d modelOffset) {
+	public boolean tessellateBlock(BlockState blockState, BlockPos blockPos, Vector3fc origin, final BakedModel model, Vec3d modelOffset) {
 		this.origin = origin;
 		this.modelOffset = modelOffset;
 
@@ -89,7 +91,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 		}
 
 		@Override
-		protected Vec3i origin() {
+		protected Vector3fc origin() {
 			return origin;
 		}
 
