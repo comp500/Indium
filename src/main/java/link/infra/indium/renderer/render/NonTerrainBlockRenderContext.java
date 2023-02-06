@@ -17,13 +17,6 @@
 package link.infra.indium.renderer.render;
 
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -36,11 +29,17 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Context for non-terrain block rendering.
  */
-public class BlockRenderContext extends MatrixRenderContext {
+public class NonTerrainBlockRenderContext extends MatrixRenderContext {
 	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	private final SingleBlockLightDataCache lightCache = new SingleBlockLightDataCache();
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, lightCache);
