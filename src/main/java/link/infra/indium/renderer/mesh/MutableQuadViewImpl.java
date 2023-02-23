@@ -32,6 +32,7 @@ import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
 import com.google.common.base.Preconditions;
 
 import link.infra.indium.renderer.IndiumRenderer;
+import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.helper.TextureHelper;
@@ -125,9 +126,13 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
 		nominalFace(quad.getFace());
 		colorIndex(quad.getColorIndex());
+
+		if (!quad.hasShade()) {
+			material = RenderMaterialImpl.setDisableDiffuse((Value) material, 0, true);
+		}
+
 		material(material);
 		tag(0);
-		shade(quad.hasShade());
 		isGeometryInvalid = true;
 		cachedSprite(quad.getSprite());
 		return this;

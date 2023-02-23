@@ -40,7 +40,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 		ArrayLightDataCache lightCache = ((AccessBlockRenderCache) renderCache).indium$getLightDataCache();
 
 		blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
-		blockInfo.setBlockView(worldSlice);
+		blockInfo.prepareForWorld(worldSlice, true);
 		chunkInfo = new ChunkRenderInfo(worldSlice);
 		aoCalc = new AoCalculator(blockInfo, lightCache);
 

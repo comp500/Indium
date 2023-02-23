@@ -17,6 +17,12 @@
 package link.infra.indium.renderer.render;
 
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -29,12 +35,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Context for non-terrain block rendering.
@@ -45,15 +45,6 @@ public class NonTerrainBlockRenderContext extends MatrixRenderContext {
 	private final AoCalculator aoCalc = new AoCalculator(blockInfo, lightCache);
 	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 	private VertexConsumer bufferBuilder;
-	private boolean didOutput = false;
-	// These are kept as fields to avoid the heap allocation for a supplier.
-	// BlockModelRenderer allows the caller to supply both the random object and seed.
-	private Random random;
-	private long seed;
-	private final Supplier<Random> randomSupplier = () -> {
-		random.setSeed(seed);
-		return random;
-	};
 
 	/**
 	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
@@ -62,32 +53,24 @@ public class NonTerrainBlockRenderContext extends MatrixRenderContext {
 	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
 
 	private VertexConsumer outputBuffer(RenderLayer renderLayer) {
-		didOutput = true;
 		return bufferBuilder;
 	}
 
-	public boolean render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, Random random, long seed, int overlay) {
+	public void render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, boolean cull, Random random, long seed, int overlay) {
 		this.bufferBuilder = buffer;
 		this.matrix = matrixStack.peek().getPositionMatrix();
 		this.normalMatrix = matrixStack.peek().getNormalMatrix();
-		this.random = random;
-		this.seed = seed;
 
 		this.overlay = overlay;
-		this.didOutput = false;
 		aoCalc.clear();
-		blockInfo.setBlockView(blockView);
+		blockInfo.prepareForWorld(blockView, cull);
 		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion(), seed);
 		lightCache.reset(pos, blockView);
 
-		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, randomSupplier, this);
+		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, blockInfo.randomSupplier, this);
 
 		blockInfo.release();
 		this.bufferBuilder = null;
-		this.random = null;
-		this.seed = seed;
-
-		return didOutput;
 	}
 
 	private class QuadBufferer extends VertexConsumerQuadBufferer {

@@ -16,7 +16,12 @@
 
 package link.infra.indium.renderer.render;
 
+import java.util.function.Supplier;
+
+import org.jetbrains.annotations.Nullable;
+
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.block.BlockColors;
@@ -29,8 +34,6 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.util.math.random.RandomSeed;
 import net.minecraft.world.BlockRenderView;
 
-import java.util.function.Supplier;
-
 /**
  * Holds, manages and provides access to the block/world related state
  * needed by fallback and mesh consumers.
@@ -40,7 +43,8 @@ import java.util.function.Supplier;
  */
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	public final Random random = new LocalRandom(RandomSeed.getSeed());
+	private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
+	private final Random random = new LocalRandom(RandomSeed.getSeed());
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
 	public BlockState blockState;
@@ -48,13 +52,18 @@ public class BlockRenderInfo {
 	boolean defaultAo;
 	RenderLayer defaultLayer;
 
+	private boolean enableCulling;
+	private int cullCompletionFlags;
+	private int cullResultFlags;
+
 	public final Supplier<Random> randomSupplier = () -> {
 		random.setSeed(this.seed);
 		return random;
 	};
 
-	public void setBlockView(BlockRenderView blockView) {
+	public void prepareForWorld(BlockRenderView blockView, boolean enableCulling) {
 		this.blockView = blockView;
+		this.enableCulling = enableCulling;
 	}
 
 	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO, long seed) {
@@ -64,6 +73,9 @@ public class BlockRenderInfo {
 		defaultAo = modelAO && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
+
+		cullCompletionFlags = 0;
+		cullResultFlags = 0;
 	}
 
 	public void release() {
@@ -75,8 +87,29 @@ public class BlockRenderInfo {
 		return 0xFF000000 | blockColorMap.getColor(blockState, blockView, blockPos, colorIndex);
 	}
 
-	boolean shouldDrawFace(Direction face) {
-		return true;
+	boolean shouldDrawFace(@Nullable Direction face) {
+		if (face == null || !enableCulling) {
+			return true;
+		}
+
+		final int mask = 1 << face.getId();
+
+		if ((cullCompletionFlags & mask) == 0) {
+			cullCompletionFlags |= mask;
+
+			if (shouldDrawFaceInner(face)) {
+				cullResultFlags |= mask;
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return (cullResultFlags & mask) != 0;
+		}
+	}
+
+	boolean shouldDrawFaceInner(Direction face) {
+		return Block.shouldDrawSide(blockState, blockView, blockPos, face, searchPos.set(blockPos, face));
 	}
 
 	RenderLayer effectiveRenderLayer(BlendMode blendMode) {

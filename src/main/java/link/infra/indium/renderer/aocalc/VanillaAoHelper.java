@@ -20,6 +20,8 @@ import java.lang.reflect.Constructor;
 import java.util.BitSet;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.Nullable;
+
 import link.infra.indium.Indium;
 import link.infra.indium.mixin.renderer.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
@@ -72,6 +74,7 @@ public class VanillaAoHelper {
 		}
 	}
 
+	@Nullable
 	public static AccessAmbientOcclusionCalculator get() {
 		return factory == null ? null : factory.get();
 	}
