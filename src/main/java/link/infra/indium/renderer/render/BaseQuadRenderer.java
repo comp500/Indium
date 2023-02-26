@@ -191,9 +191,9 @@ public class BaseQuadRenderer {
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
 	private void shadeFlatQuad(MutableQuadViewImpl quad) {
-		if ((quad.geometryFlags() & GeometryHelper.AXIS_ALIGNED_FLAG) == 0 || quad.hasVertexNormals()) {
-			// Quads that aren't direction-aligned or that have vertex normals need to be shaded
-			// using interpolation - vanilla can't handle them. Generally only applies to modded models.
+		if (quad.hasVertexNormals()) {
+			// Quads that have vertex normals need to be shaded using interpolation - vanilla can't
+			// handle them. Generally only applies to modded models.
 			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			for (int i = 0; i < 4; i++) {
