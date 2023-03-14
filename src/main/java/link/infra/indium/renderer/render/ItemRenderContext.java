@@ -16,15 +16,6 @@
 
 package link.infra.indium.renderer.render;
 
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
-import net.minecraft.util.math.random.LocalRandom;
-import net.minecraft.util.math.random.RandomSeed;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.ColorHelper;
@@ -39,22 +30,25 @@ import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelTransformation.Mode;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.util.math.random.RandomSeed;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The render context used for item rendering.
@@ -83,7 +77,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	private final FallbackConsumer fallbackConsumer = new FallbackConsumer();
 
 	private ItemStack itemStack;
-	private Mode transformMode;
+	private ModelTransformationMode transformMode;
 	private MatrixStack matrixStack;
 	private VertexConsumerProvider vertexConsumerProvider;
 	private int lightmap;
@@ -99,7 +93,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 		this.colorMap = colorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
+	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
 		this.itemStack = itemStack;
 		this.transformMode = transformMode;
 		this.matrixStack = matrixStack;
@@ -136,7 +130,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 				isDefaultTranslucent = false;
 			}
 
-			if (transformMode != Mode.GUI && !transformMode.isFirstPerson()) {
+			if (transformMode != ModelTransformationMode.GUI && !transformMode.isFirstPerson()) {
 				isTranslucentDirect = false;
 			}
 		}
