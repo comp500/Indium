@@ -3,10 +3,11 @@ package link.infra.indium.mixin.sodium;
 import link.infra.indium.Indium;
 import link.infra.indium.renderer.render.TerrainRenderContext;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildResult;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
+import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderBounds;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderBuildTask;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
 import me.jellysquid.mods.sodium.client.util.task.CancellationSource;
@@ -34,13 +35,13 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 		TerrainRenderContext.get(buildContext).release();
 	}
 
-	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderModel(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;)Z", remap = false), remap = false)
-	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderContext ctx, ChunkModelBuilder buffers, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
+	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderModel(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildBuffers;Lme/jellysquid/mods/sodium/client/render/chunk/data/ChunkRenderBounds$Builder;)V", remap = false), remap = false)
+	public void onRenderBlock(BlockRenderer blockRenderer, BlockRenderContext ctx, ChunkBuildBuffers buffers, ChunkRenderBounds.Builder bounds, ChunkBuildContext buildContext) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
 		if (!Indium.ALWAYS_TESSELLATE_INDIUM && ((FabricBakedModel) ctx.model()).isVanillaAdapter()) {
-			return blockRenderer.renderModel(ctx, buffers);
+			blockRenderer.renderModel(ctx, buffers, bounds);
 		} else {
-			return TerrainRenderContext.get(buildContext).tessellateBlock(ctx);
+			TerrainRenderContext.get(buildContext).tessellateBlock(ctx, bounds);
 		}
 	}
 }

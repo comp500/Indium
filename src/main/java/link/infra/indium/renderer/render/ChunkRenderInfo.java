@@ -18,6 +18,7 @@ package link.infra.indium.renderer.render;
 
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.world.BlockRenderView;
 
@@ -45,6 +46,6 @@ public class ChunkRenderInfo {
 
 	public ChunkModelBuilder getChunkModelBuilder(RenderLayer renderLayer) {
 		didOutput = true;
-		return buffers.get(renderLayer);
+		return buffers.get(DefaultMaterials.forRenderLayer(renderLayer));
 	}
 }
