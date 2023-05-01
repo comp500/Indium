@@ -8,6 +8,7 @@ import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
+import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderBounds;
 import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
@@ -33,6 +34,7 @@ public class TerrainRenderContext extends AbstractRenderContext {
 
 	private final BaseMeshConsumer meshConsumer;
 	private final BaseFallbackConsumer fallbackConsumer;
+	private ChunkRenderBounds.Builder bounds;
 
 	public TerrainRenderContext(BlockRenderCache renderCache) {
 		WorldSlice worldSlice = renderCache.getWorldSlice();
@@ -62,9 +64,10 @@ public class TerrainRenderContext extends AbstractRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public boolean tessellateBlock(BlockRenderContext ctx) {
+	public boolean tessellateBlock(BlockRenderContext ctx, ChunkRenderBounds.Builder bounds) {
 		this.origin = ctx.origin();
 		this.modelOffset = ctx.state().getModelOffset(ctx.world(), ctx.pos());
+		this.bounds = bounds;
 
 		try {
 			chunkInfo.didOutput = false;
@@ -94,6 +97,11 @@ public class TerrainRenderContext extends AbstractRenderContext {
 		@Override
 		protected Vec3d blockOffset() {
 			return modelOffset;
+		}
+
+		@Override
+		protected ChunkRenderBounds.Builder bounds() {
+			return bounds;
 		}
 	}
 

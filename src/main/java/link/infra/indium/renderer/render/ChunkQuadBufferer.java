@@ -4,13 +4,15 @@ import java.util.function.Function;
 
 import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
-import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
-import me.jellysquid.mods.sodium.client.render.vertex.type.ChunkVertexEncoder;
-import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
+import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderBounds;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
+import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
+import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
@@ -27,20 +29,22 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 
 	protected abstract Vec3d blockOffset();
 
+	protected abstract ChunkRenderBounds.Builder bounds();
+
 	ChunkQuadBufferer(Function<RenderLayer, ChunkModelBuilder> builderFunc) {
 		this.builderFunc = builderFunc;
 	}
 
 	@Override
 	public void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
-		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset());
+		bufferQuad(builderFunc.apply(renderLayer), quad, origin(), blockOffset(), bounds(), DefaultMaterials.forRenderLayer(renderLayer));
 	}
 
-	public void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vector3fc origin, Vec3d blockOffset) {
+	public void bufferQuad(ChunkModelBuilder builder, MutableQuadViewImpl quad, Vector3fc origin, Vec3d blockOffset, ChunkRenderBounds.Builder bounds, Material material) {
 		var vertices = this.vertices;
 
 		Direction cullFace = quad.cullFace();
-		IndexBufferBuilder indices = builder.getIndexBuffer(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED);
+		ModelQuadFacing lightFace = ModelQuadFacing.fromDirection(quad.lightFace());
 
 		for (int i = 0; i < 4; i++) {
 			var out = vertices[i];
@@ -55,9 +59,10 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 			out.v = quad.spriteV(i, 0);
 
 			out.light = quad.lightmap(i);
+			bounds.add(out.x, out.y, out.z, lightFace);
 		}
 
-		indices.add(builder.getVertexBuffer().push(vertices), ModelQuadWinding.CLOCKWISE);
+		builder.getVertexBuffer(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED).push(vertices, material);
 
 		Sprite sprite = quad.cachedSprite();
 
