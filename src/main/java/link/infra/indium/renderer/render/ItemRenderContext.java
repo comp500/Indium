@@ -34,7 +34,7 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -77,7 +77,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 	private final FallbackConsumer fallbackConsumer = new FallbackConsumer();
 
 	private ItemStack itemStack;
-	private ModelTransformationMode transformMode;
+	private Mode transformMode;
 	private MatrixStack matrixStack;
 	private VertexConsumerProvider vertexConsumerProvider;
 	private int lightmap;
@@ -93,7 +93,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 		this.colorMap = colorMap;
 	}
 
-	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
+	public void renderModel(ItemStack itemStack, Mode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model, VanillaQuadHandler vanillaHandler) {
 		this.itemStack = itemStack;
 		this.transformMode = transformMode;
 		this.matrixStack = matrixStack;
@@ -130,7 +130,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 				isDefaultTranslucent = false;
 			}
 
-			if (transformMode != ModelTransformationMode.GUI && !transformMode.isFirstPerson()) {
+			if (transformMode != Mode.GUI && !transformMode.isFirstPerson()) {
 				isTranslucentDirect = false;
 			}
 		}
