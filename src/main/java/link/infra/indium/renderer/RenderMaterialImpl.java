@@ -54,8 +54,8 @@ public abstract class RenderMaterialImpl implements MaterialView {
 		return VALUES[index];
 	}
 
-	public static Value setDisableDiffuse(Value material, int textureIndex, boolean disable) {
-		if (material.disableDiffuse(textureIndex) != disable) {
+	public static Value setDisableDiffuse(Value material, boolean disable) {
+		if (material.disableDiffuse() != disable) {
 			return byIndex(disable ? (material.bits | DIFFUSE_FLAG) : (material.bits & ~DIFFUSE_FLAG));
 		}
 
@@ -64,28 +64,29 @@ public abstract class RenderMaterialImpl implements MaterialView {
 
 	protected int bits;
 
-	public BlendMode blendMode(int textureIndex) {
+	@Override
+	public BlendMode blendMode() {
 		return BLEND_MODES[bits & BLEND_MODE_MASK];
 	}
 
-	public boolean disableColorIndex(int textureIndex) {
+	@Override
+	public boolean disableColorIndex() {
 		return (bits & COLOR_DISABLE_FLAG) != 0;
 	}
 
-	public int spriteDepth() {
-		return 1;
-	}
-
-	public boolean emissive(int textureIndex) {
+	@Override
+	public boolean emissive() {
 		return (bits & EMISSIVE_FLAG) != 0;
 	}
 
-	public boolean disableDiffuse(int textureIndex) {
+	@Override
+	public boolean disableDiffuse() {
 		return (bits & DIFFUSE_FLAG) != 0;
 	}
 
-	public boolean disableAo(int textureIndex) {
-		return (bits & AO_FLAG) != 0;
+	@Override
+	public TriState ambientOcclusion() {
+		return TriState.of((bits & AO_FLAG) != 0);
 	}
 
 	@Override

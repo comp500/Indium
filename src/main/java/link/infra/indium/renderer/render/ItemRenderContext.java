@@ -220,10 +220,10 @@ public class ItemRenderContext extends MatrixRenderContext {
 
 		final RenderMaterialImpl.Value mat = quad.material();
 
-		final int colorIndex = mat.disableColorIndex(0) ? -1 : quad.colorIndex();
-		final BlendMode blendMode = mat.blendMode(0);
+		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
+		final BlendMode blendMode = mat.blendMode();
 
-		if (mat.emissive(0)) {
+		if (mat.emissive()) {
 			renderQuadEmissive(quad, blendMode, colorIndex);
 		} else {
 			renderQuad(quad, blendMode, colorIndex);

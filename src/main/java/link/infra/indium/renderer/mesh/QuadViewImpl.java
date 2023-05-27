@@ -117,11 +117,6 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public final void toVanilla(int textureIndex, int[] target, int targetIndex, boolean isItem) {
-		System.arraycopy(data, baseIndex + VERTEX_X, target, targetIndex, QUAD_STRIDE);
-	}
-
-	@Override
 	public final RenderMaterialImpl.Value material() {
 		return EncodingFormat.material(data[baseIndex + HEADER_BITS]);
 	}
@@ -134,6 +129,11 @@ public class QuadViewImpl implements QuadView {
 	@Override
 	public final int tag() {
 		return data[baseIndex + HEADER_TAG];
+	}
+
+	@Override
+	public void toVanilla(int[] target, int targetIndex) {
+		System.arraycopy(data, baseIndex + VERTEX_X, target, targetIndex, QUAD_STRIDE);
 	}
 
 	@Override
@@ -273,6 +273,6 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	public boolean hasShade() {
-		return !material().disableDiffuse(0);
+		return !material().disableDiffuse();
 	}
 }

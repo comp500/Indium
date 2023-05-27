@@ -22,7 +22,6 @@ import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.helper.ColorHelper;
-import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
 import net.minecraft.block.BlockState;
@@ -58,29 +57,29 @@ public class BaseQuadRenderer {
 			return;
 		}
 
-		tessellateQuad(quad, 0, isVanilla);
+		tessellateQuad(quad, isVanilla);
 	}
 
 	/**
 	 * Determines color index and render layer, then routes to appropriate
 	 * tessellate routine based on material properties.
 	 */
-	private void tessellateQuad(MutableQuadViewImpl quad, int textureIndex, boolean isVanilla) {
+	private void tessellateQuad(MutableQuadViewImpl quad, boolean isVanilla) {
 		final RenderMaterialImpl.Value mat = quad.material();
-		final int colorIndex = mat.disableColorIndex(textureIndex) ? -1 : quad.colorIndex();
-		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode(textureIndex));
+		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
+		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode());
 
-		if (blockInfo.defaultAo && !mat.disableAo(textureIndex)) {
+		if (blockInfo.defaultAo && !mat.ambientOcclusion().get()) {
 			// needs to happen before offsets are applied
 			aoCalc.compute(quad, isVanilla);
 
-			if (mat.emissive(textureIndex)) {
+			if (mat.emissive()) {
 				tessellateSmoothEmissive(quad, renderLayer, colorIndex);
 			} else {
 				tessellateSmooth(quad, renderLayer, colorIndex);
 			}
 		} else {
-			if (mat.emissive(textureIndex)) {
+			if (mat.emissive()) {
 				tessellateFlatEmissive(quad, renderLayer, colorIndex);
 			} else {
 				tessellateFlat(quad, renderLayer, colorIndex);

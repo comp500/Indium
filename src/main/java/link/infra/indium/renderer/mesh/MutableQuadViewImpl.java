@@ -29,8 +29,6 @@ import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_STRIDE;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_U;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
 
-import com.google.common.base.Preconditions;
-
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.RenderMaterialImpl.Value;
@@ -38,6 +36,7 @@ import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.helper.TextureHelper;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
@@ -124,7 +123,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		colorIndex(quad.getColorIndex());
 
 		if (!quad.hasShade()) {
-			material = RenderMaterialImpl.setDisableDiffuse((Value) material, 0, true);
+			material = RenderMaterialImpl.setDisableDiffuse((Value) material, true);
 		}
 
 		material(material);
@@ -181,15 +180,23 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
+	public QuadEmitter copyFrom(QuadView quad) {
+		this.data = ((QuadViewImpl) quad).data();
+		this.baseIndex = ((QuadViewImpl) quad).baseIndex;
+		this.nominalFace = ((QuadViewImpl) quad).nominalFace;
+		this.faceNormal.set(((QuadViewImpl) quad).faceNormal);
+		this.isGeometryInvalid = ((QuadViewImpl) quad).isGeometryInvalid;
+		return this;
+	}
+
+	@Override
 	public MutableQuadViewImpl color(int vertexIndex, int color) {
 		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_COLOR] = color;
 		return this;
 	}
 
 	@Override
-	public MutableQuadViewImpl sprite(int vertexIndex, int spriteIndex, float u, float v) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public MutableQuadViewImpl uv(int vertexIndex, float u, float v) {
 		final int i = baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U;
 		data[i] = Float.floatToRawIntBits(u);
 		data[i + 1] = Float.floatToRawIntBits(v);
@@ -198,9 +205,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public MutableQuadViewImpl spriteBake(int spriteIndex, Sprite sprite, int bakeFlags) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public MutableQuadViewImpl spriteBake(Sprite sprite, int bakeFlags) {
 		TextureHelper.bakeSprite(this, sprite, bakeFlags);
 		cachedSprite(sprite);
 		return this;
