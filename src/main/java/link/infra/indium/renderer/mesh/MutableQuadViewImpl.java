@@ -108,12 +108,8 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		return this;
 	}
 
-	/**
-	 * @deprecated will be removed in 1.17 cycle - see docs in interface
-	 */
-	@Deprecated
 	@Override
-	public final MutableQuadViewImpl fromVanilla(int[] quadData, int startIndex, boolean isItem) {
+	public final MutableQuadViewImpl fromVanilla(int[] quadData, int startIndex) {
 		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
 		isGeometryInvalid = true;
 		cachedSprite(null);
@@ -185,9 +181,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public MutableQuadViewImpl spriteColor(int vertexIndex, int spriteIndex, int color) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public MutableQuadViewImpl color(int vertexIndex, int color) {
 		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_COLOR] = color;
 		return this;
 	}
@@ -207,7 +201,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	public MutableQuadViewImpl spriteBake(int spriteIndex, Sprite sprite, int bakeFlags) {
 		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
 
-		TextureHelper.bakeSprite(this, spriteIndex, sprite, bakeFlags);
+		TextureHelper.bakeSprite(this, sprite, bakeFlags);
 		cachedSprite(sprite);
 		return this;
 	}

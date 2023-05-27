@@ -180,13 +180,13 @@ public class ItemRenderContext extends MatrixRenderContext {
 	private void colorizeQuad(MutableQuadViewImpl q, int colorIndex) {
 		if (colorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(q.color(i)));
 			}
 		} else {
 			final int itemColor = 0xFF000000 | colorMap.getColor(itemStack, colorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.spriteColor(i, 0))));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.color(i))));
 			}
 		}
 	}

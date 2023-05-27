@@ -92,13 +92,13 @@ public class BaseQuadRenderer {
 	private void colorizeQuad(MutableQuadViewImpl q, int blockColorIndex) {
 		if (blockColorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(q.color(i)));
 			}
 		} else {
 			final int blockColor = blockInfo.blockColor(blockColorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.spriteColor(i, 0))));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.color(i))));
 			}
 		}
 	}
@@ -115,7 +115,7 @@ public class BaseQuadRenderer {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
+			q.color(i, ColorHelper.multiplyRGB(q.color(i), aoCalc.ao[i]));
 			q.lightmap(i, ColorHelper.maxBrightness(q.lightmap(i), aoCalc.light[i]));
 		}
 
@@ -127,7 +127,7 @@ public class BaseQuadRenderer {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
+			q.color(i, ColorHelper.multiplyRGB(q.color(i), aoCalc.ao[i]));
 			q.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
@@ -197,14 +197,14 @@ public class BaseQuadRenderer {
 			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			for (int i = 0; i < 4; i++) {
-				quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), vertexShade(quad, i, faceShade)));
+				quad.color(i, ColorHelper.multiplyRGB(quad.color(i), vertexShade(quad, i, faceShade)));
 			}
 		} else {
 			final float diffuseShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			if (diffuseShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
-					quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), diffuseShade));
+					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), diffuseShade));
 				}
 			}
 		}

@@ -48,11 +48,11 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 			out.y = origin.y() + quad.y(i) + (float) blockOffset.getY();
 			out.z = origin.z() + quad.z(i) + (float) blockOffset.getZ();
 
-			int color = quad.spriteColor(i, 0);
+			int color = quad.color(i);
 			out.color = ColorABGR.pack(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
 
-			out.u = quad.spriteU(i, 0);
-			out.v = quad.spriteV(i, 0);
+			out.u = quad.u(i);
+			out.v = quad.v(i);
 
 			out.light = quad.lightmap(i);
 		}

@@ -30,6 +30,8 @@ import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Y;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_Z;
 
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import com.google.common.base.Preconditions;
@@ -226,6 +228,16 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
+	public Vector2f copyUv(int vertexIndex, @Nullable Vector2f target) {
+		if (target == null) {
+			target = new Vector2f();
+		}
+
+		target.set(u(vertexIndex), v(vertexIndex));
+		return target;
+	}
+
+	@Override
 	public float normalX(int vertexIndex) {
 		return hasNormal(vertexIndex) ? NormalHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 0) : Float.NaN;
 	}
@@ -246,23 +258,17 @@ public class QuadViewImpl implements QuadView {
 	}
 
 	@Override
-	public int spriteColor(int vertexIndex, int spriteIndex) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public int color(int vertexIndex) {
 		return data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_COLOR];
 	}
 
 	@Override
-	public float spriteU(int vertexIndex, int spriteIndex) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public float u(int vertexIndex) {
 		return Float.intBitsToFloat(data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_U]);
 	}
 
 	@Override
-	public float spriteV(int vertexIndex, int spriteIndex) {
-		Preconditions.checkArgument(spriteIndex == 0, "Unsupported sprite index: %s", spriteIndex);
-
+	public float v(int vertexIndex) {
 		return Float.intBitsToFloat(data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_V]);
 	}
 

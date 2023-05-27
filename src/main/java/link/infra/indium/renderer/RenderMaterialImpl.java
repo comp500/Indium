@@ -20,7 +20,9 @@ import com.google.common.base.Preconditions;
 
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
+import net.fabricmc.fabric.api.renderer.v1.material.MaterialView;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -29,7 +31,7 @@ import net.minecraft.util.math.MathHelper;
  * packing of the various material properties. This offers
  * easy/fast interning via int/object hashmap.
  */
-public abstract class RenderMaterialImpl {
+public abstract class RenderMaterialImpl implements MaterialView {
 	private static final BlendMode[] BLEND_MODES = BlendMode.values();
 
 	private static final int BLEND_MODE_MASK = MathHelper.smallestEncompassingPowerOfTwo(BlendMode.values().length) - 1;
@@ -37,7 +39,8 @@ public abstract class RenderMaterialImpl {
 	private static final int EMISSIVE_FLAG = COLOR_DISABLE_FLAG << 1;
 	private static final int DIFFUSE_FLAG = EMISSIVE_FLAG << 1;
 	private static final int AO_FLAG = DIFFUSE_FLAG << 1;
-	public static final int VALUE_COUNT = (AO_FLAG << 1);
+	private static final int GLINT_FLAG = AO_FLAG << 1;
+	public static final int VALUE_COUNT = (GLINT_FLAG << 1);
 
 	private static final Value[] VALUES = new Value[VALUE_COUNT];
 
@@ -85,6 +88,11 @@ public abstract class RenderMaterialImpl {
 		return (bits & AO_FLAG) != 0;
 	}
 
+	@Override
+	public TriState glint() {
+		return TriState.of((bits & GLINT_FLAG) != 0);
+	}
+
 	public static class Value extends RenderMaterialImpl implements RenderMaterial {
 		private Value(int bits) {
 			this.bits = bits;
@@ -108,7 +116,7 @@ public abstract class RenderMaterialImpl {
 		}
 
 		@Override
-		public MaterialFinder blendMode(int textureIndex, BlendMode blendMode) {
+		public MaterialFinder blendMode(BlendMode blendMode) {
 			if (blendMode == null) {
 				blendMode = BlendMode.DEFAULT;
 			}
@@ -118,7 +126,7 @@ public abstract class RenderMaterialImpl {
 		}
 
 		@Override
-		public MaterialFinder disableColorIndex(int textureIndex, boolean disable) {
+		public MaterialFinder disableColorIndex(boolean disable) {
 			bits = disable ? (bits | COLOR_DISABLE_FLAG) : (bits & ~COLOR_DISABLE_FLAG);
 			return this;
 		}
@@ -131,20 +139,32 @@ public abstract class RenderMaterialImpl {
 		}
 
 		@Override
-		public MaterialFinder emissive(int textureIndex, boolean isEmissive) {
+		public MaterialFinder emissive(boolean isEmissive) {
 			bits = isEmissive ? (bits | EMISSIVE_FLAG) : (bits & ~EMISSIVE_FLAG);
 			return this;
 		}
 
 		@Override
-		public MaterialFinder disableDiffuse(int textureIndex, boolean disable) {
+		public MaterialFinder disableDiffuse(boolean disable) {
 			bits = disable ? (bits | DIFFUSE_FLAG) : (bits & ~DIFFUSE_FLAG);
 			return this;
 		}
 
 		@Override
-		public MaterialFinder disableAo(int textureIndex, boolean disable) {
-			bits = disable ? (bits | AO_FLAG) : (bits & ~AO_FLAG);
+		public MaterialFinder ambientOcclusion(TriState triState) {
+			bits = triState.get() ? (bits | AO_FLAG) : (bits & ~AO_FLAG);
+			return this;
+		}
+
+		@Override
+		public MaterialFinder glint(TriState triState) {
+			bits = triState.get() ? (bits | GLINT_FLAG) : (bits & ~GLINT_FLAG);
+			return this;
+		}
+
+		@Override
+		public MaterialFinder copyFrom(MaterialView material) {
+			bits = ((RenderMaterialImpl) material).bits;
 			return this;
 		}
 	}
