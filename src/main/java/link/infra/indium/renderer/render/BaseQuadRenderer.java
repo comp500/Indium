@@ -19,12 +19,12 @@ package link.infra.indium.renderer.render;
 import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
 import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
-import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.helper.ColorHelper;
-import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -58,29 +58,30 @@ public class BaseQuadRenderer {
 			return;
 		}
 
-		tessellateQuad(quad, 0, isVanilla);
+		tessellateQuad(quad, isVanilla);
 	}
 
 	/**
 	 * Determines color index and render layer, then routes to appropriate
 	 * tessellate routine based on material properties.
 	 */
-	private void tessellateQuad(MutableQuadViewImpl quad, int textureIndex, boolean isVanilla) {
-		final RenderMaterialImpl.Value mat = quad.material();
-		final int colorIndex = mat.disableColorIndex(textureIndex) ? -1 : quad.colorIndex();
-		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode(textureIndex));
+	private void tessellateQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+		final RenderMaterial mat = quad.material();
+		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
+		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode());
+		final TriState ao = mat.ambientOcclusion();
 
-		if (blockInfo.defaultAo && !mat.disableAo(textureIndex)) {
+		if (blockInfo.useAo && (ao == TriState.TRUE || (ao == TriState.DEFAULT && blockInfo.defaultAo))) {
 			// needs to happen before offsets are applied
 			aoCalc.compute(quad, isVanilla);
 
-			if (mat.emissive(textureIndex)) {
+			if (mat.emissive()) {
 				tessellateSmoothEmissive(quad, renderLayer, colorIndex);
 			} else {
 				tessellateSmooth(quad, renderLayer, colorIndex);
 			}
 		} else {
-			if (mat.emissive(textureIndex)) {
+			if (mat.emissive()) {
 				tessellateFlatEmissive(quad, renderLayer, colorIndex);
 			} else {
 				tessellateFlat(quad, renderLayer, colorIndex);
@@ -92,13 +93,13 @@ public class BaseQuadRenderer {
 	private void colorizeQuad(MutableQuadViewImpl q, int blockColorIndex) {
 		if (blockColorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(q.color(i)));
 			}
 		} else {
 			final int blockColor = blockInfo.blockColor(blockColorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.spriteColor(i, 0))));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(blockColor, q.color(i))));
 			}
 		}
 	}
@@ -115,7 +116,7 @@ public class BaseQuadRenderer {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
+			q.color(i, ColorHelper.multiplyRGB(q.color(i), aoCalc.ao[i]));
 			q.lightmap(i, ColorHelper.maxBrightness(q.lightmap(i), aoCalc.light[i]));
 		}
 
@@ -127,7 +128,7 @@ public class BaseQuadRenderer {
 		colorizeQuad(q, blockColorIndex);
 
 		for (int i = 0; i < 4; i++) {
-			q.spriteColor(i, 0, ColorHelper.multiplyRGB(q.spriteColor(i, 0), aoCalc.ao[i]));
+			q.color(i, ColorHelper.multiplyRGB(q.color(i), aoCalc.ao[i]));
 			q.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
@@ -197,14 +198,14 @@ public class BaseQuadRenderer {
 			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			for (int i = 0; i < 4; i++) {
-				quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), vertexShade(quad, i, faceShade)));
+				quad.color(i, ColorHelper.multiplyRGB(quad.color(i), vertexShade(quad, i, faceShade)));
 			}
 		} else {
 			final float diffuseShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
 
 			if (diffuseShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
-					quad.spriteColor(i, 0, ColorHelper.multiplyRGB(quad.spriteColor(i, 0), diffuseShade));
+					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), diffuseShade));
 				}
 			}
 		}

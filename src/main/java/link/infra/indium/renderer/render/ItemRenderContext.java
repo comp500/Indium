@@ -16,21 +16,34 @@
 
 package link.infra.indium.renderer.render;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
 import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MeshImpl;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.TexturedRenderLayers;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -43,12 +56,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.math.random.RandomSeed;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * The render context used for item rendering.
@@ -85,9 +92,13 @@ public class ItemRenderContext extends MatrixRenderContext {
 
 	private boolean isDefaultTranslucent;
 	private boolean isTranslucentDirect;
+	private boolean isDefaultGlint;
+
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
-	private VertexConsumer modelVertexConsumer;
+	private VertexConsumer translucentGlintVertexConsumer;
+	private VertexConsumer cutoutGlintVertexConsumer;
+	private VertexConsumer defaultVertexConsumer;
 
 	public ItemRenderContext(ItemColors colorMap) {
 		this.colorMap = colorMap;
@@ -111,9 +122,12 @@ public class ItemRenderContext extends MatrixRenderContext {
 		this.itemStack = null;
 		this.matrixStack = null;
 		this.vanillaHandler = null;
+
 		translucentVertexConsumer = null;
 		cutoutVertexConsumer = null;
-		modelVertexConsumer = null;
+		translucentGlintVertexConsumer = null;
+		cutoutGlintVertexConsumer = null;
+		defaultVertexConsumer = null;
 	}
 
 	private void computeOutputInfo() {
@@ -135,7 +149,23 @@ public class ItemRenderContext extends MatrixRenderContext {
 			}
 		}
 
-		modelVertexConsumer = quadVertexConsumer(BlendMode.DEFAULT);
+		isDefaultGlint = itemStack.hasGlint();
+
+		defaultVertexConsumer = quadVertexConsumer(BlendMode.DEFAULT, TriState.DEFAULT);
+	}
+
+	private VertexConsumer createTranslucentVertexConsumer(boolean glint) {
+		if (isTranslucentDirect) {
+			return ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, glint);
+		} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
+			return ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, glint);
+		} else {
+			return ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, glint);
+		}
+	}
+
+	private VertexConsumer createCutoutVertexConsumer(boolean glint) {
+		return ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, glint);
 	}
 
 	/**
@@ -143,8 +173,9 @@ public class ItemRenderContext extends MatrixRenderContext {
 	 * in {@code RenderLayers.getEntityBlockLayer}. Layers other than
 	 * translucent are mapped to cutout.
 	 */
-	private VertexConsumer quadVertexConsumer(BlendMode blendMode) {
+	private VertexConsumer quadVertexConsumer(BlendMode blendMode, TriState glintMode) {
 		boolean translucent;
+		boolean glint;
 
 		if (blendMode == BlendMode.DEFAULT) {
 			translucent = isDefaultTranslucent;
@@ -152,46 +183,62 @@ public class ItemRenderContext extends MatrixRenderContext {
 			translucent = blendMode == BlendMode.TRANSLUCENT;
 		}
 
-		if (translucent) {
-			if (translucentVertexConsumer == null) {
-				if (isTranslucentDirect) {
-					translucentVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
-				} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, itemStack.hasGlint());
-				} else {
-					translucentVertexConsumer = ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, itemStack.hasGlint());
-				}
-			}
-
-			return translucentVertexConsumer;
+		if (glintMode == TriState.DEFAULT) {
+			glint = isDefaultGlint;
 		} else {
-			if (cutoutVertexConsumer == null) {
-				cutoutVertexConsumer = ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, itemStack.hasGlint());
-			}
+			glint = glintMode == TriState.TRUE;
+		}
 
-			return cutoutVertexConsumer;
+		if (translucent) {
+			if (glint) {
+				if (translucentGlintVertexConsumer == null) {
+					translucentGlintVertexConsumer = createTranslucentVertexConsumer(true);
+				}
+
+				return translucentGlintVertexConsumer;
+			} else {
+				if (translucentVertexConsumer == null) {
+					translucentVertexConsumer = createTranslucentVertexConsumer(false);
+				}
+
+				return translucentVertexConsumer;
+			}
+		} else {
+			if (glint) {
+				if (cutoutGlintVertexConsumer == null) {
+					cutoutGlintVertexConsumer = createCutoutVertexConsumer(true);
+				}
+
+				return cutoutGlintVertexConsumer;
+			} else {
+				if (cutoutVertexConsumer == null) {
+					cutoutVertexConsumer = createCutoutVertexConsumer(false);
+				}
+
+				return cutoutVertexConsumer;
+			}
 		}
 	}
 
-	private void bufferQuad(MutableQuadViewImpl quad, BlendMode blendMode) {
-		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(blendMode), quad, matrix, overlay, normalMatrix, normalVec);
+	private void bufferQuad(MutableQuadViewImpl quad, BlendMode blendMode, TriState glint) {
+		VertexConsumerQuadBufferer.bufferQuad(quadVertexConsumer(blendMode, glint), quad, matrix, overlay, normalMatrix, normalVec);
 	}
 
 	private void colorizeQuad(MutableQuadViewImpl q, int colorIndex) {
 		if (colorIndex == -1) {
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(q.spriteColor(i, 0)));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(q.color(i)));
 			}
 		} else {
 			final int itemColor = 0xFF000000 | colorMap.getColor(itemStack, colorIndex);
 
 			for (int i = 0; i < 4; i++) {
-				q.spriteColor(i, 0, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.spriteColor(i, 0))));
+				q.color(i, ColorHelper.swapRedBlueIfNeeded(ColorHelper.multiplyColor(itemColor, q.color(i))));
 			}
 		}
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad, BlendMode blendMode, int colorIndex) {
+	private void renderQuad(MutableQuadViewImpl quad, BlendMode blendMode, TriState glint, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		final int lightmap = this.lightmap;
@@ -200,17 +247,17 @@ public class ItemRenderContext extends MatrixRenderContext {
 			quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), lightmap));
 		}
 
-		bufferQuad(quad, blendMode);
+		bufferQuad(quad, blendMode, glint);
 	}
 
-	private void renderQuadEmissive(MutableQuadViewImpl quad, BlendMode blendMode, int colorIndex) {
+	private void renderQuadEmissive(MutableQuadViewImpl quad, BlendMode blendMode, TriState glint, int colorIndex) {
 		colorizeQuad(quad, colorIndex);
 
 		for (int i = 0; i < 4; i++) {
 			quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 
-		bufferQuad(quad, blendMode);
+		bufferQuad(quad, blendMode, glint);
 	}
 
 	private void renderMeshQuad(MutableQuadViewImpl quad) {
@@ -218,15 +265,16 @@ public class ItemRenderContext extends MatrixRenderContext {
 			return;
 		}
 
-		final RenderMaterialImpl.Value mat = quad.material();
+		final RenderMaterial mat = quad.material();
 
-		final int colorIndex = mat.disableColorIndex(0) ? -1 : quad.colorIndex();
-		final BlendMode blendMode = mat.blendMode(0);
+		final int colorIndex = mat.disableColorIndex() ? -1 : quad.colorIndex();
+		final BlendMode blendMode = mat.blendMode();
+		final TriState glint = mat.glint();
 
-		if (mat.emissive(0)) {
-			renderQuadEmissive(quad, blendMode, colorIndex);
+		if (mat.emissive()) {
+			renderQuadEmissive(quad, blendMode, glint, colorIndex);
 		} else {
-			renderQuad(quad, blendMode, colorIndex);
+			renderQuad(quad, blendMode, glint, colorIndex);
 		}
 	}
 
@@ -287,7 +335,7 @@ public class ItemRenderContext extends MatrixRenderContext {
 					}
 				}
 			} else {
-				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, modelVertexConsumer);
+				vanillaHandler.accept(model, itemStack, lightmap, overlay, matrixStack, defaultVertexConsumer);
 			}
 		}
 	}

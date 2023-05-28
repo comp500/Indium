@@ -49,6 +49,7 @@ public class BlockRenderInfo {
 	public BlockPos blockPos;
 	public BlockState blockState;
 	public long seed;
+	boolean useAo;
 	boolean defaultAo;
 	RenderLayer defaultLayer;
 
@@ -70,7 +71,8 @@ public class BlockRenderInfo {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
 		this.seed = seed;
-		defaultAo = modelAO && MinecraftClient.isAmbientOcclusionEnabled() && blockState.getLuminance() == 0;
+		useAo = MinecraftClient.isAmbientOcclusionEnabled();
+		defaultAo = useAo && modelAO && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 

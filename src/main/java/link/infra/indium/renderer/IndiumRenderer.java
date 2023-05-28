@@ -18,6 +18,7 @@ package link.infra.indium.renderer;
 
 import java.util.HashMap;
 
+import link.infra.indium.renderer.material.MaterialFinderImpl;
 import link.infra.indium.renderer.mesh.MeshBuilderImpl;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
@@ -28,7 +29,7 @@ import net.minecraft.util.Identifier;
 public class IndiumRenderer implements Renderer {
 	public static final IndiumRenderer INSTANCE = new IndiumRenderer();
 
-	public static final RenderMaterialImpl.Value MATERIAL_STANDARD = (RenderMaterialImpl.Value) INSTANCE.materialFinder().find();
+	public static final RenderMaterial MATERIAL_STANDARD = INSTANCE.materialFinder().find();
 
 	static {
 		INSTANCE.registerMaterial(RenderMaterial.MATERIAL_STANDARD, MATERIAL_STANDARD);
@@ -45,7 +46,7 @@ public class IndiumRenderer implements Renderer {
 
 	@Override
 	public MaterialFinder materialFinder() {
-		return new RenderMaterialImpl.Finder();
+		return new MaterialFinderImpl();
 	}
 
 	@Override
