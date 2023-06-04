@@ -22,14 +22,15 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 import link.infra.indium.renderer.IndiumRenderer;
-import link.infra.indium.renderer.RenderMaterialImpl.Value;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.BakedModelConsumer;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext.QuadTransform;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -55,9 +56,9 @@ import net.minecraft.util.math.random.Random;
  *  vertex data is sent to the byte buffer.  Generally POJO array access will be faster than
  *  manipulating the data via NIO.
  */
-public class BaseFallbackConsumer extends BaseQuadRenderer implements BakedModelConsumer {
-	private static final Value MATERIAL_FLAT = (Value) IndiumRenderer.INSTANCE.materialFinder().disableAo(0, true).find();
-	private static final Value MATERIAL_SHADED = (Value) IndiumRenderer.INSTANCE.materialFinder().find();
+public class BaseFallbackConsumer extends BaseQuadRenderer implements RenderContext.BakedModelConsumer {
+	private static final RenderMaterial MATERIAL_FLAT = IndiumRenderer.INSTANCE.materialFinder().ambientOcclusion(TriState.FALSE).find();
+	private static final RenderMaterial MATERIAL_SHADED = IndiumRenderer.INSTANCE.materialFinder().find();
 
 	BaseFallbackConsumer(QuadBufferer bufferer, BlockRenderInfo blockInfo, AoCalculator aoCalc, QuadTransform transform) {
 		super(bufferer, blockInfo, aoCalc, transform);
@@ -77,18 +78,18 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements BakedModel
 	};
 
 	@Override
-	public void accept(BakedModel model) {
-		accept(model, blockInfo.blockState);
+	public void accept(BakedModel bakedModel) {
+		accept(bakedModel, blockInfo.blockState);
 	}
 
 	@Override
-	public void accept(BakedModel model, @Nullable BlockState state) {
+	public void accept(BakedModel model, @Nullable BlockState blockState) {
 		final Supplier<Random> random = blockInfo.randomSupplier;
-		final Value defaultMaterial = blockInfo.defaultAo && model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
+		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
 
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 			final Direction cullFace = ModelHelper.faceFromIndex(i);
-			final List<BakedQuad> quads = model.getQuads(state, cullFace, random.get());
+			final List<BakedQuad> quads = model.getQuads(blockState, cullFace, random.get());
 			final int count = quads.size();
 
 			if (count != 0) {
@@ -100,7 +101,7 @@ public class BaseFallbackConsumer extends BaseQuadRenderer implements BakedModel
 		}
 	}
 
-	private void renderQuad(BakedQuad quad, Direction cullFace, Value defaultMaterial) {
+	private void renderQuad(BakedQuad quad, Direction cullFace, RenderMaterial defaultMaterial) {
 		final MutableQuadViewImpl editorQuad = this.editorQuad;
 		editorQuad.fromVanilla(quad, defaultMaterial, cullFace);
 

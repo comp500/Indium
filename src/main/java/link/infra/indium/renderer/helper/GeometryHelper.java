@@ -19,6 +19,7 @@ package link.infra.indium.renderer.helper;
 import static net.minecraft.util.math.MathHelper.approximatelyEquals;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
@@ -80,7 +81,7 @@ public abstract class GeometryHelper {
 	 * Does not validate quad winding order.
 	 * Expects convex quads with all points co-planar.
 	 */
-	public static boolean isQuadParallelToFace(Direction face, QuadView quad) {
+	public static boolean isQuadParallelToFace(@Nullable Direction face, QuadView quad) {
 		if (face == null) {
 			return false;
 		}

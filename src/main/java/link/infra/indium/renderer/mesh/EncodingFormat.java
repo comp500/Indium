@@ -18,8 +18,8 @@ package link.infra.indium.renderer.mesh;
 
 import com.google.common.base.Preconditions;
 
-import link.infra.indium.renderer.RenderMaterialImpl;
 import link.infra.indium.renderer.helper.GeometryHelper;
+import link.infra.indium.renderer.material.RenderMaterialImpl;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.render.VertexFormat;
@@ -131,11 +131,11 @@ public abstract class EncodingFormat {
 		return (bits & GEOMETRY_INVERSE_MASK) | ((geometryFlags & GEOMETRY_MASK) << GEOMETRY_SHIFT);
 	}
 
-	static RenderMaterialImpl.Value material(int bits) {
+	static RenderMaterialImpl material(int bits) {
 		return RenderMaterialImpl.byIndex((bits >> MATERIAL_SHIFT) & MATERIAL_MASK);
 	}
 
-	static int material(int bits, RenderMaterialImpl.Value material) {
+	static int material(int bits, RenderMaterialImpl material) {
 		return (bits & MATERIAL_INVERSE_MASK) | (material.index() << MATERIAL_SHIFT);
 	}
 }

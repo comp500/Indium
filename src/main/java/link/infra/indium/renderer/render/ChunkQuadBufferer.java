@@ -2,11 +2,12 @@ package link.infra.indium.renderer.render;
 
 import java.util.function.Function;
 
+import org.joml.Vector3fc;
+
 import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
-import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.vertex.type.ChunkVertexEncoder;
@@ -15,9 +16,6 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer {
 	protected final Function<RenderLayer, ChunkModelBuilder> builderFunc;
@@ -48,11 +46,11 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 			out.y = origin.y() + quad.y(i) + (float) blockOffset.getY();
 			out.z = origin.z() + quad.z(i) + (float) blockOffset.getZ();
 
-			int color = quad.spriteColor(i, 0);
+			int color = quad.color(i);
 			out.color = ColorABGR.pack(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF, (color >> 24) & 0xFF);
 
-			out.u = quad.spriteU(i, 0);
-			out.v = quad.spriteV(i, 0);
+			out.u = quad.u(i);
+			out.v = quad.v(i);
 
 			out.light = quad.lightmap(i);
 		}
@@ -62,7 +60,7 @@ public abstract class ChunkQuadBufferer implements BaseQuadRenderer.QuadBufferer
 		Sprite sprite = quad.cachedSprite();
 
 		if (sprite == null) {
-			sprite = SpriteFinderCache.forBlockAtlas().find(quad, 0);
+			sprite = SpriteFinderCache.forBlockAtlas().find(quad);
 		}
 
 		builder.addSprite(sprite);
