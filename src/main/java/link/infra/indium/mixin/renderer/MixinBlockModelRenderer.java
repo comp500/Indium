@@ -16,10 +16,18 @@
 
 package link.infra.indium.mixin.renderer;
 
+import java.util.BitSet;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
 import link.infra.indium.renderer.aocalc.VanillaAoHelper;
 import link.infra.indium.renderer.render.NonTerrainBlockRenderContext;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockModelRenderer;
@@ -29,14 +37,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.BlockRenderView;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.BitSet;
 
 @Mixin(BlockModelRenderer.class)
 public abstract class MixinBlockModelRenderer implements AccessBlockModelRenderer {
@@ -48,7 +48,7 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 
 	@Inject(at = @At("HEAD"), method = "render(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;ZLnet/minecraft/util/math/random/Random;JI)V", cancellable = true)
 	private void hookRender(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrix, VertexConsumer buffer, boolean cull, Random rand, long seed, int overlay, CallbackInfo ci) {
-		if (!((FabricBakedModel) model).isVanillaAdapter()) {
+		if (!model.isVanillaAdapter()) {
 			NonTerrainBlockRenderContext context = indium_contexts.get();
 			context.render(blockView, model, state, pos, matrix, buffer, cull, rand, seed, overlay);
 			ci.cancel();

@@ -1,5 +1,11 @@
 package link.infra.indium.mixin.sodium;
 
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
 import link.infra.indium.Indium;
 import link.infra.indium.renderer.render.TerrainRenderContext;
 import me.jellysquid.mods.sodium.client.gl.compile.ChunkBuildContext;
@@ -10,12 +16,6 @@ import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRende
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderBuildTask;
 import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
 import me.jellysquid.mods.sodium.client.util.task.CancellationSource;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * The main injection point into Sodium - here we stop Sodium from rendering FRAPI block models, and do it ourselves
@@ -37,10 +37,10 @@ public abstract class MixinChunkRenderRebuildTask extends ChunkRenderBuildTask {
 	@Redirect(method = "performBuild", at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderModel(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;)Z", remap = false), remap = false)
 	public boolean onRenderBlock(BlockRenderer blockRenderer, BlockRenderContext ctx, ChunkModelBuilder buffers, ChunkBuildContext buildContext, CancellationSource cancellationSource) {
 		// We need to get the model with a bit more context than BlockRenderer has, so we do it here
-		if (!Indium.ALWAYS_TESSELLATE_INDIUM && ((FabricBakedModel) ctx.model()).isVanillaAdapter()) {
-			return blockRenderer.renderModel(ctx, buffers);
-		} else {
+		if (Indium.ALWAYS_TESSELLATE_INDIUM || !ctx.model().isVanillaAdapter()) {
 			return TerrainRenderContext.get(buildContext).tessellateBlock(ctx);
 		}
+
+		return blockRenderer.renderModel(ctx, buffers);
 	}
 }

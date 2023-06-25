@@ -16,17 +16,8 @@
 
 package link.infra.indium.renderer.render;
 
-
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-
 import link.infra.indium.renderer.aocalc.AoCalculator;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -39,73 +30,37 @@ import net.minecraft.world.BlockRenderView;
 /**
  * Context for non-terrain block rendering.
  */
-public class NonTerrainBlockRenderContext extends MatrixRenderContext {
-	private final BlockRenderInfo blockInfo = new BlockRenderInfo();
+public class NonTerrainBlockRenderContext extends AbstractBlockRenderContext {
 	private final SingleBlockLightDataCache lightCache = new SingleBlockLightDataCache();
-	private final AoCalculator aoCalc = new AoCalculator(blockInfo, lightCache);
-	private final BaseMeshConsumer meshConsumer = new BaseMeshConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
-	private VertexConsumer bufferBuilder;
+	private VertexConsumer vertexConsumer;
 
-	/**
-	 * Reuse the fallback consumer from the render context used during chunk rebuild to make it properly
-	 * apply the current transforms to vanilla models.
-	 */
-	private final BaseFallbackConsumer fallbackConsumer = new BaseFallbackConsumer(new QuadBufferer(this::outputBuffer), blockInfo, aoCalc, this::transform);
+	public NonTerrainBlockRenderContext() {
+		blockInfo = new BlockRenderInfo();
+		aoCalc = new AoCalculator(blockInfo, lightCache);
+	}
 
-	private VertexConsumer outputBuffer(RenderLayer renderLayer) {
-		return bufferBuilder;
+	@Override
+	protected void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+		bufferQuad(quad, vertexConsumer);
 	}
 
 	public void render(BlockRenderView blockView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer buffer, boolean cull, Random random, long seed, int overlay) {
-		this.bufferBuilder = buffer;
+		this.vertexConsumer = buffer;
 		this.matrix = matrixStack.peek().getPositionMatrix();
 		this.normalMatrix = matrixStack.peek().getNormalMatrix();
-
 		this.overlay = overlay;
-		aoCalc.clear();
-		blockInfo.prepareForWorld(blockView, cull);
-		blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion(), seed);
-		lightCache.reset(pos, blockView);
 
-		((FabricBakedModel) model).emitBlockQuads(blockView, state, pos, blockInfo.randomSupplier, this);
+		blockInfo.random = random;
+
+		aoCalc.clear();
+		lightCache.reset(pos, blockView);
+		blockInfo.prepareForWorld(blockView, cull);
+		blockInfo.prepareForBlock(state, pos, seed, model.useAmbientOcclusion());
+
+		model.emitBlockQuads(blockView, state, pos, blockInfo.randomSupplier, this);
 
 		blockInfo.release();
-		this.bufferBuilder = null;
-	}
-
-	private class QuadBufferer extends VertexConsumerQuadBufferer {
-		QuadBufferer(Function<RenderLayer, VertexConsumer> bufferFunc) {
-			super(bufferFunc);
-		}
-
-		@Override
-		protected Matrix4f matrix() {
-			return matrix;
-		}
-
-		@Override
-		protected Matrix3f normalMatrix() {
-			return normalMatrix;
-		}
-
-		@Override
-		protected int overlay() {
-			return overlay;
-		}
-	}
-
-	@Override
-	public Consumer<Mesh> meshConsumer() {
-		return meshConsumer;
-	}
-
-	@Override
-	public BakedModelConsumer bakedModelConsumer() {
-		return fallbackConsumer;
-	}
-
-	@Override
-	public QuadEmitter getEmitter() {
-		return meshConsumer.getEmitter();
+		blockInfo.random = null;
+		this.vertexConsumer = null;
 	}
 }

@@ -29,14 +29,12 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.util.math.random.RandomSeed;
 import net.minecraft.world.BlockRenderView;
 
 /**
- * Holds, manages and provides access to the block/world related state
- * needed by fallback and mesh consumers.
+ * Holds, manages, and provides access to the block/world related state
+ * needed to render quads.
  *
  * <p>Exception: per-block position offsets are tracked in {@link ChunkRenderInfo}
  * so they can be applied together with chunk offsets.
@@ -44,35 +42,38 @@ import net.minecraft.world.BlockRenderView;
 public class BlockRenderInfo {
 	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
 	private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
-	private final Random random = new LocalRandom(RandomSeed.getSeed());
+
 	public BlockRenderView blockView;
 	public BlockPos blockPos;
 	public BlockState blockState;
-	public long seed;
+
 	boolean useAo;
 	boolean defaultAo;
 	RenderLayer defaultLayer;
 
+	Random random;
+	long seed;
+	public final Supplier<Random> randomSupplier = () -> {
+		random.setSeed(seed);
+		return random;
+	};
+
 	private boolean enableCulling;
 	private int cullCompletionFlags;
 	private int cullResultFlags;
-
-	public final Supplier<Random> randomSupplier = () -> {
-		random.setSeed(this.seed);
-		return random;
-	};
 
 	public void prepareForWorld(BlockRenderView blockView, boolean enableCulling) {
 		this.blockView = blockView;
 		this.enableCulling = enableCulling;
 	}
 
-	public void prepareForBlock(BlockState blockState, BlockPos blockPos, boolean modelAO, long seed) {
+	public void prepareForBlock(BlockState blockState, BlockPos blockPos, long seed, boolean modelAo) {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
 		this.seed = seed;
+
 		useAo = MinecraftClient.isAmbientOcclusionEnabled();
-		defaultAo = useAo && modelAO && blockState.getLuminance() == 0;
+		defaultAo = useAo && modelAo && blockState.getLuminance() == 0;
 
 		defaultLayer = RenderLayers.getBlockLayer(blockState);
 
