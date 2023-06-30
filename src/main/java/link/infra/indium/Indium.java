@@ -43,7 +43,6 @@ import net.minecraft.resource.ResourceType;
 public class Indium implements ClientModInitializer {
 	public static final boolean ALWAYS_TESSELLATE_INDIUM;
 	public static final AoConfig AMBIENT_OCCLUSION_MODE;
-	public static final boolean FIX_EXTERIOR_VERTEX_LIGHTING;
 
 	public static final Logger LOGGER = LogUtils.getLogger();
 
@@ -104,7 +103,6 @@ public class Indium implements ClientModInitializer {
 
 		ALWAYS_TESSELLATE_INDIUM = asBoolean((String) properties.computeIfAbsent("always-tesselate-blocks", (a) -> "auto"), false);
 		AMBIENT_OCCLUSION_MODE = asEnum((String) properties.computeIfAbsent("ambient-occlusion-mode", (a) -> "auto"), AoConfig.ENHANCED);
-		FIX_EXTERIOR_VERTEX_LIGHTING = asBoolean((String) properties.computeIfAbsent("fix-exterior-vertex-lighting", (a) -> "auto"), true);
 
 		try (OutputStream stream = Files.newOutputStream(configFile)) {
 			properties.store(stream, "Indium properties file");
