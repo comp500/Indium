@@ -18,6 +18,8 @@ package link.infra.indium.renderer.mesh;
 
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_FACE_NORMAL;
+import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
 import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.material.RenderMaterialImpl;
@@ -48,7 +51,7 @@ import net.minecraft.util.math.Direction;
 public class QuadViewImpl implements QuadView {
 	@Nullable
 	protected Direction nominalFace;
-	/** True when geometry flags or light face may not match geometry. */
+	/** True when face normal, light face, or geometry flags may not match geometry. */
 	protected boolean isGeometryInvalid = true;
 	protected final Vector3f faceNormal = new Vector3f();
 
@@ -59,45 +62,13 @@ public class QuadViewImpl implements QuadView {
 	protected int baseIndex = 0;
 
 	/**
-	 * Use when subtype is "attached" to a pre-existing array.
-	 * Sets data reference and index and decodes state from array.
-	 */
-	final void load(int[] data, int baseIndex) {
-		this.data = data;
-		this.baseIndex = baseIndex;
-		load();
-	}
-
-	/**
-	 * Like {@link #load(int[], int)} but assumes array and index already set.
-	 * Only does the decoding part.
+	 * Decodes necessary state from the backing data array.
+	 * The encoded data must contain valid computed geometry.
 	 */
 	public void load() {
 		isGeometryInvalid = false;
 		nominalFace = lightFace();
-
-		// face normal isn't encoded
-		NormalHelper.computeFaceNormal(faceNormal, this);
-	}
-
-	/** Reference to underlying array. Use with caution. Meant for fast renderer access */
-	public int[] data() {
-		return data;
-	}
-
-	public int normalFlags() {
-		return EncodingFormat.normalFlags(data[baseIndex + HEADER_BITS]);
-	}
-
-	/** True if any vertex normal has been set. */
-	public boolean hasVertexNormals() {
-		return normalFlags() != 0;
-	}
-
-	/** gets flags used for lighting - lazily computed via {@link GeometryHelper#computeShapeFlags(QuadView)}. */
-	public int geometryFlags() {
-		computeGeometry();
-		return EncodingFormat.geometryFlags(data[baseIndex + HEADER_BITS]);
+		NormalHelper.unpackNormal(packedFaceNormal(), faceNormal);
 	}
 
 	protected void computeGeometry() {
@@ -105,6 +76,7 @@ public class QuadViewImpl implements QuadView {
 			isGeometryInvalid = false;
 
 			NormalHelper.computeFaceNormal(faceNormal, this);
+			data[baseIndex + HEADER_FACE_NORMAL] = NormalHelper.packNormal(faceNormal);
 
 			// depends on face normal
 			data[baseIndex + HEADER_BITS] = EncodingFormat.lightFace(data[baseIndex + HEADER_BITS], GeometryHelper.lightFace(this));
@@ -112,6 +84,12 @@ public class QuadViewImpl implements QuadView {
 			// depends on light face
 			data[baseIndex + HEADER_BITS] = EncodingFormat.geometryFlags(data[baseIndex + HEADER_BITS], GeometryHelper.computeShapeFlags(this));
 		}
+	}
+
+	/** gets flags used for lighting - lazily computed via {@link GeometryHelper#computeShapeFlags(QuadView)}. */
+	public int geometryFlags() {
+		computeGeometry();
+		return EncodingFormat.geometryFlags(data[baseIndex + HEADER_BITS]);
 	}
 
 	public boolean hasShade() {
@@ -180,9 +158,18 @@ public class QuadViewImpl implements QuadView {
 		return data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_LIGHTMAP];
 	}
 
+	public int normalFlags() {
+		return EncodingFormat.normalFlags(data[baseIndex + HEADER_BITS]);
+	}
+
 	@Override
 	public boolean hasNormal(int vertexIndex) {
 		return (normalFlags() & (1 << vertexIndex)) != 0;
+	}
+
+	/** True if any vertex normal has been set. */
+	public boolean hasVertexNormals() {
+		return normalFlags() != 0;
 	}
 
 	protected final int normalIndex(int vertexIndex) {
@@ -191,17 +178,17 @@ public class QuadViewImpl implements QuadView {
 
 	@Override
 	public float normalX(int vertexIndex) {
-		return hasNormal(vertexIndex) ? NormalHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 0) : Float.NaN;
+		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalX(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
 	public float normalY(int vertexIndex) {
-		return hasNormal(vertexIndex) ? NormalHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 1) : Float.NaN;
+		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalY(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
 	public float normalZ(int vertexIndex) {
-		return hasNormal(vertexIndex) ? NormalHelper.getPackedNormalComponent(data[normalIndex(vertexIndex)], 2) : Float.NaN;
+		return hasNormal(vertexIndex) ? NormalHelper.unpackNormalZ(data[normalIndex(vertexIndex)]) : Float.NaN;
 	}
 
 	@Override
@@ -213,7 +200,7 @@ public class QuadViewImpl implements QuadView {
 			}
 
 			final int normal = data[normalIndex(vertexIndex)];
-			target.set(NormalHelper.getPackedNormalComponent(normal, 0), NormalHelper.getPackedNormalComponent(normal, 1), NormalHelper.getPackedNormalComponent(normal, 2));
+			NormalHelper.unpackNormal(normal, target);
 			return target;
 		} else {
 			return null;
@@ -239,6 +226,11 @@ public class QuadViewImpl implements QuadView {
 		return nominalFace;
 	}
 
+	public final int packedFaceNormal() {
+		computeGeometry();
+		return data[baseIndex + HEADER_FACE_NORMAL];
+	}
+
 	@Override
 	public final Vector3f faceNormal() {
 		computeGeometry();
@@ -262,6 +254,16 @@ public class QuadViewImpl implements QuadView {
 
 	@Override
 	public final void toVanilla(int[] target, int targetIndex) {
-		System.arraycopy(data, baseIndex + VERTEX_X, target, targetIndex, QUAD_STRIDE);
+		System.arraycopy(data, baseIndex + HEADER_STRIDE, target, targetIndex, QUAD_STRIDE);
+
+		// The color is the fourth integer in each vertex.
+		// EncodingFormat.VERTEX_COLOR is not used because it also
+		// contains the header size; vanilla quads do not have a header.
+		int colorIndex = targetIndex + 3;
+
+		for (int i = 0; i < 4; i++) {
+			target[colorIndex] = ColorHelper.toVanillaColor(target[colorIndex]);
+			colorIndex += VANILLA_VERTEX_STRIDE;
+		}
 	}
 }

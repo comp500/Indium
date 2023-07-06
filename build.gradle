@@ -62,7 +62,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	modImplementation "maven.modrinth:sodium:mc${project.minecraft_version}-${project.sodium_version}"
+	modImplementation "maven.modrinth:sodium:${project.sodium_version}"
 }
 
 processResources {

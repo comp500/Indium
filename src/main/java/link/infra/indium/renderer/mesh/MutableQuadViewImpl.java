@@ -21,7 +21,6 @@ import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_BITS;
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_COLOR_INDEX;
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_STRIDE;
 import static link.infra.indium.renderer.mesh.EncodingFormat.HEADER_TAG;
-import static link.infra.indium.renderer.mesh.EncodingFormat.QUAD_STRIDE;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_COLOR;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_LIGHTMAP;
 import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_NORMAL;
@@ -32,9 +31,11 @@ import static link.infra.indium.renderer.mesh.EncodingFormat.VERTEX_X;
 import org.jetbrains.annotations.Nullable;
 
 import link.infra.indium.renderer.IndiumRenderer;
+import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.helper.TextureHelper;
 import link.infra.indium.renderer.material.RenderMaterialImpl;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
@@ -43,17 +44,37 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.math.Direction;
 
 /**
- * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emit()},
+ * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emitDirectly()},
  * because that depends on where/how it is used. (Mesh encoding vs. render-time transformation).
+ *
+ * <p>In many cases an instance of this class is used as an "editor quad". The editor quad's
+ * {@link #emitDirectly()} method calls some other internal method that transforms the quad
+ * data and then buffers it. Transformations should be the same as they would be in a vanilla
+ * render - the editor is serving mainly as a way to access vertex data without magical
+ * numbers. It also allows for a consistent interface for those transformations.
  */
 public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEmitter {
 	@Nullable
 	private Sprite cachedSprite;
+	/** This field is only used during terrain rendering. */
+	private ModelQuadOrientation orientation = ModelQuadOrientation.NORMAL;
 
-	public final void begin(int[] data, int baseIndex) {
-		this.data = data;
-		this.baseIndex = baseIndex;
-		clear();
+	@Nullable
+	public Sprite cachedSprite() {
+		return cachedSprite;
+	}
+
+	public void cachedSprite(@Nullable Sprite sprite) {
+		cachedSprite = sprite;
+	}
+
+	public ModelQuadOrientation orientation() {
+		return orientation;
+	}
+
+	/** The set value is only respected during terrain rendering. */
+	public void orientation(ModelQuadOrientation orientation) {
+		this.orientation = orientation;
 	}
 
 	public void clear() {
@@ -119,7 +140,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	@Override
 	public MutableQuadViewImpl normal(int vertexIndex, float x, float y, float z) {
 		normalFlags(normalFlags() | (1 << vertexIndex));
-		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = NormalHelper.packNormal(x, y, z, 0);
+		data[baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL] = NormalHelper.packNormal(x, y, z);
 		return this;
 	}
 
@@ -131,7 +152,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 
 		if (normalFlags == 0b1111) return;
 
-		final int packedFaceNormal = NormalHelper.packNormal(faceNormal(), 0);
+		final int packedFaceNormal = packedFaceNormal();
 
 		for (int v = 0; v < 4; v++) {
 			if ((normalFlags & (1 << v)) == 0) {
@@ -198,9 +219,17 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 
 	@Override
 	public final MutableQuadViewImpl fromVanilla(int[] quadData, int startIndex) {
-		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, QUAD_STRIDE);
+		System.arraycopy(quadData, startIndex, data, baseIndex + HEADER_STRIDE, VANILLA_QUAD_STRIDE);
 		isGeometryInvalid = true;
 		cachedSprite(null);
+
+		int colorIndex = baseIndex + VERTEX_COLOR;
+
+		for (int i = 0; i < 4; i++) {
+			data[colorIndex] = ColorHelper.fromVanillaColor(data[colorIndex]);
+			colorIndex += VERTEX_STRIDE;
+		}
+
 		return this;
 	}
 
@@ -221,12 +250,16 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 		return this;
 	}
 
-	@Nullable
-	public Sprite cachedSprite() {
-		return cachedSprite;
-	}
+	/**
+	 * Emit the quad without clearing the underlying data.
+	 * Geometry is not guaranteed to be valid when called, but can be computed by calling {@link #computeGeometry()}.
+	 */
+	public abstract void emitDirectly();
 
-	public void cachedSprite(@Nullable Sprite sprite) {
-		cachedSprite = sprite;
+	@Override
+	public final MutableQuadViewImpl emit() {
+		emitDirectly();
+		clear();
+		return this;
 	}
 }
