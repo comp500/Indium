@@ -84,6 +84,7 @@ public class BlockRenderInfo {
 	public void release() {
 		blockPos = null;
 		blockState = null;
+		blockView = null;
 	}
 
 	int blockColor(int colorIndex) {
