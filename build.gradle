@@ -62,7 +62,7 @@ dependencies {
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
 
-	modImplementation "maven.modrinth:sodium:${project.sodium_version}"
+	modImplementation "maven.modrinth:sodium:mc${project.sodium_minecraft_version}-${project.sodium_version}"
 }
 
 processResources {
@@ -111,7 +111,7 @@ publishing {
 }
 
 // TODO: infer from fabric.mod.json?!
-def supportedVersions = ["1.20", "${project.minecraft_version}"]
+def supportedVersions = ["${project.minecraft_version}"]
 def verName = "Indium ${project.mod_version} for Minecraft ${project.minecraft_version}/Sodium ${project.sodium_version}"
 
 // Check version is as expected
@@ -152,7 +152,7 @@ if (System.getenv("MODRINTH_TOKEN")) {
 		versionName = verName
 		changelog = getChangelog(project.source_url)
 		dependencies {
-			required.version "sodium", project.sodium_version
+			required.version "sodium", "mc${project.sodium_minecraft_version}-${project.sodium_version}"
 		}
 	}
 
