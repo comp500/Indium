@@ -81,9 +81,20 @@ public class BlockRenderInfo {
 		cullResultFlags = 0;
 	}
 
-	public void release() {
+	/**
+	 * Clean up context for reuse in another block
+	 */
+	public void releaseBlock() {
 		blockPos = null;
 		blockState = null;
+	}
+
+	/**
+	 * Clean up context for reuse in another world (implies reuse in another block)
+	 * Clears reference to world: must be called before unloading, or all references to it removed
+	 */
+	public void release() {
+		releaseBlock();
 		blockView = null;
 	}
 

@@ -114,7 +114,8 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	public void release() {
-		blockInfo.release();
+		// Release only block references: this is called after every build; TerrainRenderContext is world-specific
+		blockInfo.releaseBlock();
 		buffers = null;
 	}
 
