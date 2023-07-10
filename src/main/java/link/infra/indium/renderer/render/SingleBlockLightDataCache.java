@@ -53,4 +53,8 @@ public class SingleBlockLightDataCache extends LightDataAccess {
 
 		return this.light[l] = this.compute(x, y, z);
 	}
+
+	public void release() {
+		this.world = null;
+	}
 }

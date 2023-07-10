@@ -61,6 +61,7 @@ public class NonTerrainBlockRenderContext extends AbstractBlockRenderContext {
 
 		// blockInfo is thread-local, not cleaned up when leaving world (and could be called for arbitrary BlockRenderViews)
 		blockInfo.release();
+		lightCache.release();
 		blockInfo.random = null;
 		this.vertexConsumer = null;
 	}
