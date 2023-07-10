@@ -12,6 +12,8 @@ import net.minecraft.world.BlockRenderView;
  * only one block and its neighbors.
  */
 public class SingleBlockLightDataCache extends LightDataAccess {
+	// Radius of 2 is required: block models may create geometry in up to a 3x3x3 region, which requires light to be
+	// queried from neighbours of any block in this region
 	private static final int NEIGHBOR_BLOCK_RADIUS = 2;
 	private static final int BLOCK_LENGTH = 1 + (NEIGHBOR_BLOCK_RADIUS * 2);
 

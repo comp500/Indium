@@ -36,7 +36,7 @@ import net.minecraft.world.BlockRenderView;
  * Holds, manages, and provides access to the block/world related state
  * needed to render quads.
  *
- * <p>Exception: per-block position offsets are tracked in {@link ChunkRenderInfo}
+ * <p>Exception: per-block position offsets are tracked in {@link TerrainRenderContext}
  * so they can be applied together with chunk offsets.
  */
 public class BlockRenderInfo {
