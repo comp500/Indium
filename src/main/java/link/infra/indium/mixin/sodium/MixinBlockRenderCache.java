@@ -1,5 +1,6 @@
 package link.infra.indium.mixin.sodium;
 
+import me.jellysquid.mods.sodium.client.model.light.data.ArrayLightDataCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import link.infra.indium.renderer.accessor.AccessBlockRenderCache;
 import link.infra.indium.renderer.render.TerrainRenderContext;
-import me.jellysquid.mods.sodium.client.model.light.cache.ArrayLightDataCache;
 
 @Mixin(BlockRenderCache.class)
 public class MixinBlockRenderCache implements AccessBlockRenderCache {

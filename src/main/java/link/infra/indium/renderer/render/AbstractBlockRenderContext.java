@@ -21,6 +21,8 @@ import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
 import java.util.List;
 
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import org.jetbrains.annotations.Nullable;
 
 import link.infra.indium.renderer.IndiumRenderer;
@@ -64,7 +66,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 	private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
 
-	protected abstract void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer);
+	protected abstract void bufferQuad(MutableQuadViewImpl quad, Material material);
 
 	@Override
 	public QuadEmitter getEmitter() {
@@ -92,10 +94,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		final boolean ao = blockInfo.useAo && (aoMode == TriState.TRUE || (aoMode == TriState.DEFAULT && blockInfo.defaultAo));
 		final boolean emissive = mat.emissive();
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode());
+		final Material sodiumMaterial = DefaultMaterials.forRenderLayer(renderLayer);
 
 		colorizeQuad(quad, colorIndex);
 		shadeQuad(quad, isVanilla, ao, emissive);
-		bufferQuad(quad, renderLayer);
+		bufferQuad(quad, sodiumMaterial);
 	}
 
 	/** handles block color, common to all renders. */

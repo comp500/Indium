@@ -22,7 +22,7 @@ import static link.infra.indium.renderer.helper.GeometryHelper.CUBIC_FLAG;
 import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackAO;
 import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackFO;
-import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackLM;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.getLightmap;
 import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackOP;
 import static net.minecraft.util.math.Direction.DOWN;
 import static net.minecraft.util.math.Direction.EAST;
@@ -366,23 +366,23 @@ public class AoCalculator {
 		// direction of the light face, but it was actually mis-sampling and causing
 		// visible artifacts in certain situations
 
-		final long word0 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0]);
-		final int light0 = unpackLM(word0);
+		final int word0 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0]);
+		final int light0 = getLightmap(word0);
 		final float ao0 = unpackAO(word0);
 		final boolean isClear0 = unpackOP(word0);
 
-		final long word1 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1]);
-		final int light1 = unpackLM(word1);
+		final int word1 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1]);
+		final int light1 = getLightmap(word1);
 		final float ao1 = unpackAO(word1);
 		final boolean isClear1 = unpackOP(word1);
 
-		final long word2 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[2]);
-		final int light2 = unpackLM(word2);
+		final int word2 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[2]);
+		final int light2 = getLightmap(word2);
 		final float ao2 = unpackAO(word2);
 		final boolean isClear2 = unpackOP(word2);
 
-		final long word3 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[3]);
-		final int light3 = unpackLM(word3);
+		final int word3 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[3]);
+		final int light3 = getLightmap(word3);
 		final float ao3 = unpackAO(word3);
 		final boolean isClear3 = unpackOP(word3);
 
@@ -397,48 +397,48 @@ public class AoCalculator {
 			cAo0 = ao0;
 			cLight0 = light0;
 		} else {
-			final long word02 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[2]);
+			final int word02 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[2]);
 			cAo0 = unpackAO(word02);
-			cLight0 = unpackLM(word02);
+			cLight0 = getLightmap(word02);
 		}
 
 		if (!isClear3 && !isClear0) {
 			cAo1 = ao0;
 			cLight1 = light0;
 		} else {
-			final long word03 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[3]);
+			final int word03 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[3]);
 			cAo1 = unpackAO(word03);
-			cLight1 = unpackLM(word03);
+			cLight1 = getLightmap(word03);
 		}
 
 		if (!isClear2 && !isClear1) {
 			cAo2 = ao1;
 			cLight2 = light1;
 		} else {
-			final long word12 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[2]);
+			final int word12 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[2]);
 			cAo2 = unpackAO(word12);
-			cLight2 = unpackLM(word12);
+			cLight2 = getLightmap(word12);
 		}
 
 		if (!isClear3 && !isClear1) {
 			cAo3 = ao1;
 			cLight3 = light1;
 		} else {
-			final long word13 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[3]);
+			final int word13 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[3]);
 			cAo3 = unpackAO(word13);
-			cLight3 = unpackLM(word13);
+			cLight3 = getLightmap(word13);
 		}
 
-		long centerWord = cache.get(lightPosX, lightPosY, lightPosZ);
+		int centerWord = cache.get(lightPosX, lightPosY, lightPosZ);
 
 		// If on block face or neighbor isn't occluding, "center" will be neighbor brightness
 		// Doesn't use light pos because logic not based solely on this block's geometry
 		int lightCenter;
 
 		if (isOnBlockFace || !unpackFO(centerWord)) {
-			lightCenter = unpackLM(centerWord);
+			lightCenter = getLightmap(centerWord);
 		} else {
-			lightCenter = unpackLM(cache.get(x, y, z));
+			lightCenter = getLightmap(cache.get(x, y, z));
 		}
 
 		float aoCenter = unpackAO(centerWord);

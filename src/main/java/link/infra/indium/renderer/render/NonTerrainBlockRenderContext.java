@@ -18,8 +18,8 @@ package link.infra.indium.renderer.render;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -40,7 +40,7 @@ public class NonTerrainBlockRenderContext extends AbstractBlockRenderContext {
 	}
 
 	@Override
-	protected void bufferQuad(MutableQuadViewImpl quad, RenderLayer renderLayer) {
+	protected void bufferQuad(MutableQuadViewImpl quad, Material material) {
 		bufferQuad(quad, vertexConsumer);
 	}
 

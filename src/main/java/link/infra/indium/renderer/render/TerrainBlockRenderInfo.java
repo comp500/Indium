@@ -16,7 +16,7 @@
 
 package link.infra.indium.renderer.render;
 
-import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockOcclusionCache;
 import net.minecraft.util.math.Direction;
 
 public class TerrainBlockRenderInfo extends BlockRenderInfo {
