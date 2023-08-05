@@ -267,24 +267,24 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	}
 
 	/**
-     * When vanilla computes an offset lightmap with flat lighting, it passes the original BlockState but the
-     * offset BlockPos to {@link WorldRenderer#getLightmapCoordinates(BlockRenderView, BlockState, BlockPos)}.
-     * This does not make much sense but fixes certain issues, primarily dark quads on light-emitting blocks
-     * behind tinted glass. {@link LightDataAccess} cannot efficiently store lightmaps computed with
-     * inconsistent values so this method exists to mirror vanilla behavior as closely as possible.
-     */
-    private static int getOffsetLightmap(LightDataAccess lightCache, BlockPos pos, Direction face) {
-        int word = lightCache.get(pos);
+	 * When vanilla computes an offset lightmap with flat lighting, it passes the original BlockState but the
+	 * offset BlockPos to {@link WorldRenderer#getLightmapCoordinates(BlockRenderView, BlockState, BlockPos)}.
+	 * This does not make much sense but fixes certain issues, primarily dark quads on light-emitting blocks
+	 * behind tinted glass. {@link LightDataAccess} cannot efficiently store lightmaps computed with
+	 * inconsistent values so this method exists to mirror vanilla behavior as closely as possible.
+	 */
+	private static int getOffsetLightmap(LightDataAccess lightCache, BlockPos pos, Direction face) {
+		int word = lightCache.get(pos);
 
-        // Check emissivity of the origin state
-        if (LightDataAccess.unpackEM(word)) {
-            return LightmapTextureManager.MAX_LIGHT_COORDINATE;
-        }
+		// Check emissivity of the origin state
+		if (LightDataAccess.unpackEM(word)) {
+			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
 
-        // Use world light values from the offset pos, but luminance from the origin pos
-        int adjWord = lightCache.get(pos, face);
-        return LightmapTextureManager.pack(Math.max(LightDataAccess.unpackBL(adjWord), LightDataAccess.unpackLU(word)), LightDataAccess.unpackSL(adjWord));
-    }
+		// Use world light values from the offset pos, but luminance from the origin pos
+		int adjWord = lightCache.get(pos, face);
+		return LightmapTextureManager.pack(Math.max(LightDataAccess.unpackBL(adjWord), LightDataAccess.unpackLU(word)), LightDataAccess.unpackSL(adjWord));
+	}
 
 	/**
 	 * Consumer for vanilla baked models. Generally intended to give visual results matching a vanilla render,
