@@ -25,7 +25,6 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.LocalRandom;
 
@@ -61,11 +60,6 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 
 	@Override
 	protected void bufferQuad(MutableQuadViewImpl quad, Material material) {
-		ChunkModelBuilder builder = buffers.get(material);
-
-		Direction cullFace = quad.cullFace();
-		var vertexBuffer = builder.getVertexBuffer(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED);
-
 		Vector3fc origin = this.origin;
 		Vec3d modelOffset = this.modelOffset;
 
@@ -89,6 +83,9 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 			out.light = quad.lightmap(srcIndex);
 		}
 
+		ChunkModelBuilder builder = buffers.get(material);
+		ModelQuadFacing normalFace = quad.normalFace();
+		var vertexBuffer = builder.getVertexBuffer(normalFace);
 		vertexBuffer.push(vertices, material);
 
 		Sprite sprite = quad.cachedSprite();

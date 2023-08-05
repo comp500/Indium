@@ -20,12 +20,14 @@ import static net.minecraft.util.math.MathHelper.approximatelyEquals;
 
 import org.joml.Vector3f;
 
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
+import me.jellysquid.mods.sodium.client.util.DirectionUtil;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.math.Direction.AxisDirection;
-
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.minecraft.util.math.MathHelper;
 
 /**
  * Static routines of general utility for renderer implementations.
@@ -195,6 +197,33 @@ public abstract class GeometryHelper {
 			// handle WTF case
 			return Direction.UP;
 		}
+	}
+
+	// Copied from ModelQuadUtil.findNormalFace to prevent unnecessary allocation
+	public static ModelQuadFacing normalFace(QuadView quad) {
+		final Vector3f normal = quad.faceNormal();
+
+		if (!normal.isFinite()) {
+			return ModelQuadFacing.UNASSIGNED;
+		}
+
+		float maxDot = 0;
+		Direction closestFace = null;
+
+		for (Direction face : DirectionUtil.ALL_DIRECTIONS) {
+			float dot = normal.dot(face.getUnitVector());
+
+			if (dot > maxDot) {
+				maxDot = dot;
+				closestFace = face;
+			}
+		}
+
+		if (closestFace != null && MathHelper.approximatelyEquals(maxDot, 1.0f)) {
+			return ModelQuadFacing.fromDirection(closestFace);
+		}
+
+		return ModelQuadFacing.UNASSIGNED;
 	}
 
 	/**
