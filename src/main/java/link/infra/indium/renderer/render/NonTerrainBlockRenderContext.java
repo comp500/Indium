@@ -18,6 +18,7 @@ package link.infra.indium.renderer.render;
 
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
@@ -37,6 +38,11 @@ public class NonTerrainBlockRenderContext extends AbstractBlockRenderContext {
 	public NonTerrainBlockRenderContext() {
 		blockInfo = new BlockRenderInfo();
 		aoCalc = new AoCalculator(blockInfo, lightCache);
+	}
+
+	@Override
+	protected LightDataAccess getLightCache() {
+		return lightCache;
 	}
 
 	@Override

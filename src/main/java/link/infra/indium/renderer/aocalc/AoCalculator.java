@@ -16,13 +16,13 @@
 
 package link.infra.indium.renderer.aocalc;
 
-import static java.lang.Math.max;
 import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
 import static link.infra.indium.renderer.helper.GeometryHelper.CUBIC_FLAG;
 import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
-import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackAO;
-import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackFO;
 import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.getLightmap;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackAO;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackEM;
+import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackFO;
 import static me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess.unpackOP;
 import static net.minecraft.util.math.Direction.DOWN;
 import static net.minecraft.util.math.Direction.EAST;
@@ -44,6 +44,7 @@ import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.mesh.QuadViewImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
 import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -369,64 +370,77 @@ public class AoCalculator {
 		final int word0 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0]);
 		final int light0 = getLightmap(word0);
 		final float ao0 = unpackAO(word0);
-		final boolean isClear0 = unpackOP(word0);
+		final boolean opaque0 = unpackOP(word0);
+		final boolean em0 = unpackEM(word0);
 
 		final int word1 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1]);
 		final int light1 = getLightmap(word1);
 		final float ao1 = unpackAO(word1);
-		final boolean isClear1 = unpackOP(word1);
+		final boolean opaque1 = unpackOP(word1);
+		final boolean em1 = unpackEM(word1);
 
 		final int word2 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[2]);
 		final int light2 = getLightmap(word2);
 		final float ao2 = unpackAO(word2);
-		final boolean isClear2 = unpackOP(word2);
+		final boolean opaque2 = unpackOP(word2);
+		final boolean em2 = unpackEM(word2);
 
 		final int word3 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[3]);
 		final int light3 = getLightmap(word3);
 		final float ao3 = unpackAO(word3);
-		final boolean isClear3 = unpackOP(word3);
+		final boolean opaque3 = unpackOP(word3);
+		final boolean em3 = unpackEM(word3);
 
 		// c = corner - values at corners of face
 		int cLight0, cLight1, cLight2, cLight3;
 		float cAo0, cAo1, cAo2, cAo3;
+		boolean cEm0, cEm1, cEm2, cEm3;
 
 		// If neighbors on both sides of the corner are opaque, then apparently we use the light/shade
 		// from one of the sides adjacent to the corner.  If either neighbor is clear (no light subtraction)
 		// then we use values from the outwardly diagonal corner. (outwardly = position is one more away from light face)
-		if (!isClear2 && !isClear0) {
+		if (opaque2 && opaque0) {
 			cAo0 = ao0;
 			cLight0 = light0;
+			cEm0 = em0;
 		} else {
 			final int word02 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[2]);
 			cAo0 = unpackAO(word02);
 			cLight0 = getLightmap(word02);
+			cEm0 = unpackEM(word02);
 		}
 
-		if (!isClear3 && !isClear0) {
+		if (opaque3 && opaque0) {
 			cAo1 = ao0;
 			cLight1 = light0;
+			cEm1 = em0;
 		} else {
 			final int word03 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[0], neighbors[3]);
 			cAo1 = unpackAO(word03);
 			cLight1 = getLightmap(word03);
+			cEm1 = unpackEM(word03);
 		}
 
-		if (!isClear2 && !isClear1) {
+		if (opaque2 && opaque1) {
 			cAo2 = ao1;
 			cLight2 = light1;
+			cEm2 = em1;
 		} else {
 			final int word12 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[2]);
 			cAo2 = unpackAO(word12);
 			cLight2 = getLightmap(word12);
+			cEm2 = unpackEM(word12);
 		}
 
-		if (!isClear3 && !isClear1) {
+		if (opaque3 && opaque1) {
 			cAo3 = ao1;
 			cLight3 = light1;
+			cEm3 = em1;
 		} else {
 			final int word13 = cache.get(lightPosX, lightPosY, lightPosZ, neighbors[1], neighbors[3]);
 			cAo3 = unpackAO(word13);
 			cLight3 = getLightmap(word13);
+			cEm3 = unpackEM(word13);
 		}
 
 		int centerWord = cache.get(lightPosX, lightPosY, lightPosZ);
@@ -434,11 +448,15 @@ public class AoCalculator {
 		// If on block face or neighbor isn't occluding, "center" will be neighbor brightness
 		// Doesn't use light pos because logic not based solely on this block's geometry
 		int lightCenter;
+		boolean emCenter;
 
-		if (isOnBlockFace || !unpackFO(centerWord)) {
-			lightCenter = getLightmap(centerWord);
+		if (isOnBlockFace && unpackFO(centerWord)) {
+			final int originWord = cache.get(x, y, z);
+			lightCenter = getLightmap(originWord);
+			emCenter = unpackEM(originWord);
 		} else {
-			lightCenter = getLightmap(cache.get(x, y, z));
+			lightCenter = getLightmap(centerWord);
+			emCenter = unpackEM(centerWord);
 		}
 
 		float aoCenter = unpackAO(centerWord);
@@ -449,34 +467,51 @@ public class AoCalculator {
 		result.a2 = ((ao2 + ao1 + cAo2 + aoCenter) * 0.25F) * worldBrightness;
 		result.a3 = ((ao3 + ao1 + cAo3 + aoCenter) * 0.25F) * worldBrightness;
 
-		result.l0(meanBrightness(light3, light0, cLight1, lightCenter));
-		result.l1(meanBrightness(light2, light0, cLight0, lightCenter));
-		result.l2(meanBrightness(light2, light1, cLight2, lightCenter));
-		result.l3(meanBrightness(light3, light1, cLight3, lightCenter));
+		result.l0(calculateCornerBrightness(light3, light0, cLight1, lightCenter, em3, em0, cEm1, emCenter));
+		result.l1(calculateCornerBrightness(light2, light0, cLight0, lightCenter, em2, em0, cEm0, emCenter));
+		result.l2(calculateCornerBrightness(light2, light1, cLight2, lightCenter, em2, em1, cEm2, emCenter));
+		result.l3(calculateCornerBrightness(light3, light1, cLight3, lightCenter, em3, em1, cEm3, emCenter));
 	}
 
-	/**
-	 * Vanilla code excluded missing light values from mean but was not isotropic.
-	 * Still need to substitute or edges are too dark but consistently use the min
-	 * value from all four samples.
-	 */
-	private static int meanBrightness(int a, int b, int c, int d) {
-		return a == 0 || b == 0 || c == 0 || d == 0 ? meanEdgeBrightness(a, b, c, d) : meanInnerBrightness(a, b, c, d);
+	private static int calculateCornerBrightness(int a, int b, int c, int d, boolean aem, boolean bem, boolean cem, boolean dem) {
+		// FIX: Normalize corner vectors correctly to the minimum non-zero value between each one to prevent
+		// strange issues
+		if ((a == 0) || (b == 0) || (c == 0) || (d == 0)) {
+			// Find the minimum value between all corners
+			final int min = minNonZero(minNonZero(a, b), minNonZero(c, d));
+
+			// Normalize the corner values
+			a = Math.max(a, min);
+			b = Math.max(b, min);
+			c = Math.max(c, min);
+			d = Math.max(d, min);
+		}
+
+		// FIX: Apply the fullbright lightmap from emissive blocks at the very end so it cannot influence
+		// the minimum lightmap and produce incorrect results (for example, sculk sensors in a dark room)
+		if (aem) {
+			a = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
+		if (bem) {
+			b = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
+		if (cem) {
+			c = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
+		if (dem) {
+			d = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
+
+		return ((a + b + c + d) >> 2) & 0xFF00FF;
 	}
 
-	private static int meanInnerBrightness(int a, int b, int c, int d) {
-		// bitwise divide by 4, clamp to expected (positive) range
-		return a + b + c + d >> 2 & 0xFF00FF;
-	}
+	private static int minNonZero(int a, int b) {
+		if (a == 0) {
+			return b;
+		} else if (b == 0) {
+			return a;
+		}
 
-	private static int nonZeroMin(int a, int b) {
-		if (a == 0) return b;
-		if (b == 0) return a;
 		return Math.min(a, b);
-	}
-
-	private static int meanEdgeBrightness(int a, int b, int c, int d) {
-		final int min = nonZeroMin(nonZeroMin(a, b), nonZeroMin(c, d));
-		return meanInnerBrightness(max(a, min), max(b, min), max(c, min), max(d, min));
 	}
 }
