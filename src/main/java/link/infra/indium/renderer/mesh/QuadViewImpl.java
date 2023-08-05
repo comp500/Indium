@@ -41,6 +41,7 @@ import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.helper.NormalHelper;
 import link.infra.indium.renderer.material.RenderMaterialImpl;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.minecraft.util.math.Direction;
 
@@ -51,7 +52,7 @@ import net.minecraft.util.math.Direction;
 public class QuadViewImpl implements QuadView {
 	@Nullable
 	protected Direction nominalFace;
-	/** True when face normal, light face, or geometry flags may not match geometry. */
+	/** True when face normal, light face, normal face, or geometry flags may not match geometry. */
 	protected boolean isGeometryInvalid = true;
 	protected final Vector3f faceNormal = new Vector3f();
 
@@ -80,6 +81,9 @@ public class QuadViewImpl implements QuadView {
 
 			// depends on face normal
 			data[baseIndex + HEADER_BITS] = EncodingFormat.lightFace(data[baseIndex + HEADER_BITS], GeometryHelper.lightFace(this));
+
+			// depends on face normal
+			data[baseIndex + HEADER_BITS] = EncodingFormat.normalFace(data[baseIndex + HEADER_BITS], GeometryHelper.normalFace(this));
 
 			// depends on light face
 			data[baseIndex + HEADER_BITS] = EncodingFormat.geometryFlags(data[baseIndex + HEADER_BITS], GeometryHelper.computeShapeFlags(this));
@@ -172,6 +176,11 @@ public class QuadViewImpl implements QuadView {
 		return normalFlags() != 0;
 	}
 
+	/** True if all vertex normals have been set. */
+	public boolean hasAllVertexNormals() {
+		return (normalFlags() & 0b1111) == 0b1111;
+	}
+
 	protected final int normalIndex(int vertexIndex) {
 		return baseIndex + vertexIndex * VERTEX_STRIDE + VERTEX_NORMAL;
 	}
@@ -218,6 +227,11 @@ public class QuadViewImpl implements QuadView {
 	public final Direction lightFace() {
 		computeGeometry();
 		return EncodingFormat.lightFace(data[baseIndex + HEADER_BITS]);
+	}
+
+	public final ModelQuadFacing normalFace() {
+		computeGeometry();
+		return EncodingFormat.normalFace(data[baseIndex + HEADER_BITS]);
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 
 import link.infra.indium.renderer.helper.GeometryHelper;
 import link.infra.indium.renderer.material.RenderMaterialImpl;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.render.VertexFormat;
@@ -77,13 +78,17 @@ public abstract class EncodingFormat {
 	/** used for quick clearing of quad buffers. */
 	static final int[] EMPTY = new int[TOTAL_STRIDE];
 
-	private static final int DIRECTION_MASK = MathHelper.smallestEncompassingPowerOfTwo(ModelHelper.NULL_FACE_ID) - 1;
+	private static final int DIRECTION_MASK = MathHelper.smallestEncompassingPowerOfTwo(ModelHelper.NULL_FACE_ID + 1) - 1;
 	private static final int DIRECTION_BIT_COUNT = Integer.bitCount(DIRECTION_MASK);
+	private static final int FACING_MASK = MathHelper.smallestEncompassingPowerOfTwo(ModelQuadFacing.COUNT) - 1;
+	private static final int FACING_BIT_COUNT = Integer.bitCount(FACING_MASK);
 	private static final int CULL_SHIFT = 0;
 	private static final int CULL_INVERSE_MASK = ~(DIRECTION_MASK << CULL_SHIFT);
 	private static final int LIGHT_SHIFT = CULL_SHIFT + DIRECTION_BIT_COUNT;
 	private static final int LIGHT_INVERSE_MASK = ~(DIRECTION_MASK << LIGHT_SHIFT);
-	private static final int NORMALS_SHIFT = LIGHT_SHIFT + DIRECTION_BIT_COUNT;
+	private static final int NORMAL_FACE_SHIFT = LIGHT_SHIFT + DIRECTION_BIT_COUNT;
+	private static final int NORMAL_FACE_INVERSE_MASK = ~(FACING_MASK << NORMAL_FACE_SHIFT);
+	private static final int NORMALS_SHIFT = NORMAL_FACE_SHIFT + FACING_BIT_COUNT;
 	private static final int NORMALS_COUNT = 4;
 	private static final int NORMALS_MASK = (1 << NORMALS_COUNT) - 1;
 	private static final int NORMALS_INVERSE_MASK = ~(NORMALS_MASK << NORMALS_SHIFT);
@@ -113,6 +118,14 @@ public abstract class EncodingFormat {
 
 	static int lightFace(int bits, Direction face) {
 		return (bits & LIGHT_INVERSE_MASK) | (ModelHelper.toFaceIndex(face) << LIGHT_SHIFT);
+	}
+
+	static ModelQuadFacing normalFace(int bits) {
+		return ModelQuadFacing.VALUES[(bits >>> NORMAL_FACE_SHIFT) & FACING_MASK];
+	}
+
+	static int normalFace(int bits, ModelQuadFacing face) {
+		return (bits & NORMAL_FACE_INVERSE_MASK) | (face.ordinal() << NORMAL_FACE_SHIFT);
 	}
 
 	/** indicate if vertex normal has been set - bits correspond to vertex ordinals. */

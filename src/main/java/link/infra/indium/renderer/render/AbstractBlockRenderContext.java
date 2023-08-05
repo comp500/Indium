@@ -21,15 +21,19 @@ import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
 import java.util.List;
 
-import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
-import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
+import link.infra.indium.Indium;
 import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.aocalc.AoCalculator;
+import link.infra.indium.renderer.aocalc.AoConfig;
 import link.infra.indium.renderer.helper.ColorHelper;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
+import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
@@ -42,6 +46,7 @@ import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
 
 /**
  * Subclasses must set the {@link #blockInfo} and {@link #aoCalc} fields in their constructor.
@@ -64,7 +69,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 	private final BakedModelConsumerImpl vanillaModelConsumer = new BakedModelConsumerImpl();
 
-	private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
+	protected abstract LightDataAccess getLightCache();
 
 	protected abstract void bufferQuad(MutableQuadViewImpl quad, Material material);
 
@@ -129,14 +134,14 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				}
 			}
 		} else {
-			shadeFlatQuad(quad);
+			shadeFlatQuad(quad, isVanilla);
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
 					quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 				}
 			} else {
-				final int brightness = flatBrightness(quad, blockInfo.blockState, blockInfo.blockPos);
+				final int brightness = flatBrightness(quad);
 
 				for (int i = 0; i < 4; i++) {
 					quad.lightmap(i, ColorHelper.maxBrightness(quad.lightmap(i), brightness));
@@ -149,28 +154,55 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	 * Starting in 1.16 flat shading uses dimension-specific diffuse factors that can be < 1.0
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
-	private void shadeFlatQuad(MutableQuadViewImpl quad) {
-		if (quad.hasVertexNormals()) {
-			// Quads that have vertex normals need to be shaded using interpolation - vanilla can't
-			// handle them. Generally only applies to modded models.
-			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
+	private void shadeFlatQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+		final boolean hasShade = quad.hasShade();
 
-			for (int i = 0; i < 4; i++) {
-				quad.color(i, ColorHelper.multiplyRGB(quad.color(i), vertexShade(quad, i, faceShade)));
+		// Check the AO mode to match how shade is applied during smooth lighting
+		if ((Indium.AMBIENT_OCCLUSION_MODE == AoConfig.HYBRID && !isVanilla) || Indium.AMBIENT_OCCLUSION_MODE == AoConfig.ENHANCED) {
+			if (quad.hasAllVertexNormals()) {
+				for (int i = 0; i < 4; i++) {
+					float shade = normalShade(quad.normalX(i), quad.normalY(i), quad.normalZ(i), hasShade);
+					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), shade));
+				}
+			} else {
+				final float faceShade;
+
+				if ((quad.geometryFlags() & AXIS_ALIGNED_FLAG) != 0) {
+					faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), hasShade);
+				} else {
+					Vector3f faceNormal = quad.faceNormal();
+					faceShade = normalShade(faceNormal.x, faceNormal.y, faceNormal.z, hasShade);
+				}
+
+				if (quad.hasVertexNormals()) {
+					for (int i = 0; i < 4; i++) {
+						float shade;
+
+						if (quad.hasNormal(i)) {
+							shade = normalShade(quad.normalX(i), quad.normalY(i), quad.normalZ(i), hasShade);
+						} else {
+							shade = faceShade;
+						}
+
+						quad.color(i, ColorHelper.multiplyRGB(quad.color(i), shade));
+					}
+				} else {
+					if (faceShade != 1.0f) {
+						for (int i = 0; i < 4; i++) {
+							quad.color(i, ColorHelper.multiplyRGB(quad.color(i), faceShade));
+						}
+					}
+				}
 			}
 		} else {
-			final float diffuseShade = blockInfo.blockView.getBrightness(quad.lightFace(), quad.hasShade());
+			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), hasShade);
 
-			if (diffuseShade != 1.0f) {
+			if (faceShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
-					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), diffuseShade));
+					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), faceShade));
 				}
 			}
 		}
-	}
-
-	private float vertexShade(MutableQuadViewImpl quad, int vertexIndex, float faceShade) {
-		return quad.hasNormal(vertexIndex) ? normalShade(quad.normalX(vertexIndex), quad.normalY(vertexIndex), quad.normalZ(vertexIndex), quad.hasShade()) : faceShade;
 	}
 
 	/**
@@ -213,24 +245,45 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	 * Handles geometry-based check for using self brightness or neighbor brightness.
 	 * That logic only applies in flat lighting.
 	 */
-	private int flatBrightness(MutableQuadViewImpl quad, BlockState blockState, BlockPos pos) {
-		lightPos.set(pos);
+	private int flatBrightness(MutableQuadViewImpl quad) {
+		LightDataAccess lightCache = getLightCache();
+		BlockPos pos = blockInfo.blockPos;
+		Direction cullFace = quad.cullFace();
 
-		// To mirror Vanilla's behavior, if the face has a cull-face, always sample the light value
-		// offset in that direction. See net.minecraft.client.render.block.BlockModelRenderer.renderQuadsFlat
-		// for reference.
-		if (quad.cullFace() != null) {
-			lightPos.move(quad.cullFace());
+		// To match vanilla behavior, use the cull face if it exists/is available
+		if (cullFace != null) {
+			return getOffsetLightmap(lightCache, pos, cullFace);
 		} else {
 			final int flags = quad.geometryFlags();
 
-			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
-				lightPos.move(quad.lightFace());
+			// If the face is aligned, use the light data above it
+			// To match vanilla behavior, also treat the face as aligned if it is parallel and the block state is a full cube
+			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && LightDataAccess.unpackFC(lightCache.get(pos)))) {
+				return getOffsetLightmap(lightCache, pos, quad.lightFace());
+			} else {
+				return LightDataAccess.getEmissiveLightmap(lightCache.get(pos));
 			}
 		}
+	}
 
-		// Unfortunately cannot use brightness cache here unless we implement one specifically for flat lighting. See #329
-		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, blockState, lightPos);
+	/**
+	 * When vanilla computes an offset lightmap with flat lighting, it passes the original BlockState but the
+	 * offset BlockPos to {@link WorldRenderer#getLightmapCoordinates(BlockRenderView, BlockState, BlockPos)}.
+	 * This does not make much sense but fixes certain issues, primarily dark quads on light-emitting blocks
+	 * behind tinted glass. {@link LightDataAccess} cannot efficiently store lightmaps computed with
+	 * inconsistent values so this method exists to mirror vanilla behavior as closely as possible.
+	 */
+	private static int getOffsetLightmap(LightDataAccess lightCache, BlockPos pos, Direction face) {
+		int word = lightCache.get(pos);
+
+		// Check emissivity of the origin state
+		if (LightDataAccess.unpackEM(word)) {
+			return LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		}
+
+		// Use world light values from the offset pos, but luminance from the origin pos
+		int adjWord = lightCache.get(pos, face);
+		return LightmapTextureManager.pack(Math.max(LightDataAccess.unpackBL(adjWord), LightDataAccess.unpackLU(word)), LightDataAccess.unpackSL(adjWord));
 	}
 
 	/**

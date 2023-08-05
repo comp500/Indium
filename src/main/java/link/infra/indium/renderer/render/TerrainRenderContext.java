@@ -1,11 +1,14 @@
 package link.infra.indium.renderer.render;
 
+import org.joml.Vector3fc;
+
 import link.infra.indium.mixin.sodium.AccessBlockRenderer;
 import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.accessor.AccessBlockRenderCache;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.model.light.data.ArrayLightDataCache;
+import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
@@ -22,12 +25,12 @@ import net.minecraft.client.texture.Sprite;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.LocalRandom;
-import org.joml.Vector3fc;
 
 public class TerrainRenderContext extends AbstractBlockRenderContext {
+	private final ArrayLightDataCache lightCache;
+
 	private final ChunkVertexEncoder.Vertex[] vertices = ChunkVertexEncoder.Vertex.uninitializedQuad();
 
 	private ChunkBuildBuffers buffers;
@@ -38,7 +41,7 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	public TerrainRenderContext(BlockRenderCache renderCache) {
 		WorldSlice worldSlice = renderCache.getWorldSlice();
 		BlockOcclusionCache blockOcclusionCache = ((AccessBlockRenderer) renderCache.getBlockRenderer()).indium$occlusionCache();
-		ArrayLightDataCache lightCache = ((AccessBlockRenderCache) renderCache).indium$getLightDataCache();
+		lightCache = ((AccessBlockRenderCache) renderCache).indium$getLightDataCache();
 
 		blockInfo = new TerrainBlockRenderInfo(blockOcclusionCache);
 		blockInfo.random = new LocalRandom(42L);
@@ -51,12 +54,12 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	@Override
+	protected LightDataAccess getLightCache() {
+		return lightCache;
+	}
+
+	@Override
 	protected void bufferQuad(MutableQuadViewImpl quad, Material material) {
-		ChunkModelBuilder builder = buffers.get(material);
-
-		Direction cullFace = quad.cullFace();
-		var vertexBuffer = builder.getVertexBuffer(cullFace != null ? ModelQuadFacing.fromDirection(cullFace) : ModelQuadFacing.UNASSIGNED);
-
 		Vector3fc origin = this.origin;
 		Vec3d modelOffset = this.modelOffset;
 
@@ -80,6 +83,9 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 			out.light = quad.lightmap(srcIndex);
 		}
 
+		ChunkModelBuilder builder = buffers.get(material);
+		ModelQuadFacing normalFace = quad.normalFace();
+		var vertexBuffer = builder.getVertexBuffer(normalFace);
 		vertexBuffer.push(vertices, material);
 
 		Sprite sprite = quad.cachedSprite();
@@ -99,8 +105,8 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 			// Assumes aoCalc.ao / aoCalc.light holds the correct values for the current quad.
 			quad.orientation(ModelQuadOrientation.orientByBrightness(aoCalc.ao, aoCalc.light));
 		} else {
-			// When using flat lighting, Sodium makes all quads use the flipped orientation.
-			quad.orientation(ModelQuadOrientation.FLIP);
+			// When using flat lighting, all quads use the normal orientation.
+			quad.orientation(ModelQuadOrientation.NORMAL);
 		}
 	}
 
