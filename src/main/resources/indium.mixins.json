@@ -6,6 +6,7 @@
     "renderer.AccessAmbientOcclusionCalculator",
     "renderer.MixinBlockModelRenderer",
     "renderer.MixinItemRenderer",
+	"renderer.MixinBakedModel",
     "sodium.AccessBlockRenderer",
     "sodium.MixinBlockRenderCache",
     "sodium.MixinChunkBuilderMeshingTask"

@@ -16,16 +16,7 @@
 
 package link.infra.indium.renderer.render;
 
-import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
-import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
-
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
 import link.infra.indium.Indium;
-import link.infra.indium.renderer.IndiumRenderer;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.aocalc.AoConfig;
 import link.infra.indium.renderer.helper.ColorHelper;
@@ -36,17 +27,22 @@ import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMat
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.util.TriState;
+import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
 /**
  * Subclasses must set the {@link #blockInfo} and {@link #aoCalc} fields in their constructor.
@@ -67,6 +63,18 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	};
 
+	private final MutableQuadViewImpl vanillaModelEditorQuad = new MutableQuadViewImpl() {
+		{
+			data = new int[EncodingFormat.TOTAL_STRIDE];
+			clear();
+		}
+
+		@Override
+		public void emitDirectly() {
+			renderQuad(this, true);
+		}
+	};
+
 	private final BakedModelConsumerImpl vanillaModelConsumer = new BakedModelConsumerImpl();
 
 	protected abstract LightDataAccess getLightCache();
@@ -79,6 +87,21 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		return editorQuad;
 	}
 
+	public QuadEmitter getVanillaModelEmitter() {
+		// Do not clear the editorQuad since it is not accessible to API users.
+		return vanillaModelEditorQuad;
+	}
+
+	@Override
+	public boolean isFaceCulled(@Nullable Direction face) {
+		return !blockInfo.shouldDrawFace(face);
+	}
+
+	@Override
+	public ModelTransformationMode itemTransformationMode() {
+		throw new IllegalStateException("itemTransformationMode() can only be called on an item render context.");
+	}
+
 	@Override
 	public BakedModelConsumer bakedModelConsumer() {
 		return vanillaModelConsumer;
@@ -89,7 +112,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 			return;
 		}
 
-		if (!blockInfo.shouldDrawFace(quad.cullFace())) {
+		if (isFaceCulled(quad.cullFace())) {
 			return;
 		}
 
@@ -296,21 +319,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	 * them through vanilla logic would require additional hooks.
 	 */
 	private class BakedModelConsumerImpl implements BakedModelConsumer {
-		private static final RenderMaterial MATERIAL_SHADED = IndiumRenderer.INSTANCE.materialFinder().find();
-		private static final RenderMaterial MATERIAL_FLAT = IndiumRenderer.INSTANCE.materialFinder().ambientOcclusion(TriState.FALSE).find();
-
-		private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {
-			{
-				data = new int[EncodingFormat.TOTAL_STRIDE];
-				clear();
-			}
-
-			@Override
-			public void emitDirectly() {
-				renderQuad(this, true);
-			}
-		};
-
 		@Override
 		public void accept(BakedModel model) {
 			accept(model, blockInfo.blockState);
@@ -318,23 +326,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		@Override
 		public void accept(BakedModel model, @Nullable BlockState state) {
-			MutableQuadViewImpl editorQuad = this.editorQuad;
-			final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? MATERIAL_SHADED : MATERIAL_FLAT;
-
-			for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
-				final Direction cullFace = ModelHelper.faceFromIndex(i);
-				final List<BakedQuad> quads = model.getQuads(state, cullFace, blockInfo.randomSupplier.get());
-				final int count = quads.size();
-
-				for (int j = 0; j < count; j++) {
-					final BakedQuad q = quads.get(j);
-					editorQuad.fromVanilla(q, defaultMaterial, cullFace);
-					// Call renderQuad directly instead of emit for efficiency
-					renderQuad(editorQuad, true);
-				}
-			}
-
-			// Do not clear the editorQuad since it is not accessible to API users.
+			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this, vanillaModelEditorQuad);
 		}
 	}
 }
