@@ -1,7 +1,6 @@
 package link.infra.indium.renderer.render;
 
 import org.joml.Vector3fc;
-
 import link.infra.indium.mixin.sodium.AccessBlockRenderer;
 import link.infra.indium.other.SpriteFinderCache;
 import link.infra.indium.renderer.accessor.AccessBlockRenderCache;
@@ -18,7 +17,9 @@ import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockOcclu
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
+import me.jellysquid.mods.sodium.client.render.chunk.vertex.builder.ChunkMeshBufferBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
+import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder.Vertex;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.minecraft.client.texture.Sprite;
