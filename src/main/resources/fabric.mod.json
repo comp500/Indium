@@ -29,7 +29,7 @@
 	"depends": {
 		"fabricloader": ">=0.8.0",
 		"minecraft": "~1.20.2",
-		"sodium": "0.5.5",
+		"sodium": "0.5.8",
 		"fabric-renderer-api-v1": ">=3.2.0",
 		"fabric-resource-loader-v0": ">=0.4.0"
 	}
