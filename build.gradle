@@ -1,15 +1,13 @@
 plugins {
-	id 'fabric-loom' version '1.1.+'
+	id 'fabric-loom' version '1.6.+'
 	id 'maven-publish'
 
-	id "com.github.breadmoirai.github-release" version "2.4.1"
-	id "org.ajoberstar.grgit" version "4.1.0"
+	id "com.github.breadmoirai.github-release" version "2.5.2"
+	id "org.ajoberstar.grgit" version "5.2.2"
 	id "com.modrinth.minotaur" version "2.+"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
 
 String getGitVersion(Project project) {
 	if (grgit != null) {
@@ -36,7 +34,7 @@ String getChangelog(String githubUrl) {
 	}.join("\n") + (githubUrl == null ? "" : "\n\nSee the full changes on Github: ${githubUrl}commits/${getGitVersion(project)}")
 }
 
-archivesBaseName = project.archives_base_name
+base.archivesName = project.archives_base_name
 version = getGitVersion(project)
 group = project.maven_group
 
@@ -80,11 +78,14 @@ tasks.withType(JavaCompile).configureEach {
 	// If Javadoc is generated, this must be specified in that task too.
 	it.options.encoding = "UTF-8"
 
-	// Minecraft 1.18 upwards uses Java 17.
-	it.options.release = 17
+	// Minecraft 1.20 upwards uses Java 21.
+	it.options.release = 21
 }
 
 java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
 	// If you remove this line, sources will not be generated.
