@@ -27,7 +27,7 @@
 		"indium.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.8.0",
+		"fabricloader": ">=0.16.0",
 		"minecraft": "~1.21.0",
 		"sodium": "0.5.11",
 		"fabric-renderer-api-v1": ">=3.2.0",
