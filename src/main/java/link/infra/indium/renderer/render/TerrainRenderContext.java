@@ -98,8 +98,8 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	@Override
-	protected void shadeQuad(MutableQuadViewImpl quad, boolean isVanilla, boolean ao, boolean emissive) {
-		super.shadeQuad(quad, isVanilla, ao, emissive);
+	protected void shadeQuad(MutableQuadViewImpl quad, boolean ao, boolean emissive, boolean vanillaShade) {
+		super.shadeQuad(quad, ao, emissive, vanillaShade);
 
 		if (ao) {
 			// Assumes aoCalc.ao / aoCalc.light holds the correct values for the current quad.

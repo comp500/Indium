@@ -40,7 +40,6 @@ import link.infra.indium.Indium;
 import link.infra.indium.mixin.renderer.AccessAmbientOcclusionCalculator;
 import link.infra.indium.renderer.aocalc.AoFace.WeightFunction;
 import link.infra.indium.renderer.mesh.EncodingFormat;
-import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.mesh.QuadViewImpl;
 import link.infra.indium.renderer.render.BlockRenderInfo;
 import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
@@ -88,7 +87,7 @@ public class AoCalculator {
 	public AoCalculator(BlockRenderInfo blockInfo, LightDataAccess lightCache) {
 		this.blockInfo = blockInfo;
 		this.lightCache = lightCache;
-		this.vanillaCalc = VanillaAoHelper.get();
+		this.vanillaCalc = VanillaAoHelper.createCalc();
 
 		for (int i = 0; i < 24; i++) {
 			faceData[i] = new AoFaceData();
@@ -100,41 +99,21 @@ public class AoCalculator {
 		completionFlags = 0;
 	}
 
-	public void compute(MutableQuadViewImpl quad, boolean isVanilla) {
+	public void compute(QuadViewImpl quad, boolean vanillaShade) {
 		final AoConfig config = Indium.AMBIENT_OCCLUSION_MODE;
 
 		switch (config) {
-		case VANILLA:
-			// prevent NPE in error case of failed reflection for vanilla calculator access
-			if (vanillaCalc == null) {
-				calcFastVanilla(quad);
-			} else {
-				calcVanilla(quad);
-			}
-
-			break;
-
-		case EMULATE:
-			calcFastVanilla(quad);
-			break;
-
-		case HYBRID:
-		default:
-			if (isVanilla) {
+		case VANILLA -> calcVanilla(quad);
+		case EMULATE -> calcFastVanilla(quad);
+		case HYBRID -> {
+			if (vanillaShade) {
 				calcFastVanilla(quad);
 			} else {
 				calcEnhanced(quad);
 			}
-
-			break;
-
-		case ENHANCED:
-			calcEnhanced(quad);
 		}
-	}
-
-	private void calcVanilla(MutableQuadViewImpl quad) {
-		calcVanilla(quad, ao, light);
+		case ENHANCED -> calcEnhanced(quad);
+		}
 	}
 
 	// These are what vanilla AO calc wants, per its usage in vanilla code
@@ -144,7 +123,12 @@ public class AoCalculator {
 	private final BitSet vanillaAoControlBits = new BitSet(3);
 	private final int[] vertexData = new int[EncodingFormat.QUAD_STRIDE];
 
-	private void calcVanilla(MutableQuadViewImpl quad, float[] aoDest, int[] lightDest) {
+	private void calcVanilla(QuadViewImpl quad) {
+		if (vanillaCalc == null) {
+			calcFastVanilla(quad);
+			return;
+		}
+
 		vanillaAoControlBits.clear();
 		final Direction lightFace = quad.lightFace();
 		quad.toVanilla(vertexData, 0);
@@ -152,11 +136,11 @@ public class AoCalculator {
 		VanillaAoHelper.getQuadDimensions(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, lightFace, vanillaAoData, vanillaAoControlBits);
 		vanillaCalc.indium$apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, lightFace, vanillaAoData, vanillaAoControlBits, quad.hasShade());
 
-		System.arraycopy(vanillaCalc.indium$brightness(), 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.indium$light(), 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.indium$brightness(), 0, ao, 0, 4);
+		System.arraycopy(vanillaCalc.indium$light(), 0, light, 0, 4);
 	}
 
-	private void calcFastVanilla(MutableQuadViewImpl quad) {
+	private void calcFastVanilla(QuadViewImpl quad) {
 		int flags = quad.geometryFlags();
 
 		// force to block face if shape is full cube - matches vanilla logic
@@ -171,7 +155,7 @@ public class AoCalculator {
 		}
 	}
 
-	private void calcEnhanced(MutableQuadViewImpl quad) {
+	private void calcEnhanced(QuadViewImpl quad) {
 		switch (quad.geometryFlags()) {
 		case AXIS_ALIGNED_FLAG | CUBIC_FLAG | LIGHT_FACE_FLAG:
 		case AXIS_ALIGNED_FLAG | LIGHT_FACE_FLAG:
@@ -246,7 +230,7 @@ public class AoCalculator {
 	/** used exclusively in irregular face to avoid new heap allocations each call. */
 	private final Vector3f vertexNormal = new Vector3f();
 
-	private void irregularFace(MutableQuadViewImpl quad, boolean shade) {
+	private void irregularFace(QuadViewImpl quad, boolean shade) {
 		final Vector3f faceNorm = quad.faceNormal();
 		Vector3f normal;
 		final float[] w = this.w;

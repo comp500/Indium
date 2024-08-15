@@ -3,13 +3,10 @@ plugins {
 	id 'maven-publish'
 
 	id "com.github.breadmoirai.github-release" version "2.4.1"
-	id "org.ajoberstar.grgit" version "4.1.0"
+	id "org.ajoberstar.grgit" version "4.1.1"
 	id "com.modrinth.minotaur" version "2.+"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
-
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
 
 String getGitVersion(Project project) {
 	if (grgit != null) {
@@ -36,9 +33,12 @@ String getChangelog(String githubUrl) {
 	}.join("\n") + (githubUrl == null ? "" : "\n\nSee the full changes on Github: ${githubUrl}commits/${getGitVersion(project)}")
 }
 
-archivesBaseName = project.archives_base_name
 version = getGitVersion(project)
 group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
 
 repositories {
 	maven {
@@ -58,9 +58,6 @@ dependencies {
 
     // For testing in dev environment
     modRuntimeOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-    // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-    // You may need to force-disable transitiveness on them.
 
 	modImplementation "maven.modrinth:sodium:mc${project.sodium_minecraft_version}-${project.sodium_version}"
 }
@@ -89,6 +86,9 @@ java {
 	// if it is present.
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {

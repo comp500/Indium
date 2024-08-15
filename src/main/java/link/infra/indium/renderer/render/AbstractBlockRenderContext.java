@@ -16,19 +16,26 @@
 
 package link.infra.indium.renderer.render;
 
+import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
+import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
+
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
 import link.infra.indium.Indium;
 import link.infra.indium.renderer.aocalc.AoCalculator;
 import link.infra.indium.renderer.aocalc.AoConfig;
 import link.infra.indium.renderer.helper.ColorHelper;
+import link.infra.indium.renderer.helper.VanillaModelEncoder;
 import link.infra.indium.renderer.mesh.EncodingFormat;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import me.jellysquid.mods.sodium.client.model.light.data.LightDataAccess;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
-import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.RenderLayer;
@@ -38,11 +45,6 @@ import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockRenderView;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import static link.infra.indium.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
-import static link.infra.indium.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
 /**
  * Subclasses must set the {@link #blockInfo} and {@link #aoCalc} fields in their constructor.
@@ -59,19 +61,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		@Override
 		public void emitDirectly() {
-			renderQuad(this, false);
-		}
-	};
-
-	private final MutableQuadViewImpl vanillaModelEditorQuad = new MutableQuadViewImpl() {
-		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
-			clear();
-		}
-
-		@Override
-		public void emitDirectly() {
-			renderQuad(this, true);
+			renderQuad(this);
 		}
 	};
 
@@ -85,11 +75,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	public QuadEmitter getEmitter() {
 		editorQuad.clear();
 		return editorQuad;
-	}
-
-	public QuadEmitter getVanillaModelEmitter() {
-		// Do not clear the editorQuad since it is not accessible to API users.
-		return vanillaModelEditorQuad;
 	}
 
 	@Override
@@ -107,7 +92,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		return vanillaModelConsumer;
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+	private void renderQuad(MutableQuadViewImpl quad) {
 		if (!transform(quad)) {
 			return;
 		}
@@ -121,11 +106,12 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		final TriState aoMode = mat.ambientOcclusion();
 		final boolean ao = blockInfo.useAo && (aoMode == TriState.TRUE || (aoMode == TriState.DEFAULT && blockInfo.defaultAo));
 		final boolean emissive = mat.emissive();
+		final boolean vanillaShade = mat.shadeMode() == ShadeMode.VANILLA;
 		final RenderLayer renderLayer = blockInfo.effectiveRenderLayer(mat.blendMode());
 		final Material sodiumMaterial = DefaultMaterials.forRenderLayer(renderLayer);
 
 		colorizeQuad(quad, colorIndex);
-		shadeQuad(quad, isVanilla, ao, emissive);
+		shadeQuad(quad, ao, emissive, vanillaShade);
 		bufferQuad(quad, sodiumMaterial);
 	}
 
@@ -140,10 +126,10 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	protected void shadeQuad(MutableQuadViewImpl quad, boolean isVanilla, boolean ao, boolean emissive) {
+	protected void shadeQuad(MutableQuadViewImpl quad, boolean ao, boolean emissive, boolean vanillaShade) {
 		// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 		if (ao) {
-			aoCalc.compute(quad, isVanilla);
+			aoCalc.compute(quad, vanillaShade);
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
@@ -157,7 +143,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				}
 			}
 		} else {
-			shadeFlatQuad(quad, isVanilla);
+			shadeFlatQuad(quad, vanillaShade);
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
@@ -177,11 +163,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	 * Starting in 1.16 flat shading uses dimension-specific diffuse factors that can be < 1.0
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
-	private void shadeFlatQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+	private void shadeFlatQuad(MutableQuadViewImpl quad, boolean vanillaShade) {
 		final boolean hasShade = quad.hasShade();
 
 		// Check the AO mode to match how shade is applied during smooth lighting
-		if ((Indium.AMBIENT_OCCLUSION_MODE == AoConfig.HYBRID && !isVanilla) || Indium.AMBIENT_OCCLUSION_MODE == AoConfig.ENHANCED) {
+		if ((Indium.AMBIENT_OCCLUSION_MODE == AoConfig.HYBRID && !vanillaShade) || Indium.AMBIENT_OCCLUSION_MODE == AoConfig.ENHANCED) {
 			if (quad.hasAllVertexNormals()) {
 				for (int i = 0; i < 4; i++) {
 					float shade = normalShade(quad.normalX(i), quad.normalY(i), quad.normalZ(i), hasShade);
@@ -326,7 +312,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		@Override
 		public void accept(BakedModel model, @Nullable BlockState state) {
-			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this, vanillaModelEditorQuad);
+			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this);
 		}
 	}
 }

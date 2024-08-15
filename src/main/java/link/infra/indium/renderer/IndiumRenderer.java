@@ -19,6 +19,7 @@ package link.infra.indium.renderer;
 import java.util.HashMap;
 
 import link.infra.indium.renderer.material.MaterialFinderImpl;
+import link.infra.indium.renderer.material.RenderMaterialImpl;
 import link.infra.indium.renderer.mesh.MeshBuilderImpl;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
@@ -59,7 +60,7 @@ public class IndiumRenderer implements Renderer {
 		if (materialMap.containsKey(id)) return false;
 
 		// cast to prevent acceptance of impostor implementations
-		materialMap.put(id, material);
+		materialMap.put(id, (RenderMaterialImpl) material);
 		return true;
 	}
 }

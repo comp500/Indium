@@ -26,7 +26,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import link.infra.indium.renderer.accessor.AccessBlockModelRenderer;
-import link.infra.indium.renderer.aocalc.VanillaAoHelper;
 import link.infra.indium.renderer.render.NonTerrainBlockRenderContext;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.VertexConsumer;
@@ -53,11 +52,6 @@ public abstract class MixinBlockModelRenderer implements AccessBlockModelRendere
 			context.render(blockView, model, state, pos, matrix, buffer, cull, rand, seed, overlay);
 			ci.cancel();
 		}
-	}
-
-	@Inject(at = @At("RETURN"), method = "<init>*")
-	private void onInit(CallbackInfo ci) {
-		VanillaAoHelper.initialize((BlockModelRenderer) (Object) this);
 	}
 
 	@Override
