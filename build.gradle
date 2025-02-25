@@ -3,7 +3,7 @@ plugins {
 	id 'maven-publish'
 
 	id "com.github.breadmoirai.github-release" version "2.4.1"
-	id "org.ajoberstar.grgit" version "4.1.0"
+	id "org.ajoberstar.grgit" version "4.1.1"
 	id "com.modrinth.minotaur" version "2.+"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
